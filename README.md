@@ -68,7 +68,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 `<template id="gh-admin-pending-card">`（一覧のカード）と `<template id="gh-admin-pending-article">`（記事詳細）を、ページの `<body>` に出します。`pending.js` は雛形を複製し、次の要素に値を入れます。
 
-- `data-field="thumb|band|date|categories|title|external|source|summary|tags|edit|crumbs|body"`: 値を入れる要素。`textContent`・`src`・`href` だけを使う。
+- `data-field="thumb|band|date|categories|title|external|source|summary|tags|edit|crumbs|body"`: 値を入れる要素。`textContent`・`src`・`href` だけを利用する。
 - `data-item="tag|crumb"`: 項目の数だけ複製される入れ子の雛形。
 - 差し込み先: 一覧は `[data-pending-target="list"]`、記事は `[data-pending-target="article"]`（404の箱）か `article[data-slug]`。
 
@@ -76,8 +76,8 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 ### クラス名とCSS変数
 
-- 見出しは `.page-title`、記事の見出しは `.post-title`、本文は `.post-body`。プレビューも同じクラスを使う。
-- 編集画面のCSS（`assets/gh-admin/editor.css`）は次のCSS変数を使う。本体のテーマで定義する。
+- 見出しは `.page-title`、記事の見出しは `.post-title`、本文は `.post-body`。プレビューも同じクラスを利用する。
+- 編集画面のCSS（`assets/gh-admin/editor.css`）は次のCSS変数を利用する。本体のテーマで定義する。
   `--text-primary`・`--text-secondary`・`--foreground`・`--foreground-rgb`・`--background`・`--border`・`--link`・`--danger`
 - 編集画面のプレビューの数式は `lib/marked.min.js`（本体の `static/lib/`）を読む。
 
@@ -100,7 +100,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 ## セキュリティ
 
-- Personal Access Tokenはブラウザの `localStorage` に保存される。共有の端末では使わない。
+- Personal Access Tokenはブラウザの `localStorage` に保存される。共有の端末では利用しない。
 - トークンはFine-grainedにし、記事のリポジトリだけに絞ってContentsの読み書きだけを付ける。期限は90日以内にする。
 - 管理ボタンの表示などは利便性のためだけ。権限はGitHubが判定する。
 - 本体のContent-Security-Policyに、`csp.html` が返す送り先を含める。
