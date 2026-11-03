@@ -21,6 +21,9 @@ import { createSave } from './save.js';
 
 const $ = (id) => document.getElementById(id);
 const SUMMARY_TARGET = 120;
+// 最後に使った作者。新規記事の既定にする
+const AUTHOR_KEY = 'gh_admin_author';
+const AUTHOR_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 
 // 画面の状態はこの 1 つにまとめる。記事の状態（kind・originalSlug・sha・aliases・extra）と、編集中の値・タイマー
 const state = {
@@ -97,6 +100,7 @@ function readForm() {
     url: $('f-external').value.trim(),
     source: $('f-source').value.trim(),
     image: state.thumbImage,
+    author: $('f-author').value.trim(),
   };
 }
 
@@ -119,6 +123,7 @@ function writeForm(fields) {
   state.tags = [...fields.tags];
   taxonomy.renderSelectedTags();
   taxonomy.renderTagSuggestions('');
+  $('f-author').value = fields.author ?? '';
   $('f-summary').value = fields.summary;
   $('summary-details').open = Boolean(fields.summary);
   state.thumbImage = fields.image ?? '';
@@ -141,6 +146,9 @@ function validate(fields) {
   if (fields.kind !== 'external' && !fields.title) return fail('f-title', 'タイトルを入力してください。');
   if (!fields.categories.length) return fail('f-category', 'カテゴリを入力してください。');
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(fields.date)) return fail('f-date', '投稿日時を入力してください。');
+  if (fields.kind !== 'external' && fields.author && !AUTHOR_RE.test(fields.author)) {
+    return fail('f-author', '作者は GitHub のユーザー名（英数字とハイフン）で入力してください。');
+  }
   if (fields.kind === 'external') {
     if (!isHttps(fields.url)) return fail('f-external', '外部記事の URL は https:// で始まるものを入れてください。');
     if (!fields.source) return fail('f-source', 'サイト名を入力してください。');
@@ -408,6 +416,7 @@ async function load() {
       body: '',
       url: '',
       source: '',
+      author: getItem(AUTHOR_KEY) || config.author || '',
     };
     server.slug = slugs.autoSlugFor(server);
   }

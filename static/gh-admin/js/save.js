@@ -6,6 +6,7 @@ import { draftKey, removeDraft, renderDrafts } from './drafts.js';
 import { setSaveState, showNotice } from './notice.js';
 import { recordSave, recordDelete, postPath } from './pending.js';
 import { nowJst } from './time.js';
+import { setItem } from './storage.js';
 
 const $ = (id) => document.getElementById(id);
 const AUTO_SLUG_TRIES = 5;
@@ -103,6 +104,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       removeDraft(oldKey);
       drafts.closeDraftNotice();
       // 反映待ちの控え。slug を変えた場合は旧 slug を削除の控えにする（旧ファイルの削除に失敗していなければ）
+      if (fields.kind !== 'external') setItem('gh_admin_author', fields.author);
       recordSave(fields.slug, {
         fields,
         isNew: creating || slugChanged,

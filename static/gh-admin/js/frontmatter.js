@@ -3,7 +3,7 @@ import { config } from './config.js';
 import { dateToJstInput } from './time.js';
 
 // 画面で扱うキー。それ以外は raw 行のまま保持して書き戻す。build は読み込みで捨てて保存で作り直す
-const KNOWN_KEYS = ['title', 'date', 'lastmod', 'categories', 'tags', 'summary', 'image', 'aliases', 'external', 'source', 'build', 'sitemap'];
+const KNOWN_KEYS = ['title', 'date', 'lastmod', 'author', 'categories', 'tags', 'summary', 'image', 'aliases', 'external', 'source', 'build', 'sitemap'];
 const LIST_KEYS = ['categories', 'tags', 'aliases'];
 // 外部記事はページを作らない。never だとカテゴリ・タグの集計からも外れるので link にする（link もページは作らない）
 const EXTERNAL_BUILD = '{"render": "link", "list": "always"}';
@@ -87,6 +87,7 @@ export function parseArticle(text) {
       source: String(values.source ?? ''),
       // 更新日。画面では扱わず、更新のたびに保存時の値で上書きする
       lastmod: String(values.lastmod ?? ''),
+      author: String(values.author ?? ''),
       body,
     },
     aliases: values.aliases ?? [],
@@ -110,6 +111,8 @@ function frontFields(fields) {
 export function buildArticle(fields, aliases, extra) {
   const lines = [
     ...frontFields(fields),
+    // 作者（GitHub のユーザー名）は設定したときだけ書く
+    ...(fields.author ? [`author: ${JSON.stringify(fields.author)}`] : []),
     ...(fields.lastmod ? [`lastmod: ${fields.lastmod}`] : []),
     ...(aliases.length ? [`aliases: ${JSON.stringify(aliases)}`] : []),
     ...extra,

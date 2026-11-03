@@ -36,6 +36,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
 | `imagesURL` | `/images/` | 記事に書く画像のURLの前置き（`relURL` を通す） |
 | `defaultCategory` | `tech` | 新規記事の既定のカテゴリ |
+| `author` | （空） | 新規記事の既定の作者（GitHub のユーザー名）。編集画面で最後に保存した作者があれば、そちらを優先する |
 | `editURL` | `/edit/` | 編集画面のURL |
 | `loginURL` | `/login/` | ログイン画面のURL |
 | `adminURL` | `/admin/` | 一括管理のURL |
@@ -99,7 +100,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 管理画面が読み書きするのは次の項目だけ。ほかの項目は消さずに残す。
 
-`title`・`date`・`lastmod`・`categories`・`tags`・`summary`・`image`・`aliases`・`external`・`source`・`build`・`sitemap`
+`title`・`date`・`lastmod`・`author`・`categories`・`tags`・`summary`・`image`・`aliases`・`external`・`source`・`build`・`sitemap`
 
 ## 版の約束
 
