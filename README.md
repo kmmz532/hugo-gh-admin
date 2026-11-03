@@ -59,7 +59,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 |---|---|---|---|
 | `gh-admin/head.html` | `<head>`（CSSのbundleの後） | `.` | `<meta name="gh-admin">`、編集画面のCSS、`admin.js` |
 | `gh-admin/csp.html` | CSPの `script-src` を組むところ | `.` | そのページで足す送り先（編集画面だけcdnjs） |
-| `gh-admin/button.html` | ヘッダー・記事カード・フッター | `dict "kind" "edit\|new\|admin\|login\|logout\|footer" "page" . "class" "..." "label" "..."` | 管理画面への入口のボタン |
+| `gh-admin/button.html` | ヘッダー・記事カード・フッター | `dict "kind" "edit\|new\|admin\|login\|logout\|footer" "page" . "class" "..." "label" "..." "text" true` | 管理画面への入口のボタン |
 | `gh-admin/article-scripts.html` | 記事詳細の `scripts` ブロック | `.` | コードのコピーボタンの読み込み |
 
 `csp.html` は `script-src` に足す値を返します。前に空白を付け、末尾に改行を出しません。

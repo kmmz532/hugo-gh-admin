@@ -1,4 +1,4 @@
-{{- /* 管理画面への入口のボタン。引数: dict "kind" "edit|new|admin|login|logout|footer" "page" . "class" "..." "label" "..."。
+{{- /* 管理画面への入口のボタン。引数: dict "kind" "edit|new|admin|login|logout|footer" "page" . "class" "..." "label" "..." "text" true（text を付けるとアイコンではなく文字で出す）。
   本体の header.html・post-card.html・footer.html から呼ぶ。見た目のクラスは class で渡す。 */ -}}
 {{- $gh := partial "gh-admin/settings.html" .page | transform.Unmarshal -}}
 {{- $kind := .kind -}}
@@ -29,7 +29,11 @@
     {{- $label = .label | default "ログアウト" -}}
     {{- $icon = "fa-solid fa-right-from-bracket" -}}
   {{- end }}
+{{- if .text }}
+<a class="{{ $cls }} {{ $vis }}" href="{{ $href }}" hidden>{{ $label }}</a>
+{{- else }}
 <a class="{{ $cls }} {{ $vis }}" href="{{ $href }}" aria-label="{{ $label }}" title="{{ $label }}" hidden>
   <i class="{{ $icon }}" aria-hidden="true"></i>
 </a>
+{{- end }}
 {{- end -}}
