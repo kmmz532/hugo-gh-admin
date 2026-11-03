@@ -9,7 +9,7 @@ import { attachToolbar, insertImageMarkdown, altFrom } from './toolbar.js';
 import { mountImageManager } from './images.js';
 import { getItem, setItem } from './storage.js';
 import { confirmImageUpload, attachUploadConfirm } from './upload-confirm.js';
-import { createExternalForm, isHttps } from './external.js';
+import { createExternalForm, isWebUrl } from './external.js';
 import { nowJst } from './time.js';
 import { postUrl } from './pending.js';
 import { setSaveState, showNotice } from './notice.js';
@@ -150,7 +150,7 @@ function validate(fields) {
     return fail('f-author', '作者は GitHub のユーザー名（英数字とハイフン）で入力してください。');
   }
   if (fields.kind === 'external') {
-    if (!isHttps(fields.url)) return fail('f-external', '外部記事の URL は https:// で始まるものを入れてください。');
+    if (!isWebUrl(fields.url)) return fail('f-external', '外部記事の URL は http:// または https:// で始まるものを入れてください。');
     if (!fields.source) return fail('f-source', 'サイト名を入力してください。');
   }
   return null;

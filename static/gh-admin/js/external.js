@@ -103,6 +103,15 @@ export async function fetchExternalMeta(rawUrl) {
 
 const SOURCE_NAMES = { 'zenn.dev': 'Zenn', 'qiita.com': 'Qiita', 'note.com': 'note' };
 
+// 外部記事の URL。リンクにするだけなので http も許す
+export function isWebUrl(url) {
+  try {
+    return ['http:', 'https:'].includes(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+}
+
 export function isHttps(url) {
   try {
     return new URL(url).protocol === 'https:';
@@ -137,7 +146,7 @@ export function createExternalForm({ state, markDirty, slugs, taxonomy, updateSu
   // URL の確定時に外部ページから項目を取る。入力済みの項目は上書きしない
   async function autofillExternal() {
     const url = $('f-external').value.trim();
-    if (!isHttps(url)) return;
+    if (!isWebUrl(url)) return;
     showNotice('info', '外部ページから項目を取得しています…');
     const meta = await fetchExternalMeta(url);
     if (!meta) {
