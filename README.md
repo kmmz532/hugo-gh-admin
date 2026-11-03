@@ -41,8 +41,6 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `adminURL` | `/admin/` | 一括管理のURL |
 | `adminImagesURL` | `/admin/images/` | 画像の管理のURL |
 | `postURL` | `/posts/{slug}/` | 記事のURLの形。`{slug}`（ファイル名）・`{name}`（先頭の日付を除いた名前）・`{yyyy}`・`{mm}`・`{dd}` を置き換える。反映待ちの表示で利用する |
-| `api` | なし | web-api の URL（例: `https://api.osudenken4dev.workers.dev`）。設定すると、PAT の代わりに公式サイトのログイン（idToken）で記事と画像を扱う（`/v3/blog`・`/v3/image`） |
-| `blogTarget` | なし | web-api の保存先（`denken`）。v3 の既定も denken |
 
 画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。
 

@@ -3,7 +3,6 @@ import { config, escapeRe } from './config.js';
 import { getItem, setItem, removeItem } from './storage.js';
 
 const API_ORIGIN = 'https://api.github.com';
-// 記事と画像の経路。config.api があれば web-api（v3）を使う
 const TOKEN_KEY = 'blog_token';
 const LOGIN_KEY = 'blog_login';
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
@@ -18,8 +17,7 @@ export const branch = config.branch ?? '';
 
 export class ConflictError extends Error {}
 
-// web-api を使うときは、公式サイトのログイン（idToken）をログイン中とみなす
-export const getToken = () => (WEB_API ? getItem('idToken') : null) || getItem(TOKEN_KEY);
+export const getToken = () => getItem(TOKEN_KEY);
 export const getLogin = () => getItem(LOGIN_KEY);
 
 export function saveSession(token, login) {
@@ -116,115 +114,8 @@ function contentsUrl(path) {
   return `/repos/${repo}/contents/${path}`;
 }
 
-// web-api（v3）経由で記事と画像を扱う。config.api を設定したときだけ使う（既定は PAT で GitHub を直接呼ぶ）
-const WEB_API = (config.api ?? '').replace(/\/$/, '');
-const MIME = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif' };
-
-// 公式サイトのログインの idToken。期限が切れたら refreshToken で取り直す
-async function refreshIdToken() {
-  const refreshToken = getItem('refreshToken');
-  if (!refreshToken) return null;
-  const res = await fetch(`${WEB_API}/user/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!data.idToken || !data.refreshToken) return null;
-  setItem('idToken', data.idToken);
-  setItem('refreshToken', data.refreshToken);
-  return data.idToken;
-}
-
-// web-api を呼ぶ。404 の GET は null を返す。401 なら一度だけ取り直して再試行する
-async function backend(path, { method = 'GET', body, page, form } = {}) {
-  const send = (token) => {
-    const headers = { Authorization: `Bearer ${token}` };
-    if (page) headers.page = page;
-    let payload;
-    if (form) {
-      payload = form;
-    } else if (body) {
-      headers['Content-Type'] = 'application/json';
-      payload = JSON.stringify(body);
-    }
-    return fetch(`${WEB_API}${path}`, { method, headers, body: payload, cache: 'no-store' });
-  };
-
-  let res = await send(getItem('idToken'));
-  if (res.status === 401) {
-    const next = await refreshIdToken();
-    if (!next) {
-      clearSession();
-      redirectToLogin();
-      throw new Error('ログインの有効期限が切れました。');
-    }
-    res = await send(next);
-  }
-  if (res.status === 404 && method === 'GET') return null;
-
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`API エラー（${res.status}）: ${json.message ?? json.error ?? ''}`.trim());
-  return json;
-}
-
-async function backendGetPost(slug) {
-  if (!isValidSlug(slug)) throw new Error('slug は英小文字・数字・ハイフンのみ（1〜80 文字）で指定してください。');
-  const json = await backend(`/v3/blog/get?page=${encodeURIComponent(slug)}`);
-  return json ? { sha: json.sha, text: json.raw } : null;
-}
-
-async function backendSavePost(slug, text) {
-  if (!isValidSlug(slug)) throw new Error('slug は英小文字・数字・ハイフンのみ（1〜80 文字）で指定してください。');
-  const json = await backend('/v3/blog/update', { method: 'POST', body: { page: slug, text } });
-  return json.content.sha;
-}
-
-async function backendDeletePost(slug) {
-  await backend('/v3/blog/delete', { method: 'POST', page: slug });
-}
-
-// 一括は 1 件ずつ保存する（GitHub の 1 コミットにはまとめられない）
-async function backendCommit(changes) {
-  for (const [slug, text] of Object.entries(changes)) {
-    if (text === null) await backendDeletePost(slug);
-    else await backendSavePost(slug, text);
-  }
-  return null;
-}
-
-// 保存先は平らな名前（images/<name>）。公開パスは imagesURL に名前を足したもの
-async function backendSaveImage(path, base64) {
-  const name = path.split('/').pop();
-  const ext = name.split('.').pop().toLowerCase();
-  const bytes = Uint8Array.from(atob(base64.replace(/\s/g, '')), (c) => c.charCodeAt(0));
-  const form = new FormData();
-  form.append('file', new Blob([bytes], { type: MIME[ext] ?? 'application/octet-stream' }), name);
-  form.append('name', name.replace(/\.[^.]+$/, ''));
-  const json = await backend('/v3/image/upload', { method: 'POST', form });
-  return `${config.imagesURL}${json.name}`;
-}
-
-async function backendListImages() {
-  const json = await backend('/v3/image/list');
-  return (json ?? [])
-    .map((img) => ({
-      path: img.name,
-      publicPath: `${config.imagesURL}${img.name}`,
-      sha: img.sha,
-      size: img.size,
-      uploadedAt: img.uploadedAt ?? '',
-    }))
-    .sort((a, b) => (a.uploadedAt < b.uploadedAt ? 1 : -1));
-}
-
-async function backendDeleteImage(path, sha) {
-  await backend('/v3/image/delete', { method: 'POST', body: { filename: path, sha } });
-}
-
 // 存在しなければ null
 export async function getPost(slug) {
-  if (WEB_API) return backendGetPost(slug);
   const json = await api(`${contentsUrl(postPath(slug))}?ref=${encodeURIComponent(branch)}`);
   if (!json) return null;
   return { sha: json.sha, text: fromBase64(json.content) };
@@ -232,7 +123,6 @@ export async function getPost(slug) {
 
 // sha を省略すると新規作成。既存ファイルがあれば ConflictError。新しい sha を返す
 export async function savePost(slug, text, sha) {
-  if (WEB_API) return backendSavePost(slug, text);
   const json = await api(contentsUrl(postPath(slug)), {
     method: 'PUT',
     body: {
@@ -246,7 +136,6 @@ export async function savePost(slug, text, sha) {
 }
 
 export async function deletePost(slug, sha) {
-  if (WEB_API) return backendDeletePost(slug);
   await api(contentsUrl(postPath(slug)), {
     method: 'DELETE',
     body: { message: `delete: ${slug}`, sha, branch },
@@ -256,7 +145,6 @@ export async function deletePost(slug, sha) {
 // 複数の記事を 1 コミットにまとめる。changes は { slug: text | null }（null は削除）。
 // 参照（ブランチ）が他で進んでいたら ConflictError。強制更新はしないので、失敗時は何も変わらない
 export async function commitChanges(changes, message) {
-  if (WEB_API) return backendCommit(changes);
   const ref = await api(`/repos/${repo}/git/ref/heads/${branch}`);
   const headSha = ref.object.sha;
   const head = await api(`/repos/${repo}/git/commits/${headSha}`);
@@ -285,7 +173,6 @@ export async function commitChanges(changes, message) {
 
 // base64 は呼び出し側で作る（バイナリを扱うため）。既存パスは ConflictError
 export async function saveImage(path, base64) {
-  if (WEB_API) return backendSaveImage(path, base64);
   if (!IMAGE_PATH_RE.test(path)) throw new Error('画像の保存先が正しくありません。');
   await api(contentsUrl(path), {
     method: 'PUT',
@@ -296,7 +183,6 @@ export async function saveImage(path, base64) {
 // 保存済みの画像を新しい年から順に返す。publicPath は記事に書く /images/<yyyy>/<name>。
 // 1 つのフォルダは 1000 件まで。取れない年があっても他の年は返す
 export async function listImages() {
-  if (WEB_API) return backendListImages();
   const ref = `?ref=${encodeURIComponent(branch)}`;
   const years = (await api(`${contentsUrl(config.imagesDir)}${ref}`)) ?? [];
   const dirs = years.filter((entry) => entry.type === 'dir' && /^\d{4}$/.test(entry.name));
@@ -314,7 +200,6 @@ export async function listImages() {
 }
 
 export async function deleteImage(path, sha) {
-  if (WEB_API) return backendDeleteImage(path, sha);
   if (!IMAGE_PATH_RE.test(path)) throw new Error('画像の保存先が正しくありません。');
   await api(contentsUrl(path), {
     method: 'DELETE',
