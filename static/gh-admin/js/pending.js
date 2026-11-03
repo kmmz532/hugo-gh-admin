@@ -166,7 +166,7 @@ function loadMarked() {
 }
 
 // 記事詳細と同じ形で描画する（タイトル・日付・カテゴリ・タグ・本文）。雛形が無ければ帯だけ出す
-async function renderArticle(container, fields) {
+async function renderArticle(container, slug, fields) {
   const article = fromTemplate('gh-admin-pending-article');
   if (!article) {
     container.prepend(pendingBand());
@@ -194,6 +194,9 @@ async function renderArticle(container, fields) {
       node.textContent = `#${tag}`;
     });
   }
+  // 編集ボタンは任意（雛形に data-field="edit" があるときだけ）
+  const edit = field(article, 'edit');
+  if (edit) edit.href = `${config.editURL}?slug=${encodeURIComponent(slug)}`;
   field(article, 'body').replaceWith(...scratch.childNodes);
   container.replaceChildren(...article.childNodes);
 }
@@ -290,7 +293,7 @@ export function applyPending() {
   if (article) {
     const control = controlFor(article.dataset.slug);
     if (control?.op === 'delete') renderDeleted(article);
-    else if (control && control.fields.kind !== 'external') renderArticle(article, control.fields);
+    else if (control && control.fields.kind !== 'external') renderArticle(article, article.dataset.slug, control.fields);
     return;
   }
 
@@ -299,7 +302,7 @@ export function applyPending() {
   if (pathSlug && document.querySelector('[data-not-found]')) {
     const control = controlFor(pathSlug);
     if (control?.op === 'save' && control.fields.kind !== 'external') {
-      renderArticle(document.querySelector('[data-pending-target="article"]'), control.fields);
+      renderArticle(document.querySelector('[data-pending-target="article"]'), pathSlug, control.fields);
     }
     return;
   }

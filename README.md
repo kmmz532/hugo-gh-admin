@@ -73,6 +73,8 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - `data-item="tag|crumb"`: 項目の数だけ複製される入れ子の雛形。
 - 差し込み先: 一覧は `[data-pending-target="list"]`、記事は `[data-pending-target="article"]`（404の箱）か `article[data-slug]`。
 
+記事の雛形の `data-field="edit"` は任意。置くと、その要素に編集画面へのURL（`href`）を入れる。
+
 雛形がないページでは、反映待ちの帯だけを出します。
 
 ### クラス名とCSS変数
