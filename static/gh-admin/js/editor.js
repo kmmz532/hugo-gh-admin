@@ -416,11 +416,12 @@ async function load() {
       body: '',
       url: '',
       source: '',
-      author: getItem(AUTHOR_KEY) || config.author || '',
+      author: config.authorField ? getItem(AUTHOR_KEY) || config.author || '' : '',
     };
     server.slug = slugs.autoSlugFor(server);
   }
 
+  $('author-field').hidden = !config.authorField;
   writeForm(server);
   $('template-details').hidden = state.originalSlug !== null;
 

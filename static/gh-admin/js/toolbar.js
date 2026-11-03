@@ -94,10 +94,10 @@ async function insertImage(textarea, file, upload, onError, width = '') {
   }
 }
 
-// 1 行の URL だけ（前後の空白は可）。" を含むと記法が壊れるので除く
 // X（旧 Twitter）の投稿の URL。埋め込み記法にする
-const TWEET_URL = /^https://(?:x|twitter).com/[A-Za-z0-9_]{1,15}/status/d+/;
+const TWEET_URL = /^https:\/\/(?:x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/\d+/;
 
+// 1 行の URL だけ（前後の空白は可）。" を含むと記法が壊れるので除く
 const URL_ONLY = /^\s*(https?:\/\/[^\s"]+)\s*$/;
 
 // execCommand で入れると、ブラウザの undo に載る（value に代入すると undo が効かない）

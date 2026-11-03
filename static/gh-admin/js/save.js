@@ -104,7 +104,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       removeDraft(oldKey);
       drafts.closeDraftNotice();
       // 反映待ちの控え。slug を変えた場合は旧 slug を削除の控えにする（旧ファイルの削除に失敗していなければ）
-      if (fields.kind !== 'external') setItem('gh_admin_author', fields.author);
+      if (config.authorField && fields.kind !== 'external') setItem('gh_admin_author', fields.author);
       recordSave(fields.slug, {
         fields,
         isNew: creating || slugChanged,

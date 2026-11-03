@@ -36,6 +36,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
 | `imagesURL` | `/images/` | 記事に書く画像のURLの前置き（`relURL` を通す） |
 | `defaultCategory` | `tech` | 新規記事の既定のカテゴリ |
+| `authorField` | `false` | `true` にすると、編集画面に作者の欄を出す。出さないサイトでは、記事の `author` をそのまま保持する |
 | `author` | （空） | 新規記事の既定の作者（GitHub のユーザー名）。編集画面で最後に保存した作者があれば、そちらを優先する |
 | `editURL` | `/edit/` | 編集画面のURL |
 | `loginURL` | `/login/` | ログイン画面のURL |
