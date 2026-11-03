@@ -8,7 +8,7 @@ import { renderPreview } from './preview.js';
 const PREFIX = 'blog_pending:';
 const EXPIRE_SECONDS = 30 * 60;
 // editor.js と同じ marked。記事詳細では読み込まれていないので、必要になったときだけ読む
-const MARKED_SRC = '/lib/marked.min.js';
+const MARKED_SRC = `${config.rootURL.replace(/\/$/, '')}/lib/marked.min.js`;
 const MARKED_SRI = 'sha384-H+hy9ULve6xfxRkWIh/YOtvDdpXgV2fmAGQkIDTxIgZwNoaoBal14Di2YTMR6MzR';
 
 const nowSec = () => Math.floor(Date.now() / 1000);
