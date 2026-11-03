@@ -86,6 +86,11 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - 管理画面は `/gh-admin/index.json` を読む。1ファイル50件まで、`next` をたどる。項目は `slug`・`title`・`url`・`date`・`external`・`images`・`tags`・`categories`。
 - 検索用の `/index.json` は本体の担当。
 
+索引は次の 2 つの partial を読むため、テーマはこれを用意する。
+
+- `partials/external-meta.html`: 記事の `title`・`summary`・`image`・`images` を持つ dict を返す。`images` は外部記事の OGP 画像の候補（https のみ）の配列。
+- `partials/post-url.html`: 記事の URL を返す。外部記事（`external` あり）なら `external` の値、そうでなければ `.RelPermalink`。
+
 ## フロントマター
 
 管理画面が読み書きするのは次の項目だけ。ほかの項目は消さずに残す。
