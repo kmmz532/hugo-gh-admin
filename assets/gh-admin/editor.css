@@ -980,3 +980,8 @@ body:has(.editor) .footer {
 .thumb-set:focus-visible {
   background: rgba(0, 0, 0, 0.85);
 }
+
+/* 記事の種類に合わせて隠す欄は、表示の指定より hidden を優先する */
+.external-fields[hidden] {
+  display: none;
+}
