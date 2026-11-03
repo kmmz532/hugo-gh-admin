@@ -1,13 +1,13 @@
 # hugo-gh-admin
-Hugoで作成したサイトにGitHub 上の Markdown 記事をブラウザから編集する機能を追加する Hugo Modules のモジュールです。ログイン、記事の新規作成と編集、管理画面などを含みます。
+Hugoで作成したサイトにGitHub上のMarkdown記事をブラウザから編集する機能を追加するHugo Modulesのモジュールです。ログイン、記事の新規作成と編集、管理画面などを含みます。
 
-- 保存先は GitHubリポジトリ。記事は `content/posts/<slug>.md` の形で保存します。
+- 保存先はGitHubリポジトリ。記事は `content/posts/<slug>.md` の形で保存します。
 - 画面は日本語だけです（今のところ、多言語には対応していません）
 
 ## 必要なもの
-- Hugo 0.141.0 以上の extended版
-- Go（Hugo Modules の取り込みに使う）
-- 記事を置くGitHubリポジトリ（以下「記事のリポジトリ」）と、その Contents への読み書き権限を持つ GitHub PAT
+- Hugo 0.141.0以上のextended版
+- Go（Hugo Modulesの取り込みに利用する）
+- 記事を置くGitHubリポジトリ（以下「記事のリポジトリ」）と、そのContentsへの読み書き権限を持つGitHub PAT
 
 ## 取り込み方
 
