@@ -1,3 +1,4 @@
+import { config } from './config.js';
 import { checkRepoPush, fetchLogin, saveSession, repo } from './github.js';
 
 const form = document.getElementById('login-form');
@@ -6,8 +7,8 @@ const status = document.getElementById('login-status');
 
 // 同一 origin のパスだけ戻り先として許可する
 function returnPath() {
-  const ret = new URLSearchParams(location.search).get('return') ?? '/';
-  return ret.startsWith('/') && !ret.startsWith('//') ? ret : '/';
+  const ret = new URLSearchParams(location.search).get('return') ?? config.rootURL;
+  return ret.startsWith('/') && !ret.startsWith('//') ? ret : config.rootURL;
 }
 
 function showError(message) {

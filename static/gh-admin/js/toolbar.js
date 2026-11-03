@@ -65,6 +65,8 @@ function insertBlock(textarea, text) {
   const after = gap(value.slice(end), /^\n*/);
   textarea.setRangeText(before + text + after, start, end, 'end');
   if (after) textarea.setSelectionRange(start + before.length + text.length, start + before.length + text.length);
+  // 本文欄にフォーカスが無いまま続けて入れても、直前の画像の後ろに置く
+  lastCaret.set(textarea, [textarea.selectionStart, textarea.selectionEnd]);
 }
 
 // 仮テキストを置き、保存が終わったら差し替える。すべて textarea の input イベントで通知する
@@ -79,6 +81,7 @@ async function insertImage(textarea, file, upload, onError, width = '') {
     const index = textarea.value.indexOf(placeholder);
     if (index === -1) return;
     textarea.setRangeText(text, index, index + placeholder.length, 'end');
+    if (document.activeElement !== textarea) lastCaret.set(textarea, [textarea.selectionStart, textarea.selectionEnd]);
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
@@ -92,6 +95,9 @@ async function insertImage(textarea, file, upload, onError, width = '') {
 }
 
 // 1 行の URL だけ（前後の空白は可）。" を含むと記法が壊れるので除く
+// X（旧 Twitter）の投稿の URL。埋め込み記法にする
+const TWEET_URL = /^https://(?:x|twitter).com/[A-Za-z0-9_]{1,15}/status/d+/;
+
 const URL_ONLY = /^\s*(https?:\/\/[^\s"]+)\s*$/;
 
 // execCommand で入れると、ブラウザの undo に載る（value に代入すると undo が効かない）
@@ -105,7 +111,8 @@ function insertCardFromUrl(textarea, url) {
   const start = textarea.selectionStart;
   insertText(textarea, url);
   textarea.setSelectionRange(start, start + url.length);
-  insertText(textarea, `{{< link-card url="${url}" >}}`);
+  const name = TWEET_URL.test(url) ? 'tweet' : 'link-card';
+  insertText(textarea, `{{< ${name} url="${url}" >}}`);
 }
 
 // 本文のカーソル位置に画像を入れる（画像の一覧から選んだとき・一覧から上げたとき）

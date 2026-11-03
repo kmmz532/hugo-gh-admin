@@ -11,6 +11,7 @@ import { getItem, setItem } from './storage.js';
 import { confirmImageUpload, attachUploadConfirm } from './upload-confirm.js';
 import { createExternalForm, isHttps } from './external.js';
 import { nowJst } from './time.js';
+import { postUrl } from './pending.js';
 import { setSaveState, showNotice } from './notice.js';
 import { createTaxonomy } from './taxonomy.js';
 import { createSlug } from './slug.js';
@@ -284,7 +285,7 @@ function updateChrome() {
   $('kind-tabs').hidden = saved;
   $('danger-details').hidden = !saved;
   const back = $('back-link');
-  back.href = saved && state.kind === 'article' ? `/posts/${state.originalSlug}/` : '/';
+  back.href = saved && state.kind === 'article' ? postUrl(state.originalSlug, { date: $('f-date').value }) : config.rootURL;
 }
 
 function failStart(message) {

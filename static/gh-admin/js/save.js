@@ -4,7 +4,7 @@ import { savePost, deletePost, ConflictError } from './github.js';
 import { buildArticle, buildExternal } from './frontmatter.js';
 import { draftKey, removeDraft, renderDrafts } from './drafts.js';
 import { setSaveState, showNotice } from './notice.js';
-import { recordSave, recordDelete } from './pending.js';
+import { recordSave, recordDelete, postPath } from './pending.js';
 import { nowJst } from './time.js';
 
 const $ = (id) => document.getElementById(id);
@@ -33,7 +33,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
     const oldSlug = state.originalSlug;
     const oldSha = state.sha;
     // 外部記事は本文がないので aliases も付けない
-    const aliases = fields.kind === 'external' ? [] : [...new Set([...state.aliases, `/posts/${oldSlug}/`])];
+    const aliases = fields.kind === 'external' ? [] : [...new Set([...state.aliases, postPath(oldSlug, fields.date)])];
 
     // sha を付けない。同名があれば ConflictError で中止される
     const sha = await savePost(fields.slug, serialize(fields, aliases));
@@ -142,7 +142,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       recordDelete(slug);
       removeDraft(draftKey(slug));
       state.dirty = false;
-      location.assign('/');
+      location.assign(config.rootURL);
     } catch (error) {
       showNotice('error', errorMessage(error, false));
       $('delete').disabled = false;

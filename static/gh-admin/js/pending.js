@@ -118,9 +118,14 @@ function urlParts(slug, date) {
   return { slug, name: slug, yyyy, mm, dd };
 }
 
-function postUrl(slug, fields) {
-  const parts = urlParts(slug, fields.date);
-  return config.rootURL.replace(/\/$/, '') + config.postURL.replace(TOKEN, (_, key) => parts[key]);
+// サイト内のパス（rootURL を除く）。別名（aliases）にも使う
+export function postPath(slug, date) {
+  const parts = urlParts(slug, date);
+  return config.postURL.replace(TOKEN, (_, key) => parts[key]);
+}
+
+export function postUrl(slug, fields) {
+  return config.rootURL.replace(/\/$/, '') + postPath(slug, fields.date);
 }
 
 // 404 ページの URL から、記事のファイル名を取り出す。postURL の形に合わなければ null
