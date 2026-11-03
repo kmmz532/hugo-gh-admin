@@ -106,6 +106,46 @@ function fillItems(box, items, fill) {
   }
 }
 
+// 記事の URL。設定 postURL の {slug}（ファイル名）・{name}（先頭の日付を除いた名前）・{yyyy}・{mm}・{dd} を置き換える。
+// 日付はファイル名の先頭（YYYY-MM-DD-）を優先し、無ければ front matter の date を使う
+const DATE_PREFIX = /^(\d{4})-(\d{2})-(\d{2})-(.+)$/;
+const TOKEN = /\{(slug|name|yyyy|mm|dd)\}/g;
+
+function urlParts(slug, date) {
+  const m = DATE_PREFIX.exec(slug);
+  if (m) return { slug, name: m[4], yyyy: m[1], mm: m[2], dd: m[3] };
+  const [yyyy = '', mm = '', dd = ''] = (date ?? '').slice(0, 10).split('-');
+  return { slug, name: slug, yyyy, mm, dd };
+}
+
+function postUrl(slug, fields) {
+  const parts = urlParts(slug, fields.date);
+  return config.rootURL.replace(/\/$/, '') + config.postURL.replace(TOKEN, (_, key) => parts[key]);
+}
+
+// 404 ページの URL から、記事のファイル名を取り出す。postURL の形に合わなければ null
+function slugFromPath(pathname) {
+  const root = config.rootURL.replace(/\/$/, '');
+  if (!pathname.startsWith(root)) return null;
+  const keys = [];
+  const source = config.postURL
+    .split(/(\{(?:slug|name|yyyy|mm|dd)\})/)
+    .map((part) => {
+      const key = /^\{(\w+)\}$/.exec(part)?.[1];
+      if (!key) return part.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+      keys.push(key);
+      return key === 'slug' || key === 'name' ? '([a-z0-9-]+)' : '(\\d+)';
+    })
+    .join('')
+    .replace(/\\\/$/, '\\/?');
+  const m = new RegExp(`^${source}$`).exec(pathname.slice(root.length));
+  if (!m) return null;
+  const v = Object.fromEntries(keys.map((k, i) => [k, m[i + 1]]));
+  if (v.slug) return v.slug;
+  if (v.name && v.yyyy && v.mm && v.dd) return `${v.yyyy}-${v.mm}-${v.dd}-${v.name}`;
+  return v.name ?? null;
+}
+
 function setDate(root, date) {
   const time = field(root, 'date');
   time.textContent = date.slice(0, 10).replaceAll('-', '.');
@@ -182,7 +222,7 @@ function renderCard(slug, fields) {
   }
   const link = field(card, 'title');
   link.textContent = fields.title || fields.url || '（無題）';
-  link.href = external ? fields.url : `/posts/${slug}/`;
+  link.href = external ? fields.url : postUrl(slug, fields);
   if (external) {
     link.target = '_blank';
     link.rel = 'noopener';
@@ -255,9 +295,9 @@ export function applyPending() {
   }
 
   // 404 ページ（data-not-found）で、新規記事の URL を開いたとき
-  const match = location.pathname.match(/^\/posts\/([a-z0-9-]+)\/?$/);
-  if (match && document.querySelector('[data-not-found]')) {
-    const control = controlFor(match[1]);
+  const pathSlug = slugFromPath(location.pathname);
+  if (pathSlug && document.querySelector('[data-not-found]')) {
+    const control = controlFor(pathSlug);
     if (control?.op === 'save' && control.fields.kind !== 'external') {
       renderArticle(document.querySelector('[data-pending-target="article"]'), control.fields);
     }
