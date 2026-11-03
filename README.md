@@ -11,7 +11,7 @@ Hugoで作成したサイトにGitHub上のMarkdown記事をブラウザから�
 
 ## 取り込み方
 
-本体の `go.mod` と `hugo.toml` に入れます。
+本体の `go.mod` と `hugo.toml` に記述する。
 
 ```toml
 [[module.imports]]
@@ -22,7 +22,7 @@ Hugoで作成したサイトにGitHub上のMarkdown記事をブラウザから�
 hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 ```
 
-版はタグで固定します。`hugo mod get -u` で更新する前に、差分を読みます。
+版はタグで固定する。`hugo mod get -u` で更新する前に、差分を確認する。
 
 ## 設定（`params.ghAdmin`）
 
