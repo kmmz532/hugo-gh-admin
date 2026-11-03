@@ -279,7 +279,7 @@ function applyToList(list) {
 // 一覧の 1 ページ目だけ（canonical が / のページ）。タグ・カテゴリ・2 ページ目以降は補わない
 function isFirstPage() {
   const canonical = document.querySelector('link[rel="canonical"]')?.href;
-  return Boolean(canonical) && new URL(canonical).pathname === '/';
+  return Boolean(canonical) && new URL(canonical).pathname === config.rootURL;
 }
 
 function showStaleNotice() {
