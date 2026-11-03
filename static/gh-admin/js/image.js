@@ -66,7 +66,7 @@ async function toBase64(blob) {
 
 // 上げたばかりの画像は、公開されるまで /images/... で見られない。この画面の間だけ手元の Blob で見せる
 const localImages = new Map();
-const IMAGE_URL_RE = new RegExp(`^${escapeRe(config.imagesURL)}\\d{4}/[a-z0-9]{8}\\.\\w+$`);
+const IMAGE_URL_RE = new RegExp(`^${escapeRe(config.imagesURL)}(?:\\d{4}/)?[a-z0-9]{8}\\.\\w+$`);
 
 // 記事内の画像 URL（/images/...）を、今すぐ見られる URL にする。それ以外はそのまま返す
 export function imageSrc(url) {
@@ -84,9 +84,10 @@ export async function uploadImage(file) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const name = `${randomName()}.${ext}`;
     try {
-      await saveImage(`${config.imagesDir}/${year}/${name}`, content);
-      localImages.set(`${config.imagesURL}${year}/${name}`, URL.createObjectURL(blob));
-      return `${config.imagesURL}${year}/${name}`;
+      // 保存先によって公開パスが違う（GitHub は年のフォルダ、web-api は平らな名前）。保存の結果を使う
+      const publicPath = (await saveImage(`${config.imagesDir}/${year}/${name}`, content)) ?? `${config.imagesURL}${year}/${name}`;
+      localImages.set(publicPath, URL.createObjectURL(blob));
+      return publicPath;
     } catch (error) {
       if (!(error instanceof ConflictError)) throw error;
     }
