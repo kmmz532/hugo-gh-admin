@@ -1,0 +1,9 @@
+# このリポジトリは Hugo Modules として取り込まれる部品。単体の設定は確認用（hugo config が通ることを見る）
+baseURL = "https://example.org/"
+languageCode = "ja"
+title = "hugo-gh-admin"
+
+[module]
+  [module.hugoVersion]
+    min = "0.141.0"
+    extended = true
