@@ -17,7 +17,10 @@ export const branch = config.branch ?? '';
 
 export class ConflictError extends Error {}
 
-export const getToken = () => getItem(TOKEN_KEY);
+// tokenProvider（サイトが用意する受け取り口）を設定したときは、そこから受け取ったトークンを優先する。タブを閉じると消える（sessionStorage）
+const PROVIDER_PATH = config.tokenProvider ?? '';
+const SESSION_KEY = 'gh_session_token';
+export const getToken = () => (PROVIDER_PATH ? sessionStorage.getItem(SESSION_KEY) : null) || getItem(TOKEN_KEY);
 export const getLogin = () => getItem(LOGIN_KEY);
 
 export function saveSession(token, login) {
@@ -27,6 +30,7 @@ export function saveSession(token, login) {
 }
 
 export function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
   removeItem(TOKEN_KEY);
   removeItem(LOGIN_KEY);
 }
@@ -36,7 +40,19 @@ export function clearSession() {
 const DEV_SESSION_URL = 'http://127.0.0.1:1314/session';
 export const isLocalHost = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 
+async function ensureSessionToken() {
+  if (sessionStorage.getItem(SESSION_KEY)) return;
+  try {
+    const provider = await import(PROVIDER_PATH);
+    const token = await provider.getGitHubToken();
+    if (token) sessionStorage.setItem(SESSION_KEY, token);
+  } catch (e) {
+    console.warn('トークンを受け取れませんでした。', e);
+  }
+}
+
 export async function ensureDevSession() {
+  if (PROVIDER_PATH) await ensureSessionToken();
   if (!isLocalHost || getToken()) return;
   try {
     const res = await fetch(DEV_SESSION_URL, { cache: 'no-store' });
