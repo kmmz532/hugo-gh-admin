@@ -1,6 +1,8 @@
 // コードブロックのコピーボタン。ボタンは JS で付けるので、JS が無いときは出ない。
 // 記事詳細（single.html）とプレビュー（preview.js）から使う。
 
+import { t } from './i18n.js';
+
 const CHECK_MS = 2000;
 
 function icon(className) {
@@ -19,8 +21,8 @@ export function addCopyButtons(root) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'copy-code';
-    button.setAttribute('aria-label', 'コードをコピー');
-    button.title = 'コードをコピー';
+    button.setAttribute('aria-label', t('common.copy_code'));
+    button.title = t('common.copy_code');
     const mark = icon('fa-regular fa-copy');
     button.append(mark);
     button.addEventListener('click', async () => {

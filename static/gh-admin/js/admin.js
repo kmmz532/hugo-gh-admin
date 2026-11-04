@@ -3,6 +3,7 @@
 import { config } from './config.js';
 import { getToken, clearSession, ensureDevSession, isLocalHost } from './github.js';
 import { applyPending } from './pending.js';
+import { t } from './i18n.js';
 
 await ensureDevSession();
 
@@ -33,7 +34,7 @@ for (const el of document.querySelectorAll('.logout-only')) {
 const authLink = document.getElementById('auth-link');
 if (authLink) {
   if (loggedIn) {
-    authLink.textContent = 'ログアウト';
+    authLink.textContent = t('common.logout');
     authLink.href = '#';
     authLink.addEventListener('click', logout);
   } else {

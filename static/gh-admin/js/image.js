@@ -1,6 +1,7 @@
 import { config, escapeRe } from './config.js';
 import { saveImage, rawImageUrl, ConflictError } from './github.js';
 import { jstYear } from './time.js';
+import { t } from './i18n.js';
 
 const MAX_LONG_SIDE = 1600;
 const MAX_BYTES = 1024 * 1024;
@@ -32,7 +33,7 @@ async function toWebp(file) {
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('画像を変換できませんでした。'))),
+      (blob) => (blob ? resolve(blob) : reject(new Error(t('image.convert_failed')))),
       'image/webp',
       QUALITY,
     );
@@ -42,14 +43,14 @@ async function toWebp(file) {
 // 保存する Blob と拡張子を決める。サイズ超過と未対応形式はここで弾く
 export async function prepareImage(file) {
   if (!file.type.startsWith('image/')) {
-    throw new Error('画像ファイルを選んでください。');
+    throw new Error(t('image.not_image'));
   }
   const blob = PASS_THROUGH.has(file.type) ? file : await toWebp(file);
   const ext = EXT[blob.type];
-  if (!ext) throw new Error(`この形式は保存できません（${blob.type}）。`);
+  if (!ext) throw new Error(t('image.format_unsupported', { type: blob.type }));
   if (blob.size > MAX_BYTES) {
     const mb = (blob.size / 1024 / 1024).toFixed(1);
-    throw new Error(`サイズが 1MB を超えています（${mb}MB）。小さい画像を選んでください。`);
+    throw new Error(t('image.too_large', { mb }));
   }
   return { blob, ext };
 }
@@ -91,5 +92,5 @@ export async function uploadImage(file) {
       if (!(error instanceof ConflictError)) throw error;
     }
   }
-  throw new Error('画像の保存名が重複しました。もう一度お試しください。');
+  throw new Error(t('image.name_conflict'));
 }

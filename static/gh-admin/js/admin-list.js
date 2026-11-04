@@ -4,13 +4,14 @@ import { config } from './config.js';
 import { ensureDevSession, getToken, getPost, commitChanges, ConflictError } from './github.js';
 import { applyBulk } from './frontmatter.js';
 import { loadIndex } from './index-loader.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const ACTION_LABELS = {
-  delete: '削除',
-  category: 'カテゴリを設定',
-  addTags: 'タグを追加',
-  removeTags: 'タグを削除',
+  delete: t('admin.action_delete'),
+  category: t('admin.action_category'),
+  addTags: t('admin.action_add_tags'),
+  removeTags: t('admin.action_remove_tags'),
 };
 
 let articles = [];
@@ -46,7 +47,7 @@ function row(item) {
   check.type = 'checkbox';
   check.disabled = !ready;
   check.checked = selected.has(item.slug);
-  check.setAttribute('aria-label', `${item.title || item.slug} を選ぶ`);
+  check.setAttribute('aria-label', t('admin.select_label', { title: item.title || item.slug }));
   check.addEventListener('change', () => {
     if (check.checked) selected.add(item.slug);
     else selected.delete(item.slug);
@@ -57,14 +58,14 @@ function row(item) {
 
   const title = document.createElement('a');
   title.href = `${config.editURL}?slug=${encodeURIComponent(item.slug)}`;
-  title.textContent = item.title || item.url || '（無題）';
+  title.textContent = item.title || item.url || t('common.untitled');
   const titleCell = document.createElement('td');
   titleCell.append(title);
   if (!item.external) {
     const copy = document.createElement('a');
     copy.href = `${config.editURL}?from=${encodeURIComponent(item.slug)}`;
     copy.className = 'template-link';
-    copy.textContent = 'テンプレートにする';
+    copy.textContent = t('admin.make_template');
     titleCell.append(' ', copy);
   }
 
@@ -72,7 +73,7 @@ function row(item) {
     checkCell,
     cell(item.date.replaceAll('-', '.')),
     titleCell,
-    cell(item.external ? '外部記事' : '記事'),
+    cell(item.external ? t('admin.kind_external') : t('admin.kind_article')),
     cell((item.categories ?? []).join(' / ')),
     cell((item.tags ?? []).map((tag) => `#${tag}`).join(' ')),
   );
@@ -82,7 +83,7 @@ function row(item) {
 function renderRows() {
   const visible = visibleArticles();
   $('admin-rows').replaceChildren(...visible.map(row));
-  $('admin-count').textContent = `${visible.length} 件（全 ${articles.length} 件）`;
+  $('admin-count').textContent = t('admin.count', { visible: visible.length, total: articles.length });
   $('admin-all').checked = visible.length > 0 && visible.every((item) => selected.has(item.slug));
   updateBar();
 }
@@ -92,7 +93,7 @@ function updateBar() {
   const action = $('bulk-action').value;
   $('bulk-category').hidden = action !== 'category';
   $('bulk-tags').hidden = action !== 'addTags' && action !== 'removeTags';
-  $('bulk-count').textContent = `${selected.size} 件を選択中`;
+  $('bulk-count').textContent = t('admin.selected', { count: selected.size });
   $('bulk-apply').disabled = selected.size === 0;
   $('bulk-bar').hidden = selected.size === 0;
 }
@@ -124,12 +125,12 @@ function fillCategoryOptions() {
 function bulkOptions(action) {
   if (action === 'category') {
     const value = $('bulk-category').value;
-    if (!value) return '設定するカテゴリを選んでください。';
+    if (!value) return t('admin.category_required');
     return { categories: JSON.parse(value) };
   }
   if (action === 'addTags' || action === 'removeTags') {
     const tags = splitTags($('bulk-tags').value);
-    if (!tags.length) return 'タグを入力してください。';
+    if (!tags.length) return t('admin.tags_required');
     return action === 'addTags' ? { addTags: tags } : { removeTags: tags };
   }
   return {};
@@ -153,18 +154,18 @@ async function apply() {
 
   const count = slugs.length;
   if (action === 'delete') {
-    const typed = prompt(`${count} 件の記事を削除します。確認のため件数「${count}」を入力してください。`);
+    const typed = prompt(t('admin.delete_prompt', { count }));
     if (typed !== String(count)) {
-      setStatus('削除を取り消しました。');
+      setStatus(t('admin.delete_cancelled'));
       return;
     }
-  } else if (!confirm(`${count} 件に「${ACTION_LABELS[action]}」を行い、1 つのコミットにします。よろしいですか？`)) {
-    setStatus('取り消しました。');
+  } else if (!confirm(t('admin.apply_confirm', { count, action: ACTION_LABELS[action] }))) {
+    setStatus(t('admin.cancelled'));
     return;
   }
 
   $('bulk-apply').disabled = true;
-  setStatus('保存しています…');
+  setStatus(t('admin.saving'));
   try {
     const changes = {};
     if (action === 'delete') {
@@ -172,11 +173,11 @@ async function apply() {
     } else {
       const posts = await Promise.all(slugs.map((slug) => getPost(slug)));
       slugs.forEach((slug, index) => {
-        if (!posts[index]) throw new Error(`記事「${slug}」が見つかりません。何も変えていません。`);
+        if (!posts[index]) throw new Error(t('admin.post_missing', { slug }));
         changes[slug] = applyBulk(posts[index].text, options);
       });
     }
-    await commitChanges(changes, `一括操作: ${ACTION_LABELS[action]} ${count} 件`);
+    await commitChanges(changes, t('admin.commit_message', { action: ACTION_LABELS[action], count }));
 
     // 一覧も変更後の内容に合わせる（index.json は次の反映で更新される）
     if (action === 'delete') {
@@ -192,11 +193,11 @@ async function apply() {
     selected.clear();
     fillCategoryOptions();
     renderRows();
-    setStatus(`${count} 件を保存しました。1〜2 分後に反映されます。`);
+    setStatus(t('admin.saved', { count }));
   } catch (error) {
     setStatus(
       error instanceof ConflictError
-        ? '他で更新されています。再読み込みしてからもう一度行ってください（何も変えていません）。'
+        ? t('admin.conflict')
         : error.message,
     );
   } finally {
@@ -236,7 +237,7 @@ async function load() {
         articles = byNewest([...read]);
         fillCategoryOptions();
         renderRows();
-        setStatus(`読み込み中（${read.length} / ${total}）`);
+        setStatus(t('admin.reading', { read: read.length, total }));
       },
     });
     articles = byNewest(items);
@@ -244,7 +245,7 @@ async function load() {
     setStatus('');
     setReady(true);
   } catch {
-    setStatus('記事の一覧を読み込めませんでした。');
+    setStatus(t('error.list_load'));
   }
 }
 

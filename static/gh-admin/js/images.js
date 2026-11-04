@@ -3,6 +3,7 @@
 import { config } from './config.js';
 import { listImages, deleteImage } from './github.js';
 import { uploadImage, imageSrc } from './image.js';
+import { t } from './i18n.js';
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -34,8 +35,8 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
 
   // 挿入・アップロードで本文に入れるときの表示幅（空は元のまま）。alt の末尾の |数字 になる
   const size = el('select');
-  size.setAttribute('aria-label', '本文に入れるときの表示サイズ');
-  for (const [value, label] of [['', '元のまま'], ['320', '小 320px'], ['480', '中 480px'], ['720', '大 720px']]) {
+  size.setAttribute('aria-label', t('images.size_label'));
+  for (const [value, label] of [['', t('images.size_original')], ['320', t('images.size_small')], ['480', t('images.size_medium')], ['720', t('images.size_large')]]) {
     size.append(new Option(label, value));
   }
 
@@ -57,31 +58,31 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
     img.loading = 'lazy';
     img.width = 120;
     img.height = 120;
-    const name = el('figcaption', 'image-name', `${item.publicPath.slice(config.imagesURL.length)}（${formatSize(item.size)}）`);
+    const name = el('figcaption', 'image-name', t('images.name_size', { name: item.publicPath.slice(config.imagesURL.length), size: formatSize(item.size) }));
 
     const actions = el('div', 'image-actions');
-    if (onPick) actions.append(button('挿入', 'fa-plus', () => onPick(item.publicPath, size.value)));
-    if (onThumb) actions.append(button('サムネイル', 'fa-image', () => onThumb(item.publicPath)));
+    if (onPick) actions.append(button(t('images.insert'), 'fa-plus', () => onPick(item.publicPath, size.value)));
+    if (onThumb) actions.append(button(t('images.thumb'), 'fa-image', () => onThumb(item.publicPath)));
     actions.append(
       button('URL', 'fa-copy', async () => {
         try {
           await navigator.clipboard.writeText(item.publicPath);
-          say(`コピーしました: ${item.publicPath}`);
+          say(t('images.copied', { path: item.publicPath }));
         } catch {
           say(item.publicPath);
         }
       }),
       button(
-        '削除',
+        t('images.delete'),
         'fa-trash',
         async () => {
-          if (!confirm(`この画像を削除します。使っている記事では表示されなくなります。\n${item.publicPath}`)) return;
-          say('削除しています…');
+          if (!confirm(t('images.delete_confirm', { path: item.publicPath }))) return;
+          say(t('images.deleting'));
           try {
             await deleteImage(item.path, item.sha);
             items = items.filter((other) => other !== item);
             render();
-            say('削除しました（反映まで 1〜2 分）。');
+            say(t('images.deleted'));
           } catch (error) {
             say(error.message);
           }
@@ -95,16 +96,16 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
 
   function render() {
     grid.replaceChildren(...items.map(tile));
-    if (loaded && !items.length) grid.textContent = '画像はまだありません。';
+    if (loaded && !items.length) grid.textContent = t('images.empty');
   }
 
   async function load() {
-    say('読み込んでいます…');
+    say(t('images.loading'));
     try {
       items = await listImages();
       loaded = true;
       render();
-      say(`${items.length} 枚`);
+      say(t('images.count', { count: items.length }));
     } catch (error) {
       say(error.message);
     }
@@ -115,7 +116,7 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
     if (!images.length) return;
     let done = 0;
     for (const file of images) {
-      say(`アップロードしています…（${done + 1}/${images.length}）`);
+      say(t('images.uploading', { done: done + 1, total: images.length }));
       try {
         const url = await uploadImage(file);
         onUploaded?.(url, file, size.value);
@@ -127,7 +128,7 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
       }
     }
     await load();
-    say(`${done} 枚をアップロードしました。`);
+    say(t('images.uploaded', { done }));
   }
 
   fileInput.addEventListener('change', () => {
@@ -150,11 +151,11 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
 
   const bar = el('div', 'image-bar');
   bar.append(
-    button('アップロード', 'fa-upload', () => fileInput.click(), 'btn primary'),
-    button('再読み込み', 'fa-rotate', load),
+    button(t('images.upload'), 'fa-upload', () => fileInput.click(), 'btn primary'),
+    button(t('images.reload'), 'fa-rotate', load),
   );
   if (onPick || onUploaded) {
-    const label = el('label', 'image-size', '本文に入れるサイズ ');
+    const label = el('label', 'image-size', t('images.size_for_body'));
     label.append(size);
     bar.append(label);
   }

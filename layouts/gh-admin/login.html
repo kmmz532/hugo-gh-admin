@@ -1,18 +1,20 @@
 {{ define "main" }}
-<h1 class="page-title">ログイン</h1>
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
+{{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
+<h1 class="page-title">{{ $i18n.title.login }}</h1>
 <ol class="steps">
-  <li>GitHub の Settings → Developer settings → Fine-grained tokens で新しいトークンを作成する。</li>
-  <li>Repository access は「Only select repositories」で <code>{{ path.Base $gh.repo }}</code> のみを選ぶ。</li>
-  <li>Permissions は Repository permissions の <strong>Contents: Read and write</strong> のみ付与する。</li>
-  <li>有効期限は 90 日以内にする。</li>
+  <li>{{ $i18n.login.step_create }}</li>
+  <li>{{ replace $i18n.login.step_repo "{repo}" (printf "<code>%s</code>" (path.Base $gh.repo)) | safeHTML }}</li>
+  <li>{{ replace $i18n.login.step_permissions "{permission}" "<strong>Contents: Read and write</strong>" | safeHTML }}</li>
+  <li>{{ $i18n.login.step_expiry }}</li>
 </ol>
 <form id="login-form" class="login-form">
   <label class="field">Personal access token
     <input id="token" type="password" autocomplete="off" required></label>
-  <button type="submit" class="btn primary">ログイン</button>
+  <button type="submit" class="btn primary">{{ $i18n.common.login }}</button>
   <p id="login-status" role="alert"></p>
 </form>
+<script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
 {{ end }}
 
 

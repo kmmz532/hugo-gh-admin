@@ -1,5 +1,7 @@
 // 編集画面の表示を 2 つに分ける。
 // 保存状態は編集バーの左（公開ボタンの横）に短い文言で、それ以外のメッセージはお知らせ欄（編集バーの直下）に出す。
+import { t } from './i18n.js';
+
 const $ = (id) => document.getElementById(id);
 
 const SAVE_ICONS = {
@@ -56,8 +58,8 @@ export function showNotice(type, message, actions = []) {
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'notice-close';
-  close.setAttribute('aria-label', '閉じる');
-  close.title = '閉じる';
+  close.setAttribute('aria-label', t('common.close'));
+  close.title = t('common.close');
   close.textContent = '×';
   close.addEventListener('click', hideNotice);
 

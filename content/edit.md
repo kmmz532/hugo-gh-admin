@@ -1,5 +1,5 @@
 ---
-title: "記事の編集"
+title: "Edit"
 type: "gh-admin"
 layout: edit
 url: /edit/

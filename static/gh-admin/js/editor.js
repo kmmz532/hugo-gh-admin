@@ -19,6 +19,7 @@ import { createThumb } from './thumb.js';
 import { createDrafts } from './drafts.js';
 import { createSave } from './save.js';
 import { createHistory } from './history.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const SUMMARY_TARGET = 120;
@@ -82,7 +83,7 @@ const commitHistory = createHistory({ state });
 
 function markDirty() {
   state.dirty = true;
-  setSaveState('unsaved', '未保存の変更あり');
+  setSaveState('unsaved', t('save.unsaved'));
   state.schedule.draft();
   state.schedule.refresh();
 }
@@ -142,18 +143,18 @@ function writeForm(fields) {
 function validate(fields) {
   const fail = (field, message) => ({ field, message });
   if (!isValidSlug(fields.slug)) {
-    return fail('f-slug', 'slug は英小文字・数字・ハイフンのみ（1〜80 文字）で入力してください。');
+    return fail('f-slug', t('editor.slug_invalid'));
   }
   // 外部記事のタイトルと概要は空でもよい（ビルド時に OGP で補う）
-  if (fields.kind !== 'external' && !fields.title) return fail('f-title', 'タイトルを入力してください。');
-  if (!fields.categories.length) return fail('f-category', 'カテゴリを入力してください。');
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(fields.date)) return fail('f-date', '投稿日時を入力してください。');
+  if (fields.kind !== 'external' && !fields.title) return fail('f-title', t('editor.title_required'));
+  if (!fields.categories.length) return fail('f-category', t('editor.category_required'));
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(fields.date)) return fail('f-date', t('editor.date_required'));
   if (fields.kind !== 'external' && fields.author && !AUTHOR_RE.test(fields.author)) {
-    return fail('f-author', '作者は GitHub のユーザー名（英数字とハイフン）で入力してください。');
+    return fail('f-author', t('editor.author_invalid'));
   }
   if (fields.kind === 'external') {
-    if (!isWebUrl(fields.url)) return fail('f-external', '外部記事の URL は http:// または https:// で始まるものを入れてください。');
-    if (!fields.source) return fail('f-source', 'サイト名を入力してください。');
+    if (!isWebUrl(fields.url)) return fail('f-external', t('editor.url_invalid'));
+    if (!fields.source) return fail('f-source', t('editor.source_required'));
   }
   return null;
 }
@@ -211,7 +212,7 @@ function autoSummary(markdown) {
 }
 
 function updateSummaryHint() {
-  $('f-summary').placeholder = autoSummary($('f-body').value) || '（本文から自動生成されます）';
+  $('f-summary').placeholder = autoSummary($('f-body').value) || t('editor.summary_placeholder');
 }
 
 // 取っ手で手動に変えた高さ（px）。autosize が書いた値とは違う高さになったときだけ覚える
@@ -255,7 +256,7 @@ function attachScrollSync() {
   const toggle = $('scroll-sync-toggle');
   const showState = () => {
     toggle.setAttribute('aria-pressed', String(enabled));
-    toggle.title = enabled ? 'スクロール同期: オン（押すとオフ）' : 'スクロール同期: オフ（押すとオン）';
+    toggle.title = enabled ? t('editor.scroll_sync_on') : t('editor.scroll_sync_off');
   };
   showState();
   toggle.addEventListener('click', () => {
@@ -290,7 +291,7 @@ function refreshPreview() {
 
 function updateChrome() {
   const saved = state.originalSlug !== null;
-  $('save').textContent = saved ? '更新' : '公開';
+  $('save').textContent = saved ? t('editor.update') : t('editor.publish');
   slugs.updateSlugAuto();
   $('kind-tabs').hidden = saved;
   $('danger-details').hidden = !saved;
@@ -330,13 +331,13 @@ function attachTemplate() {
       }
     } catch {
       loaded = false;
-      showNotice('error', '記事の一覧を読み込めませんでした。');
+      showNotice('error', t('error.list_load'));
     }
   });
   $('template-load').addEventListener('click', () => {
     const slug = select.value;
     if (!slug) return;
-    if (hasContent() && !confirm('今書いている内容を、選んだ記事の内容で置き換えます。よろしいですか？（下書き保存したものは残ります）')) return;
+    if (hasContent() && !confirm(t('editor.template_confirm'))) return;
     state.dirty = false;
     location.href = `${config.editURL}?from=${encodeURIComponent(slug)}`;
   });
@@ -353,7 +354,7 @@ async function load() {
 
   if (slug !== null) {
     if (!isValidSlug(slug)) {
-      failStart('slug の形式が正しくありません。');
+      failStart(t('editor.slug_format_invalid'));
       return;
     }
     let post;
@@ -364,7 +365,7 @@ async function load() {
       return;
     }
     if (!post) {
-      failStart(`記事「${slug}」が見つかりません。`);
+      failStart(t('editor.not_found', { slug }));
       return;
     }
     let parsed;
@@ -383,14 +384,14 @@ async function load() {
   } else if (fromSlug !== null) {
     // 既存記事をテンプレートにする。投稿日・slug・保存先の情報は引き継がず、新規記事として開く
     if (!isValidSlug(fromSlug)) {
-      failStart('slug の形式が正しくありません。');
+      failStart(t('editor.slug_format_invalid'));
       return;
     }
     let parsed;
     try {
       const post = await getPost(fromSlug);
       if (!post) {
-        failStart(`記事「${fromSlug}」が見つかりません。`);
+        failStart(t('editor.not_found', { slug: fromSlug }));
         return;
       }
       parsed = parseArticle(post.text);
@@ -399,11 +400,11 @@ async function load() {
       return;
     }
     if (parsed.kind !== 'article') {
-      failStart('外部記事はテンプレートにできません。');
+      failStart(t('editor.external_no_template'));
       return;
     }
     state.extra = parsed.extra;
-    templateTitle = parsed.fields.title || '（無題）';
+    templateTitle = parsed.fields.title || t('common.untitled');
     server = { ...parsed.fields, kind: 'article', slug: '', date: nowJst() };
     server.slug = slugs.autoSlugFor(server);
   } else {
@@ -430,7 +431,7 @@ async function load() {
   const key = draftKey(state.originalSlug);
   // テンプレートで開いたときは、新規記事の下書きの案内は出さない（選んだ記事の内容で始めるため）
   if (templateTitle !== null) {
-    showNotice('info', `「${templateTitle}」の内容を引き継ぎました。投稿日は今の日時です。`);
+    showNotice('info', t('editor.template_loaded', { title: templateTitle }));
   } else if (hasDraft(key)) {
     const draft = readDraft(key);
     // 壊れた下書きは捨てる。まともな下書きは復元か破棄を選ばれるまで残す
@@ -503,7 +504,7 @@ function start() {
   attachUploadConfirm();
 
   const images = mountImageManager($('image-manager'), {
-    onPick: (url, width) => insertImageMarkdown($('f-body'), url, 'image', width),
+    onPick: (url, width) => insertImageMarkdown($('f-body'), url, t('toolbar.default_alt'), width),
     onUploaded: (url, file, width) => insertImageMarkdown($('f-body'), url, altFrom(file), width),
     onThumb: thumbs.setManual,
   });
@@ -524,7 +525,7 @@ function start() {
   attachTemplate();
   $('delete').addEventListener('click', save.removePost);
   $('discard').addEventListener('click', () => {
-    if (!confirm('この記事の下書きを破棄して、保存済みの内容を読み直します。')) return;
+    if (!confirm(t('editor.discard_confirm'))) return;
     removeDraft(draftKey(state.originalSlug));
     state.dirty = false;
     location.reload();

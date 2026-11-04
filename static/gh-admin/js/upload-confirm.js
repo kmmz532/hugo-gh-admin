@@ -1,5 +1,7 @@
 // 貼り付け・ドロップで画像を上げる前の確認。記事のリポジトリは public なので、上げた時点で誰でも見られる。
 // ダイアログの中身は textContent と属性だけで作る
+import { t } from './i18n.js';
+
 const $ = (id) => document.getElementById(id);
 
 // 上げてよければ選んだ表示幅（'' は元のまま）。やめる・Esc・枠の外なら null
@@ -7,7 +9,7 @@ export function confirmImageUpload(file) {
   const dialog = $('upload-confirm');
   const url = URL.createObjectURL(file);
   $('upload-confirm-image').src = url;
-  $('upload-confirm-name').textContent = `${file.name || '貼り付けた画像'}（${Math.max(1, Math.round(file.size / 1024))} KB）`;
+  $('upload-confirm-name').textContent = t('upload.name', { name: file.name || t('upload.pasted_image'), size: Math.max(1, Math.round(file.size / 1024)) });
 
   return new Promise((resolve) => {
     const finish = () => {

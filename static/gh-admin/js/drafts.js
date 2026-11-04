@@ -2,6 +2,7 @@
 import { config } from './config.js';
 import { getItem, setItem, removeItem, keys } from './storage.js';
 import { setSaveState, showNotice } from './notice.js';
+import { t, lang } from './i18n.js';
 
 const PREFIX = 'blog_draft:';
 // slug は英小文字・数字・ハイフンのみなので、'_' で始めれば記事の slug と衝突しない
@@ -36,7 +37,7 @@ export function renderDrafts(list) {
   if (items.length === 0) {
     const empty = document.createElement('li');
     empty.className = 'card-meta';
-    empty.textContent = '下書きはありません。';
+    empty.textContent = t('drafts.empty');
     list.append(empty);
     return;
   }
@@ -45,10 +46,10 @@ export function renderDrafts(list) {
     const item = document.createElement('li');
     const link = document.createElement('a');
     link.href = isNew ? config.editURL : `${config.editURL}?slug=${encodeURIComponent(slug)}`;
-    link.textContent = draft.title || '（無題）';
+    link.textContent = draft.title || t('common.untitled');
     const meta = document.createElement('span');
     meta.className = 'card-meta';
-    meta.textContent = ` ${isNew ? '新規' : slug}・${new Date(draft.savedAt).toLocaleString('ja-JP')}`;
+    meta.textContent = ` ${t('drafts.meta', { label: isNew ? t('drafts.new_label') : slug, time: new Date(draft.savedAt).toLocaleString(lang) })}`;
     item.append(link, meta);
     list.append(item);
   }
@@ -71,34 +72,32 @@ export function createDrafts({ state, readForm, writeForm, refreshPreview, updat
       savedAt: new Date().toISOString(),
     };
     if (!writeDraft(draftKey(state.originalSlug), payload)) {
-      showNotice('error', '下書きを保存できませんでした。');
+      showNotice('error', t('drafts.save_error'));
     } else {
-      const time = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-      setSaveState('draft', `下書き保存 ${time}`);
+      const time = new Date().toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+      setSaveState('draft', t('drafts.saved_at', { time }));
     }
     renderDrafts($('drafts'));
   }
 
   // 下書きの案内は、上のお知らせ欄ではなく「下書き」の折りたたみの中に出す（本文の邪魔にならないように）。
   // 選ぶまでは折りたたみを開いたままにし、見出しにも「復元待ち」と出して忘れないようにする
-  const SUMMARY = '下書き（この端末のみ）';
-
   function showDraftNotice(key, draft) {
     state.pendingDraft = { key, draft };
-    const time = new Date(draft.savedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    $('draft-pending-text').textContent = `この記事の下書きがあります（${time} 保存）。復元か破棄を選ぶまで、新しい下書きは保存されません。`;
+    const time = new Date(draft.savedAt).toLocaleString(lang, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    $('draft-pending-text').textContent = t('drafts.pending_text', { time });
     $('draft-pending').hidden = false;
-    $('drafts-summary').textContent = `${SUMMARY}・復元待ち`;
+    $('drafts-summary').textContent = t('drafts.summary_pending');
     $('drafts-details').classList.add('has-pending');
     $('drafts-details').open = true;
     // 記事設定が本文の下に回る狭い画面でも気づけるように、編集バーの保存状態にも短く出す
-    setSaveState('draft', '未復元の下書きあり');
+    setSaveState('draft', t('drafts.unrestored'));
   }
 
   function closeDraftNotice() {
     state.pendingDraft = null;
     $('draft-pending').hidden = true;
-    $('drafts-summary').textContent = SUMMARY;
+    $('drafts-summary').textContent = t('drafts.summary');
     $('drafts-details').classList.remove('has-pending');
   }
 
@@ -117,7 +116,7 @@ export function createDrafts({ state, readForm, writeForm, refreshPreview, updat
     state.dirty = true;
     updateChrome();
     refreshPreview();
-    showNotice('info', '下書きを復元しました。');
+    showNotice('info', t('drafts.restored'));
   }
 
   function discardDraft() {
@@ -125,7 +124,7 @@ export function createDrafts({ state, readForm, writeForm, refreshPreview, updat
     removeDraft(state.pendingDraft.key);
     closeDraftNotice();
     renderDrafts($('drafts'));
-    showNotice('info', '下書きを破棄しました。');
+    showNotice('info', t('drafts.discarded'));
   }
 
 

@@ -1,6 +1,7 @@
 // 記事ファイルの front matter を読み書きする。副作用はない。
 import { config } from './config.js';
 import { dateToJstInput } from './time.js';
+import { t } from './i18n.js';
 
 // 画面で扱うキー。それ以外は raw 行のまま保持して書き戻す。build は読み込みで捨てて保存で作り直す
 const KNOWN_KEYS = ['title', 'date', 'lastmod', 'author', 'categories', 'tags', 'summary', 'image', 'aliases', 'external', 'source', 'build', 'sitemap'];
@@ -65,7 +66,7 @@ export function parseArticle(text) {
     // 画面で扱うキーを extra に回すと書き戻し時にキーが重複するので、読み込みを止める
     const value = parseField(key, lines);
     if (value === undefined) {
-      throw new Error(`front matter の ${key} を解釈できません。リポジトリ上で 1 行の形式に直してください。`);
+      throw new Error(t('error.front_matter', { key }));
     }
     values[key] = value;
   }

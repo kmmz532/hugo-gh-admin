@@ -5,6 +5,7 @@ import { uploadImage, imageSrc } from './image.js';
 import { showNotice } from './notice.js';
 import { isHttps } from './external.js';
 import { loadOgpIndex } from './preview.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -19,11 +20,11 @@ export function createThumb({ state, markDirty }) {
 
   // 今どう決まっているかを返す。自動の画像は本文の最初の画像（外部記事は OGP なのでプレビューなし）
   function thumbStatus() {
-    if (state.thumbImage) return { url: state.thumbImage, label: '手動' };
-    if (state.kind === 'external') return { url: '', label: '自動: OGP の画像（ビルド時に取得）' };
+    if (state.thumbImage) return { url: state.thumbImage, label: t('thumb.manual') };
+    if (state.kind === 'external') return { url: '', label: t('thumb.auto_ogp') };
     const first = [...$('f-body').value.matchAll(BODY_IMAGE_RE)][0];
-    if (first) return { url: first[2], label: '自動: 本文の最初の画像' };
-    return { url: '', label: 'なし' };
+    if (first) return { url: first[2], label: t('thumb.auto_first_image') };
+    return { url: '', label: t('thumb.none') };
   }
 
   function renderThumb() {
@@ -33,7 +34,7 @@ export function createThumb({ state, markDirty }) {
     preview.hidden = !url;
     preview.src = imageSrc(url);
     $('thumb-state').textContent = label;
-    $('thumb-pick').textContent = external ? 'OGP の画像から選ぶ' : '本文の画像から選ぶ';
+    $('thumb-pick').textContent = external ? t('thumb.pick_ogp') : t('thumb.pick_body');
     $('thumb-url-row').hidden = !external;
     $('thumb-choices').hidden = true;
   }
@@ -87,7 +88,7 @@ export function createThumb({ state, markDirty }) {
       const card = map.get(url);
       if (!card?.image || !isHttps(card.image) || seen.has(card.image)) return;
       seen.add(card.image);
-      items.push({ url: card.image, caption: `${i + 1}. カード: ${card.title || url}` });
+      items.push({ url: card.image, caption: t('thumb.card_caption', { index: i + 1, title: card.title || url }) });
     });
     return items;
   }
@@ -114,16 +115,16 @@ export function createThumb({ state, markDirty }) {
     const box = $('thumb-choices');
     box.hidden = false;
     if (state.kind !== 'external') {
-      box.textContent = '読み込んでいます…';
+      box.textContent = t('thumb.loading');
       const items = [...bodyChoices(), ...(await cardChoices())];
       box.replaceChildren(...items.map(choice));
-      if (!items.length) box.textContent = '本文に画像がありません。';
+      if (!items.length) box.textContent = t('thumb.no_body_image');
       return;
     }
-    box.textContent = '読み込んでいます…';
+    box.textContent = t('thumb.loading');
     const items = await externalChoices();
     box.replaceChildren(...items.map(choice));
-    if (!items.length) box.textContent = 'OGP の画像が見つかりません。公開すると候補が出ます。URL を直接指定することもできます。';
+    if (!items.length) box.textContent = t('thumb.no_ogp');
   }
 
   // サムネイルの操作（自動に戻す・候補から選ぶ・URL を指定する・画像を上げる）を付ける
@@ -140,7 +141,7 @@ export function createThumb({ state, markDirty }) {
     $('thumb-url-set').addEventListener('click', () => {
       const url = $('thumb-url').value.trim();
       if (!isHttps(url)) {
-        showNotice('error', '画像の URL は https:// で始まるものを入れてください。');
+        showNotice('error', t('thumb.url_invalid'));
         return;
       }
       $('thumb-url').value = '';
@@ -151,7 +152,7 @@ export function createThumb({ state, markDirty }) {
       const file = $('thumb-file').files[0];
       $('thumb-file').value = '';
       if (!file) return;
-      showNotice('info', '画像をアップロードしています…');
+      showNotice('info', t('thumb.uploading'));
       try {
         // 本文には挿入しない。URL だけを手動のサムネイルにする
         setManual(await uploadImage(file));

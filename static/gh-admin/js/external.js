@@ -1,4 +1,5 @@
 import { showNotice } from './notice.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,7 +55,7 @@ async function fromHatena(url) {
     date: toJstInput(text('published')),
     tags: [...entry.getElementsByTagName('category')].map((cat) => cat.getAttribute('term')),
     summary: plainText(text('summary')),
-    source: 'はてなブログ',
+    source: t('external.default_source'),
   };
 }
 
@@ -147,10 +148,10 @@ export function createExternalForm({ state, markDirty, slugs, taxonomy, updateSu
   async function autofillExternal() {
     const url = $('f-external').value.trim();
     if (!isWebUrl(url)) return;
-    showNotice('info', '外部ページから項目を取得しています…');
+    showNotice('info', t('external.fetching'));
     const meta = await fetchExternalMeta(url);
     if (!meta) {
-      showNotice('info', '自動取得できませんでした（手入力してください）。');
+      showNotice('info', t('external.fetch_failed'));
       return;
     }
 
@@ -175,7 +176,7 @@ export function createExternalForm({ state, markDirty, slugs, taxonomy, updateSu
       state.autoSource = meta.source;
     }
     markDirty();
-    showNotice('info', '外部ページから項目を取得しました。内容を確認してください。');
+    showNotice('info', t('external.fetched'));
     refreshPreview();
   }
 
@@ -197,7 +198,7 @@ export function createExternalForm({ state, markDirty, slugs, taxonomy, updateSu
 
     const heading = document.createElement('h2');
     heading.className = 'card-title';
-    heading.textContent = fields.title || fields.url || '（無題）';
+    heading.textContent = fields.title || fields.url || t('common.untitled');
     // 外部リンクの表示はタイトルの横に出す（一覧カードと同じ）
     const source = document.createElement('span');
     source.className = 'card-external';

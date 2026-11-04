@@ -1,5 +1,6 @@
 import { config } from './config.js';
 import { checkRepoPush, fetchLogin, saveSession, repo } from './github.js';
+import { t } from './i18n.js';
 
 const form = document.getElementById('login-form');
 const tokenInput = document.getElementById('token');
@@ -21,12 +22,12 @@ form.addEventListener('submit', async (event) => {
   const token = tokenInput.value.trim();
   const button = form.querySelector('button');
   button.disabled = true;
-  status.textContent = '確認しています…';
+  status.textContent = t('login.checking');
   status.classList.remove('error');
 
   try {
     if (!(await checkRepoPush(token))) {
-      showError(`このトークンでは ${repo} に書き込めません。権限の設定を確認してください。`);
+      showError(t('login.no_push', { repo }));
       return;
     }
     const login = await fetchLogin(token);

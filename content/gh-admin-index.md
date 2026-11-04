@@ -1,5 +1,5 @@
 ---
-title: "gh-admin 索引"
+title: "gh-admin index"
 type: "gh-admin"
 layout: "index"
 url: /gh-admin/

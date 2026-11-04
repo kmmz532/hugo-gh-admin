@@ -7,6 +7,7 @@ import { setSaveState, showNotice } from './notice.js';
 import { recordSave, recordDelete, postPath } from './pending.js';
 import { nowJst } from './time.js';
 import { setItem } from './storage.js';
+import { t, lang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const AUTO_SLUG_TRIES = 5;
@@ -14,8 +15,8 @@ const AUTO_SLUG_TRIES = 5;
 function errorMessage(error, creating) {
   if (error instanceof ConflictError) {
     return creating
-      ? '同じ slug の記事が既にあります。別の slug にしてください。'
-      : '他で更新されています。再読み込みしてください（上書きはしていません）。';
+      ? t('save.conflict_new')
+      : t('save.conflict_update');
   }
   return error.message;
 }
@@ -45,7 +46,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       await deletePost(oldSlug, oldSha);
       return null;
     } catch (error) {
-      return `旧ファイル（${oldSlug}）を削除できませんでした。手動で削除してください。（${error.message}）`;
+      return t('save.old_delete_failed', { slug: oldSlug, message: error.message });
     }
   }
 
@@ -63,7 +64,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
         if (!auto || !(error instanceof ConflictError)) throw error;
       }
     }
-    throw new Error(`自動の slug が ${AUTO_SLUG_TRIES} 回続けて既存と重なったため決められませんでした。slug を手で入力してください。`);
+    throw new Error(t('save.slug_retry_failed', { tries: AUTO_SLUG_TRIES }));
   }
 
   async function publish(event) {
@@ -72,7 +73,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
     const invalid = validate(fields);
     if (invalid) {
       if (invalid.field === 'f-slug') slugs.setSlugError(invalid.message);
-      showNotice('error', `入力に誤りがあります。${invalid.message}`);
+      showNotice('error', t('save.invalid_input', { message: invalid.message }));
       $(invalid.field).focus();
       return;
     }
@@ -87,7 +88,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
 
     $('save').disabled = true;
     cancelDraft();
-    setSaveState('publishing', '公開中…');
+    setSaveState('publishing', t('save.publishing'));
     try {
       let warning = null;
       if (slugChanged) {
@@ -116,12 +117,12 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       updateChrome();
       renderDrafts($('drafts'));
 
-      setSaveState('published', `公開済み ${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`);
+      setSaveState('published', t('save.published_at', { time: new Date().toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }) }));
       if (warning) showNotice('error', warning);
-      else showNotice('success', '公開しました。1〜2分後に反映されます。');
+      else showNotice('success', t('save.success'));
     } catch (error) {
       showNotice('error', errorMessage(error, creating || slugChanged));
-      setSaveState('unsaved', '未保存の変更あり');
+      setSaveState('unsaved', t('save.unsaved'));
     } finally {
       $('save').disabled = false;
     }
@@ -130,10 +131,10 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
   async function removePost() {
     const slug = state.originalSlug;
     if (slug === null) return;
-    const typed = prompt(`この記事を削除します。確認のため slug「${slug}」を入力してください。`);
+    const typed = prompt(t('save.delete_prompt', { slug }));
     if (typed === null) return;
     if (typed !== slug) {
-      showNotice('error', 'slug が一致しないため削除しませんでした。');
+      showNotice('error', t('save.slug_mismatch'));
       return;
     }
 

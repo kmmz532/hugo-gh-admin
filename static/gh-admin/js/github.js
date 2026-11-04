@@ -1,6 +1,7 @@
 // 他の JS は GitHub API をこのモジュール経由でのみ呼ぶ。
 import { config, escapeRe } from './config.js';
 import { getItem, setItem, removeItem } from './storage.js';
+import { t } from './i18n.js';
 
 const API_ORIGIN = 'https://api.github.com';
 const TOKEN_KEY = 'blog_token';
@@ -25,7 +26,7 @@ export const getLogin = () => getItem(LOGIN_KEY);
 
 export function saveSession(token, login) {
   if (!(setItem(TOKEN_KEY, token) && setItem(LOGIN_KEY, login))) {
-    throw new Error('ブラウザの保存領域に書き込めません。');
+    throw new Error(t('error.storage_write'));
   }
 }
 
@@ -47,7 +48,7 @@ async function ensureSessionToken() {
     const token = await provider.getGitHubToken();
     if (token) sessionStorage.setItem(SESSION_KEY, token);
   } catch (e) {
-    console.warn('トークンを受け取れませんでした。', e);
+    console.warn(t('error.token_provider'), e);
   }
 }
 
@@ -68,7 +69,7 @@ export const isValidSlug = (slug) => SLUG_RE.test(slug);
 
 function postPath(slug) {
   if (!isValidSlug(slug)) {
-    throw new Error('slug は英小文字・数字・ハイフンのみ（1〜80 文字）で指定してください。');
+    throw new Error(t('error.invalid_slug'));
   }
   return `${config.postsDir}/${slug}.md`;
 }
@@ -112,16 +113,16 @@ async function api(endpoint, { method = 'GET', body, token = getToken() } = {}) 
   if (res.status === 401 && token === getToken()) {
     clearSession();
     redirectToLogin();
-    throw new Error('ログインの有効期限が切れました。');
+    throw new Error(t('error.session_expired'));
   }
   if (res.status === 409 || res.status === 422) {
-    throw new ConflictError(`GitHub がこの操作を受け付けませんでした（${res.status}）。`);
+    throw new ConflictError(t('error.conflict', { status: res.status }));
   }
   if (res.status === 404 && method === 'GET') return null;
 
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(`GitHub API エラー（${res.status}）: ${json.message ?? ''}`.trim());
+    throw new Error(t('error.api', { status: res.status, message: json.message ?? '' }).trim());
   }
   return json;
 }
@@ -205,7 +206,7 @@ export async function commitChanges(changes, message) {
 
 // base64 は呼び出し側で作る（バイナリを扱うため）。既存パスは ConflictError
 export async function saveImage(path, base64) {
-  if (!IMAGE_PATH_RE.test(path)) throw new Error('画像の保存先が正しくありません。');
+  if (!IMAGE_PATH_RE.test(path)) throw new Error(t('error.image_path'));
   await api(contentsUrl(path), {
     method: 'PUT',
     body: { message: `image: ${path}`, content: base64, branch },
@@ -232,7 +233,7 @@ export async function listImages() {
 }
 
 export async function deleteImage(path, sha) {
-  if (!IMAGE_PATH_RE.test(path)) throw new Error('画像の保存先が正しくありません。');
+  if (!IMAGE_PATH_RE.test(path)) throw new Error(t('error.image_path'));
   await api(contentsUrl(path), {
     method: 'DELETE',
     body: { message: `delete image: ${path}`, sha, branch },
@@ -250,6 +251,6 @@ export async function checkRepoPush(token) {
 
 export async function fetchLogin(token) {
   const json = await api('/user', { token });
-  if (!json) throw new Error('ユーザー情報を取得できませんでした。');
+  if (!json) throw new Error(t('error.user_info'));
   return json.login;
 }

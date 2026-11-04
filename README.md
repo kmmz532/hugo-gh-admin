@@ -2,7 +2,7 @@
 Hugoで作成したサイトにGitHub上のMarkdown記事をブラウザから編集する機能を追加するHugo Modulesのモジュールです。ログイン、記事の新規作成と編集、管理画面などを含みます。
 
 - 保存先はGitHubリポジトリ。記事は `content/posts/<slug>.md` の形で保存します。
-- 画面は日本語だけです（今のところ、多言語には対応していません）
+- 画面の文言は日本語と英語に対応しています（`params.ghAdmin.lang` で選びます）。英語版の説明は [README.en.md](README.en.md) を参照してください。
 
 ## 必要なもの
 - Hugo 0.141.0以上のextended版
@@ -43,6 +43,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `adminURL` | `/admin/` | 一括管理のURL |
 | `adminImagesURL` | `/admin/images/` | 画像の管理のURL |
 | `postURL` | `/posts/{slug}/` | 記事のURLの形。`{slug}`（ファイル名）・`{name}`（先頭の日付を除いた名前）・`{yyyy}`・`{mm}`・`{dd}` を置き換える。反映待ちの表示で利用する |
+| `lang` | `languageCode` の先頭（`ja-jp` → `ja`） | 管理画面の文言の言語。辞書が無ければ `en`。辞書は `data/gh-admin/i18n/<lang>.toml` |
 | `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()` を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
 
 画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。
@@ -52,6 +53,14 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
   repo = "owner/articles"
   branch = "main"
 ```
+
+### 文言の上書き
+
+管理画面の文言は `data/gh-admin/i18n/<lang>.toml` にある。キーは `<画面>.<項目>` の 2 階層（例: `editor.publish`）。
+
+- 本体の `data/gh-admin/i18n/<lang>.toml` を置くと、モジュールのファイルより本体が優先される。ファイル単位で置き換わるため、一部のキーだけを変えるときも、そのファイルの全キーを書く。
+- 文字列の `{name}` は差し込みの値に置き換わる。書き換えるときも同じ名前を残す。
+- 管理画面のページ名（ブラウザのタブの `<title>`）は `content/*.md` の `title:` で決まる。モジュールの既定値は英語（`Admin` など）。日本語にするときは、本体に同じパスの `content/*.md` を置いて `title:` を書く（例: `content/admin.md` の `title: "一括管理"`）。
 
 ## 本体（テーマ）との接点
 

@@ -3,6 +3,7 @@
 import { loadIndex as loadIndexPages } from './index-loader.js';
 import { config } from './config.js';
 import { showNotice } from './notice.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -76,7 +77,7 @@ export function createTaxonomy({ state, markDirty }) {
   function commitCategoryInput() {
     const text = $('f-category').value;
     if (text.includes(',')) {
-      showNotice('error', 'カテゴリ名に , は使えません。');
+      showNotice('error', t('taxonomy.comma_category'));
       return;
     }
     const path = parsePath(text);
@@ -102,7 +103,7 @@ export function createTaxonomy({ state, markDirty }) {
         chip.textContent = `#${tag}`;
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.setAttribute('aria-label', `${tag} を外す`);
+        remove.setAttribute('aria-label', t('taxonomy.remove_tag', { tag }));
         remove.textContent = '×';
         remove.addEventListener('click', () => {
           state.tags.splice(index, 1);
@@ -148,7 +149,7 @@ export function createTaxonomy({ state, markDirty }) {
     const name = normalizeTagName(raw);
     entry.value = '';
     if (name === null) {
-      if (raw.trim()) showNotice('error', 'タグ名に , は使えません。');
+      if (raw.trim()) showNotice('error', t('taxonomy.comma_tag'));
       return;
     }
     if (!state.tags.includes(name)) {

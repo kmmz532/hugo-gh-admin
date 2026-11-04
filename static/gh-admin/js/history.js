@@ -1,10 +1,11 @@
 // 編集画面の「履歴」。記事ファイルのコミット履歴を新しい順に出す。初めて開いたときに読み込み、保存のあとは開いていれば読み直す。
 import { listPostCommits, COMMITS_PER_PAGE } from './github.js';
+import { t, lang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
 // 日時は日本時間で出す（time.js と同じ扱い）
-const DATE_FORMAT = new Intl.DateTimeFormat('ja-JP', {
+const DATE_FORMAT = new Intl.DateTimeFormat(lang, {
   timeZone: 'Asia/Tokyo',
   year: 'numeric',
   month: '2-digit',
@@ -27,7 +28,7 @@ function commitRow(commit) {
   link.href = commit.url;
   link.target = '_blank';
   link.rel = 'noopener';
-  link.textContent = '差分';
+  link.textContent = t('history.diff');
   li.append(meta, message, link);
   return li;
 }
@@ -60,13 +61,13 @@ export function createHistory({ state }) {
   async function loadPage(n) {
     // 新規記事（まだファイルが無い）は GitHub に問い合わせない
     if (state.originalSlug === null) {
-      setStatus('まだ保存されていません');
+      setStatus(t('history.unsaved'));
       return;
     }
     const id = ++request;
     loading = true;
     more.disabled = true;
-    setStatus('読み込み中…');
+    setStatus(t('common.loading'));
     try {
       const commits = await listPostCommits(state.originalSlug, { page: n });
       if (id !== request) return;
@@ -74,7 +75,7 @@ export function createHistory({ state }) {
       page = n;
       // 件数が 1 ページ分に満たなければ、これ以上は無い
       more.hidden = commits.length < COMMITS_PER_PAGE;
-      setStatus(n === 1 && commits.length === 0 ? '履歴はまだありません' : '');
+      setStatus(n === 1 && commits.length === 0 ? t('history.empty') : '');
     } catch (error) {
       if (id !== request) return;
       setStatus(error.message);

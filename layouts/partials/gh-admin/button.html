@@ -1,32 +1,33 @@
 {{- /* 管理画面への入口のボタン。引数: dict "kind" "edit|new|admin|login|logout|footer" "page" . "class" "..." "label" "..." "text" true（text を付けるとアイコンではなく文字で出す）。
   本体の header.html・post-card.html・footer.html から呼ぶ。見た目のクラスは class で渡す。 */ -}}
 {{- $gh := partial "gh-admin/settings.html" .page | transform.Unmarshal -}}
+{{- $i18n := partial "gh-admin/i18n.html" .page | transform.Unmarshal -}}
 {{- $kind := .kind -}}
 {{- if eq $kind "footer" -}}
-<a id="auth-link" class="footer-admin" href="{{ $gh.loginURL }}">管理</a>
+<a id="auth-link" class="footer-admin" href="{{ $gh.loginURL }}">{{ $i18n.common.admin }}</a>
 {{- else -}}
   {{- $cls := .class | default "icon-button" -}}
   {{- $vis := "admin-only" -}}
   {{- $href := $gh.adminURL -}}
-  {{- $label := .label | default "一括管理" -}}
+  {{- $label := .label | default $i18n.common.bulk_admin -}}
   {{- $icon := "fa-solid fa-table-list" -}}
   {{- if eq $kind "edit" -}}
     {{- $href = printf "%s?slug=%s" $gh.editURL (.page.File.ContentBaseName | urlquery) -}}
-    {{- $label = .label | default "この記事を編集" -}}
+    {{- $label = .label | default $i18n.common.edit_post -}}
     {{- $icon = "fa-solid fa-pen" -}}
   {{- else if eq $kind "new" -}}
     {{- $href = $gh.editURL -}}
-    {{- $label = .label | default "新規記事" -}}
+    {{- $label = .label | default $i18n.common.new_post -}}
     {{- $icon = "fa-solid fa-plus" -}}
   {{- else if eq $kind "login" -}}
     {{- $vis = "guest-only" -}}
     {{- $href = $gh.loginURL -}}
-    {{- $label = .label | default "ログイン" -}}
+    {{- $label = .label | default $i18n.common.login -}}
     {{- $icon = "fa-solid fa-right-to-bracket" -}}
   {{- else if eq $kind "logout" -}}
     {{- $vis = "logout-only" -}}
     {{- $href = "#" -}}
-    {{- $label = .label | default "ログアウト" -}}
+    {{- $label = .label | default $i18n.common.logout -}}
     {{- $icon = "fa-solid fa-right-from-bracket" -}}
   {{- end }}
 {{- if .text }}

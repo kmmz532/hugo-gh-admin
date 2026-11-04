@@ -1,6 +1,7 @@
 import { config } from './config.js';
 import { addCopyButtons } from './copy.js';
 import { imageSrc } from './image.js';
+import { t } from './i18n.js';
 
 // marked の出力は HTML として挿入するため、危険な要素と属性を落としてから描画する。
 // 記事詳細（single.html）と同じ見た目になるよう、タイトルと本文を同じクラスで出す。
@@ -140,7 +141,7 @@ function fillLinkCard(slot, url) {
   loadOgpIndex().then((map) => {
     const card = map.get(url);
     if (card?.title) slot.replaceChildren(buildCard(url, card));
-    else slot.replaceChildren(buildCard(url, { title: url, desc: '公開すると OGP から表示されます', image: '' }));
+    else slot.replaceChildren(buildCard(url, { title: url, desc: t('preview.card_pending'), image: '' }));
   });
 }
 
@@ -175,12 +176,12 @@ function fillTweet(slot, url) {
 
 function fillYoutube(slot, id) {
   if (!YOUTUBE_ID.test(id)) {
-    slot.replaceChildren(makeElement('span', 'shortcode-error', `YouTube の ID が正しくありません: ${id}`));
+    slot.replaceChildren(makeElement('span', 'shortcode-error', t('preview.youtube_error', { id })));
     return;
   }
   const frame = document.createElement('iframe');
   frame.src = `https://www.youtube-nocookie.com/embed/${id}`;
-  frame.title = 'YouTube の動画';
+  frame.title = t('preview.youtube_title');
   frame.loading = 'lazy';
   frame.referrerPolicy = 'strict-origin-when-cross-origin';
   frame.allowFullscreen = true;
@@ -198,7 +199,7 @@ function fillInstagram(slot, url) {
   }
   const frame = document.createElement('iframe');
   frame.src = `https://www.instagram.com/${match[1]}/${match[2]}/embed`;
-  frame.title = 'Instagram の投稿';
+  frame.title = t('preview.instagram_title');
   frame.loading = 'lazy';
   const wrap = makeElement('div', 'instagram-embed');
   wrap.append(frame);
@@ -219,18 +220,18 @@ function fillFrame(slot, src, title, wrapClass) {
 
 function fillVimeo(slot, id) {
   if (!/^[0-9]+$/.test(id)) {
-    slot.replaceChildren(makeElement('span', 'shortcode-error', `Vimeo の ID が正しくありません: ${id}`));
+    slot.replaceChildren(makeElement('span', 'shortcode-error', t('preview.vimeo_error', { id })));
     return;
   }
-  fillFrame(slot, `https://player.vimeo.com/video/${id}`, 'Vimeo の動画', 'video-embed');
+  fillFrame(slot, `https://player.vimeo.com/video/${id}`, t('preview.vimeo_title'), 'video-embed');
 }
 
 function fillNiconico(slot, id) {
   if (!/^(sm|nm|so)?[0-9]+$/.test(id)) {
-    slot.replaceChildren(makeElement('span', 'shortcode-error', `ニコニコ動画の ID が正しくありません: ${id}`));
+    slot.replaceChildren(makeElement('span', 'shortcode-error', t('preview.niconico_error', { id })));
     return;
   }
-  fillFrame(slot, `https://embed.nicovideo.jp/watch/${id}`, 'ニコニコ動画の動画', 'video-embed');
+  fillFrame(slot, `https://embed.nicovideo.jp/watch/${id}`, t('preview.niconico_title'), 'video-embed');
 }
 
 function fillSoundcloud(slot, url) {
@@ -238,7 +239,7 @@ function fillSoundcloud(slot, url) {
     slot.replaceChildren(plainLink(url));
     return;
   }
-  fillFrame(slot, `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`, 'SoundCloud の曲', 'audio-embed');
+  fillFrame(slot, `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`, t('preview.soundcloud_title'), 'audio-embed');
 }
 
 function fillFacebook(slot, url) {
@@ -246,7 +247,7 @@ function fillFacebook(slot, url) {
     slot.replaceChildren(plainLink(url));
     return;
   }
-  fillFrame(slot, `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=500`, 'Facebook の投稿', 'facebook-embed');
+  fillFrame(slot, `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=500`, t('preview.facebook_title'), 'facebook-embed');
 }
 
 function fillSlot(slot) {
@@ -265,7 +266,7 @@ function fillSlot(slot) {
 // onThumb を渡すと http(s) と /images/ の画像に「サムネイルにする」を付ける（編集画面だけ）
 export function renderPreview(markdown, title, container, { onThumb } = {}) {
   if (!window.marked) {
-    container.textContent = 'プレビューを読み込めませんでした。';
+    container.textContent = t('preview.load_error');
     return;
   }
   const template = document.createElement('template');
@@ -297,7 +298,7 @@ export function renderPreview(markdown, title, container, { onThumb } = {}) {
     if (url.startsWith(config.imagesURL)) img.src = imageSrc(url);
     if (!onThumb || !(url.startsWith(config.imagesURL) || isHttpUrl(url))) return;
     const wrap = makeElement('span', 'thumb-target');
-    const button = makeElement('button', 'thumb-set', 'サムネイルにする');
+    const button = makeElement('button', 'thumb-set', t('preview.set_thumb'));
     button.type = 'button';
     button.addEventListener('click', () => onThumb(url));
     img.replaceWith(wrap);
@@ -311,7 +312,7 @@ export function renderPreview(markdown, title, container, { onThumb } = {}) {
   if (title !== null) {
     const heading = document.createElement('h1');
     heading.className = 'post-title';
-    heading.textContent = title || '（無題）';
+    heading.textContent = title || t('common.untitled');
     parts.unshift(heading);
   }
   container.replaceChildren(...parts);

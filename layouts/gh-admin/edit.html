@@ -1,164 +1,166 @@
 {{ define "main" }}
+{{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
 <div class="editor-bar">
-  <a class="icon-button" id="back-link" href="{{ site.Home.RelPermalink }}" aria-label="戻る" title="戻る">
+  <a class="icon-button" id="back-link" href="{{ site.Home.RelPermalink }}" aria-label="{{ $i18n.common.back }}" title="{{ $i18n.common.back }}">
     <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
   </a>
   <span class="spacer"></span>
-  <div class="tabs" role="group" aria-label="表示切替">
-    <button type="button" id="view-edit" aria-pressed="true">編集</button>
-    <button type="button" id="view-preview" aria-pressed="false">プレビュー</button>
-    <button type="button" id="view-split" aria-pressed="false" hidden>並べて表示</button>
+  <div class="tabs" role="group" aria-label="{{ $i18n.editor.view_label }}">
+    <button type="button" id="view-edit" aria-pressed="true">{{ $i18n.editor.view_edit }}</button>
+    <button type="button" id="view-preview" aria-pressed="false">{{ $i18n.editor.view_preview }}</button>
+    <button type="button" id="view-split" aria-pressed="false" hidden>{{ $i18n.editor.view_split }}</button>
   </div>
   <span id="save-state" class="save-state" aria-live="polite"></span>
-  <button type="submit" form="post-form" id="save" class="btn primary" title="公開（Ctrl+Enter）">公開</button>
+  <button type="submit" form="post-form" id="save" class="btn primary" title="{{ $i18n.editor.publish_title }}">{{ $i18n.editor.publish }}</button>
 </div>
 <div id="notice" class="notice" role="status" hidden></div>
 
 <form id="post-form" class="editor" autocomplete="off" data-index-url="{{ "gh-admin/index.json" | relURL }}">
   <div class="editor-main" id="editor-main" data-view="edit" data-kind="article">
     <div id="kind-tabs" class="kind-tabs" hidden>
-      <button type="button" class="btn" data-kind="article" aria-pressed="true">記事</button>
-      <button type="button" class="btn" data-kind="external" aria-pressed="false">外部記事</button>
+      <button type="button" class="btn" data-kind="article" aria-pressed="true">{{ $i18n.editor.kind_article }}</button>
+      <button type="button" class="btn" data-kind="external" aria-pressed="false">{{ $i18n.editor.kind_external }}</button>
     </div>
 
-    <input id="f-title" class="title-input" placeholder="タイトル" aria-label="タイトル">
+    <input id="f-title" class="title-input" placeholder="{{ $i18n.editor.title }}" aria-label="{{ $i18n.editor.title }}">
 
     <div id="external-fields" class="external-fields" hidden>
-      <label class="field">URL（http:// または https://）
+      <label class="field">{{ $i18n.editor.url_label }}
         <input id="f-external" type="url" placeholder="https://"></label>
-      <label class="field">サイト名
-        <input id="f-source" placeholder="Zenn など"></label>
+      <label class="field">{{ $i18n.editor.source_label }}
+        <input id="f-source" placeholder="{{ $i18n.editor.source_placeholder }}"></label>
     </div>
 
-    <div id="toolbar" class="toolbar" role="toolbar" aria-label="書式">
-      <button type="button" data-action="bold" aria-label="太字" title="太字（Ctrl+B）"><i class="fa-solid fa-bold" aria-hidden="true"></i></button>
-      <button type="button" data-action="italic" aria-label="斜体" title="斜体（Ctrl+I）"><i class="fa-solid fa-italic" aria-hidden="true"></i></button>
-      <button type="button" data-action="heading" aria-label="見出し" title="見出し"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
-      <button type="button" data-action="link" aria-label="リンク" title="リンク（Ctrl+K）"><i class="fa-solid fa-link" aria-hidden="true"></i></button>
-      <button type="button" data-action="list" aria-label="箇条書き" title="箇条書き"><i class="fa-solid fa-list-ul" aria-hidden="true"></i></button>
-      <button type="button" data-action="quote" aria-label="引用" title="引用"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></button>
-      <button type="button" data-action="code" aria-label="コード" title="コード"><i class="fa-solid fa-code" aria-hidden="true"></i></button>
-      <button type="button" data-action="image" aria-label="画像を挿入" title="画像を挿入"><i class="fa-solid fa-image" aria-hidden="true"></i></button>
-      <button type="button" id="scroll-sync-toggle" class="split-only" aria-pressed="true" aria-label="スクロール同期" title="スクロール同期"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i></button>
-      <button type="button" id="open-images"aria-label="画像の一覧" title="画像の一覧"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
+    <div id="toolbar" class="toolbar" role="toolbar" aria-label="{{ $i18n.editor.toolbar_label }}">
+      <button type="button" data-action="bold" aria-label="{{ $i18n.toolbar.bold }}" title="{{ $i18n.editor.title_bold }}"><i class="fa-solid fa-bold" aria-hidden="true"></i></button>
+      <button type="button" data-action="italic" aria-label="{{ $i18n.toolbar.italic }}" title="{{ $i18n.editor.title_italic }}"><i class="fa-solid fa-italic" aria-hidden="true"></i></button>
+      <button type="button" data-action="heading" aria-label="{{ $i18n.toolbar.heading }}" title="{{ $i18n.toolbar.heading }}"><i class="fa-solid fa-heading" aria-hidden="true"></i></button>
+      <button type="button" data-action="link" aria-label="{{ $i18n.toolbar.link }}" title="{{ $i18n.editor.title_link }}"><i class="fa-solid fa-link" aria-hidden="true"></i></button>
+      <button type="button" data-action="list" aria-label="{{ $i18n.toolbar.list }}" title="{{ $i18n.toolbar.list }}"><i class="fa-solid fa-list-ul" aria-hidden="true"></i></button>
+      <button type="button" data-action="quote" aria-label="{{ $i18n.toolbar.quote }}" title="{{ $i18n.toolbar.quote }}"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></button>
+      <button type="button" data-action="code" aria-label="{{ $i18n.toolbar.code }}" title="{{ $i18n.toolbar.code }}"><i class="fa-solid fa-code" aria-hidden="true"></i></button>
+      <button type="button" data-action="image" aria-label="{{ $i18n.toolbar.image }}" title="{{ $i18n.toolbar.image }}"><i class="fa-solid fa-image" aria-hidden="true"></i></button>
+      <button type="button" id="scroll-sync-toggle" class="split-only" aria-pressed="true" aria-label="{{ $i18n.editor.scroll_sync }}" title="{{ $i18n.editor.scroll_sync }}"><i class="fa-solid fa-arrows-up-down" aria-hidden="true"></i></button>
+      <button type="button" id="open-images"aria-label="{{ $i18n.editor.open_images }}" title="{{ $i18n.editor.open_images }}"><i class="fa-solid fa-images" aria-hidden="true"></i></button>
       <input id="f-image" type="file" accept="image/*" hidden>
     </div>
 
     <div class="editor-panes">
-      <textarea id="f-body" class="body-input" aria-label="本文（Markdown）" placeholder="本文を書く（Markdown）"></textarea>
-      <section id="preview" class="preview-pane" aria-label="プレビュー"></section>
+      <textarea id="f-body" class="body-input" aria-label="{{ $i18n.editor.body_label }}" placeholder="{{ $i18n.editor.body_placeholder }}"></textarea>
+      <section id="preview" class="preview-pane" aria-label="{{ $i18n.editor.preview_label }}"></section>
     </div>
   </div>
 
   <aside class="settings">
     <div class="settings-card">
-      <h2>記事設定</h2>
+      <h2>{{ $i18n.editor.settings_heading }}</h2>
       <div class="field">
-        <label for="f-category">カテゴリ（「&gt;」で階層）</label>
-        <input id="f-category" list="category-list" placeholder="例: 趣味 &gt; 写真" autocomplete="off">
+        <label for="f-category">{{ $i18n.editor.category_label }}</label>
+        <input id="f-category" list="category-list" placeholder="{{ $i18n.editor.category_example }}" autocomplete="off">
         <datalist id="category-list"></datalist>
-        <div id="category-chips" class="choices" role="group" aria-label="既存のカテゴリ"></div>
+        <div id="category-chips" class="choices" role="group" aria-label="{{ $i18n.editor.category_choices_label }}"></div>
       </div>
       <div class="field">
-        <span>タグ</span>
-        <div id="tag-selected" class="tag-selected" aria-label="選択中のタグ"></div>
-        <input id="f-tag-entry" placeholder="検索または新しいタグ（Enter）" aria-label="タグ" maxlength="40">
-        <div id="tag-suggest" class="choices" aria-label="既存のタグ"></div>
+        <span>{{ $i18n.editor.tags_label }}</span>
+        <div id="tag-selected" class="tag-selected" aria-label="{{ $i18n.editor.tags_selected_label }}"></div>
+        <input id="f-tag-entry" placeholder="{{ $i18n.editor.tag_placeholder }}" aria-label="{{ $i18n.editor.tag_label }}" maxlength="40">
+        <div id="tag-suggest" class="choices" aria-label="{{ $i18n.editor.tags_choices_label }}"></div>
       </div>
-      <label class="field">投稿日時
+      <label class="field">{{ $i18n.editor.date_label }}
         <input id="f-date" type="datetime-local" required></label>
-      <label id="author-field" class="field" hidden>作者（GitHub のユーザー名）
-        <input id="f-author" maxlength="39" autocomplete="off" placeholder="例: osu-denken"></label>
-      <label class="field">slug
+      <label id="author-field" class="field" hidden>{{ $i18n.editor.author_label }}
+        <input id="f-author" maxlength="39" autocomplete="off" placeholder="{{ $i18n.editor.author_example }}"></label>
+      <label class="field">{{ $i18n.editor.slug_label }}
         <span class="slug-row">
           <input id="f-slug" required pattern="[a-z0-9\-]{1,80}" maxlength="80">
-          <span id="slug-auto" class="slug-auto" hidden>自動</span>
+          <span id="slug-auto" class="slug-auto" hidden>{{ $i18n.editor.slug_auto }}</span>
         </span></label>
       <p id="f-slug-error" class="field-error" hidden></p>
     </div>
 
     <details id="template-details" class="details-card" hidden>
-      <summary>テンプレート</summary>
-      <label class="field">既存の記事から作る（投稿日以外を引き継ぐ）
-        <select id="template-select"><option value="">記事を選ぶ</option></select></label>
-      <button type="button" id="template-load" class="btn">読み込む</button>
+      <summary>{{ $i18n.editor.template_heading }}</summary>
+      <label class="field">{{ $i18n.editor.template_label }}
+        <select id="template-select"><option value="">{{ $i18n.editor.template_choose }}</option></select></label>
+      <button type="button" id="template-load" class="btn">{{ $i18n.editor.template_load }}</button>
     </details>
 
     <details id="summary-details" class="details-card">
-      <summary>概要（任意）</summary>
-      <textarea id="f-summary" rows="3" placeholder="（本文から自動生成されます）"></textarea>
+      <summary>{{ $i18n.editor.summary_heading }}</summary>
+      <textarea id="f-summary" rows="3" placeholder="{{ $i18n.editor.summary_placeholder }}"></textarea>
       <p id="summary-count" class="char-count"></p>
     </details>
 
     <details id="thumb-details" class="details-card">
-      <summary>サムネイル</summary>
+      <summary>{{ $i18n.editor.thumb_heading }}</summary>
       <div class="thumb-current">
         <img id="thumb-preview" class="card-thumb" alt="" width="96" height="96" loading="lazy" hidden>
         <p id="thumb-state" class="card-meta"></p>
       </div>
       <div class="thumb-actions">
-        <button type="button" id="thumb-auto" class="btn">自動</button>
-        <button type="button" id="thumb-pick" class="btn">本文の画像から選ぶ</button>
-        <button type="button" id="thumb-upload" class="btn">画像をアップロード</button>
+        <button type="button" id="thumb-auto" class="btn">{{ $i18n.editor.thumb_auto }}</button>
+        <button type="button" id="thumb-pick" class="btn">{{ $i18n.thumb.pick_body }}</button>
+        <button type="button" id="thumb-upload" class="btn">{{ $i18n.editor.thumb_upload }}</button>
         <input id="thumb-file" type="file" accept="image/*" hidden>
       </div>
       <div id="thumb-url-row" class="thumb-url" hidden>
-        <input id="thumb-url" type="url" placeholder="https://（画像の URL）" aria-label="サムネイルの画像の URL">
-        <button type="button" id="thumb-url-set" class="btn">この URL にする</button>
+        <input id="thumb-url" type="url" placeholder="{{ $i18n.editor.thumb_url_placeholder }}" aria-label="{{ $i18n.editor.thumb_url_label }}">
+        <button type="button" id="thumb-url-set" class="btn">{{ $i18n.editor.thumb_url_set }}</button>
       </div>
-      <div id="thumb-choices" class="thumb-choices" aria-label="サムネイルの候補" hidden></div>
+      <div id="thumb-choices" class="thumb-choices" aria-label="{{ $i18n.editor.thumb_choices_label }}" hidden></div>
     </details>
 
     <details id="history-details" class="details-card history">
-      <summary>履歴</summary>
+      <summary>{{ $i18n.history.heading }}</summary>
       <p id="history-status" class="history-status" aria-live="polite" hidden></p>
       <ul id="history-list" class="history-list"></ul>
-      <button type="button" id="history-more" class="btn" hidden>さらに読み込む</button>
+      <button type="button" id="history-more" class="btn" hidden>{{ $i18n.history.more }}</button>
     </details>
 
     <details id="drafts-details" class="details-card drafts">
-      <summary id="drafts-summary">下書き（この端末のみ）</summary>
+      <summary id="drafts-summary">{{ $i18n.drafts.summary }}</summary>
       <div id="draft-pending" class="draft-pending" hidden>
         <p id="draft-pending-text"></p>
-        <button type="button" id="draft-restore" class="btn primary">復元する</button>
-        <button type="button" id="draft-drop" class="btn">破棄する</button>
+        <button type="button" id="draft-restore" class="btn primary">{{ $i18n.drafts.restore }}</button>
+        <button type="button" id="draft-drop" class="btn">{{ $i18n.drafts.drop }}</button>
       </div>
       <ul id="drafts"></ul>
-      <button type="button" id="discard" class="btn">この下書きを破棄</button>
+      <button type="button" id="discard" class="btn">{{ $i18n.drafts.discard }}</button>
     </details>
 
     <details id="danger-details" class="details-card" hidden>
-      <summary>危険な操作</summary>
-      <button type="button" id="delete" class="btn danger">この記事を削除</button>
+      <summary>{{ $i18n.editor.danger_heading }}</summary>
+      <button type="button" id="delete" class="btn danger">{{ $i18n.editor.delete }}</button>
     </details>
   </aside>
 </form>
 
 <dialog id="upload-confirm" class="images-dialog upload-confirm" aria-labelledby="upload-confirm-title">
-  <h2 id="upload-confirm-title">この画像をアップロードしますか？</h2>
-  <img id="upload-confirm-image" class="upload-confirm-image" alt="アップロードする画像">
+  <h2 id="upload-confirm-title">{{ $i18n.upload.heading }}</h2>
+  <img id="upload-confirm-image" class="upload-confirm-image" alt="{{ $i18n.upload.image_alt }}">
   <p id="upload-confirm-name" class="image-status"></p>
-  <label class="field">表示サイズ
+  <label class="field">{{ $i18n.upload.size_label }}
     <select id="upload-confirm-size">
-      <option value="">元のまま（最大 1600px）</option>
-      <option value="320">小（幅 320px）</option>
-      <option value="480">中（幅 480px）</option>
-      <option value="720">大（幅 720px）</option>
+      <option value="">{{ $i18n.upload.size_original }}</option>
+      <option value="320">{{ $i18n.upload.size_small }}</option>
+      <option value="480">{{ $i18n.upload.size_medium }}</option>
+      <option value="720">{{ $i18n.upload.size_large }}</option>
     </select></label>
-  <p class="admin-note">記事の公開リポジトリに保存されます。上げた時点で誰でも見られるようになるので、個人情報などが写っていないか確認してください。</p>
+  <p class="admin-note">{{ $i18n.upload.note }}</p>
   <div class="upload-confirm-actions">
-    <button type="button" id="upload-confirm-ok" class="btn primary">アップロード</button>
-    <button type="button" id="upload-confirm-cancel" class="btn">やめる</button>
+    <button type="button" id="upload-confirm-ok" class="btn primary">{{ $i18n.upload.ok }}</button>
+    <button type="button" id="upload-confirm-cancel" class="btn">{{ $i18n.upload.cancel }}</button>
   </div>
 </dialog>
 
 <dialog id="images-dialog" class="images-dialog" aria-labelledby="images-title">
   <div class="images-dialog-head">
-    <h2 id="images-title">画像</h2>
-    <button type="button" id="images-close" class="icon-button" aria-label="閉じる" title="閉じる"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    <h2 id="images-title">{{ $i18n.images.heading }}</h2>
+    <button type="button" id="images-close" class="icon-button" aria-label="{{ $i18n.common.close }}" title="{{ $i18n.common.close }}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
   </div>
   <div id="image-manager" class="image-manager"></div>
 </dialog>
+<script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
 {{ end }}
 
 

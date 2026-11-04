@@ -1,5 +1,7 @@
 // 本文欄のツールバーと、画像の 3 経路（ボタン・貼り付け・ドロップ）。
 // 画像は upload で保存し、仮テキストを置いてから実 URL に差し替える。失敗したら仮テキストを消す。
+import { t } from './i18n.js';
+
 let uploadCount = 0;
 
 function wrapSelection(textarea, before, after, fallback) {
@@ -17,16 +19,16 @@ function prefixLine(textarea, prefix) {
 }
 
 const ACTIONS = {
-  bold: (ta) => wrapSelection(ta, '**', '**', '太字'),
-  italic: (ta) => wrapSelection(ta, '*', '*', '斜体'),
+  bold: (ta) => wrapSelection(ta, '**', '**', t('toolbar.bold')),
+  italic: (ta) => wrapSelection(ta, '*', '*', t('toolbar.italic')),
   heading: (ta) => prefixLine(ta, '## '),
-  link: (ta) => wrapSelection(ta, '[', '](https://)', 'リンク'),
+  link: (ta) => wrapSelection(ta, '[', '](https://)', t('toolbar.link')),
   list: (ta) => prefixLine(ta, '- '),
   quote: (ta) => prefixLine(ta, '> '),
   code: (ta) => {
     const multiline = ta.value.slice(ta.selectionStart, ta.selectionEnd).includes('\n');
-    if (multiline) wrapSelection(ta, '```\n', '\n```', 'コード');
-    else wrapSelection(ta, '`', '`', 'コード');
+    if (multiline) wrapSelection(ta, '```\n', '\n```', t('toolbar.code'));
+    else wrapSelection(ta, '`', '`', t('toolbar.code'));
   },
 };
 
@@ -35,7 +37,7 @@ function imageFile(list) {
 }
 
 export function altFrom(file) {
-  return file.name ? file.name.replace(/\.[^.]+$/, '').replace(/[[\]|]/g, '') : 'image';
+  return file.name ? file.name.replace(/\.[^.]+$/, '').replace(/[[\]|]/g, '') : t('toolbar.default_alt');
 }
 
 // 表示幅（px）は alt の末尾に |数字 で付ける。空なら元のまま
@@ -74,7 +76,7 @@ function insertBlock(textarea, text, caret = null) {
 // 仮テキストを置き、保存が終わったら差し替える。すべて textarea の input イベントで通知する
 async function insertImage(textarea, file, upload, onError, width = '', caret = null) {
   // 仮テキストに番号を付け、同時に複数の画像を貼っても差し替え先を取り違えないようにする
-  const placeholder = `![アップロード中…(${++uploadCount})]()`;
+  const placeholder = `![${t('toolbar.uploading', { n: ++uploadCount })}]()`;
   insertBlock(textarea, placeholder, caret);
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -118,7 +120,7 @@ function insertCardFromUrl(textarea, url) {
 }
 
 // 本文のカーソル位置に画像を入れる（画像の一覧から選んだとき・一覧から上げたとき）
-export function insertImageMarkdown(textarea, url, alt = 'image', width = '') {
+export function insertImageMarkdown(textarea, url, alt = t('toolbar.default_alt'), width = '') {
   insertBlock(textarea, `![${withWidth(alt, width)}](${url})`);
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }

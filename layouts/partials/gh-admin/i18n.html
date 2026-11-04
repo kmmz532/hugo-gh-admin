@@ -1,0 +1,3 @@
+{{- /* 文言の辞書（settings.html の lang の辞書）を JSON で返す。読むときは transform.Unmarshal する */ -}}
+{{- $lang := (partial "gh-admin/settings.html" . | transform.Unmarshal).lang -}}
+{{- index site.Data "gh-admin" "i18n" $lang | jsonify -}}

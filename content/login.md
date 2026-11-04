@@ -1,5 +1,5 @@
 ---
-title: "ログイン"
+title: "Login"
 type: "gh-admin"
 layout: login
 url: /login/

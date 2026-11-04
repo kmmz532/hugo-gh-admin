@@ -1,5 +1,6 @@
 // slug の自動生成・検証・表示。画面の状態（state）は引数で受け取る。editor.js は import しない
 import { isValidSlug } from './github.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -48,7 +49,7 @@ export function createSlug({ state }) {
       updateSlugAuto();
       const slug = $('f-slug').value;
       const invalid = Boolean(slug) && !isValidSlug(slug);
-      setSlugError(invalid ? 'slug は英小文字・数字・ハイフンのみ使えます。' : '');
+      setSlugError(invalid ? t('slug.format_invalid') : '');
     });
   }
 

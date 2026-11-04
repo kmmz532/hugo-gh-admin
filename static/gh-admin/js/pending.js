@@ -2,6 +2,7 @@
 // 控えは localStorage に置き、ビルド時刻を過ぎたら、または 30 分経ったら消す。GitHub API は呼ばない。
 import { config } from './config.js';
 import { getToken } from './github.js';
+import { t } from './i18n.js';
 import { getItem, setItem, removeItem, keys } from './storage.js';
 import { renderPreview } from './preview.js';
 
@@ -80,7 +81,7 @@ function sweep() {
   return expired;
 }
 
-function pendingBand(text = '反映待ち（この端末だけの表示）') {
+function pendingBand(text = t('pending.band')) {
   const band = el('p', 'pending-band');
   band.append(icon('fa-solid fa-clock'), ` ${text}`);
   return band;
@@ -186,8 +187,8 @@ async function renderArticle(container, slug, fields) {
   const scratch = document.createElement('div');
   renderPreview(fields.body, null, scratch);
 
-  const title = fields.title || '（無題）';
-  fillItems(field(article, 'crumbs'), ['トップ', ...(fields.categories ?? []), title], (node, name) => {
+  const title = fields.title || t('common.untitled');
+  fillItems(field(article, 'crumbs'), [t('common.top'), ...(fields.categories ?? []), title], (node, name) => {
     node.textContent = name;
   });
   field(article, 'title').textContent = title;
@@ -207,7 +208,7 @@ async function renderArticle(container, slug, fields) {
 }
 
 function renderDeleted(container) {
-  container.replaceChildren(pendingBand('この記事は削除済みです（反映待ち）'));
+  container.replaceChildren(pendingBand(t('pending.band_deleted')));
 }
 
 // 一覧に出す反映待ちのカード。雛形が無ければ帯だけ返す
@@ -229,7 +230,7 @@ function renderCard(slug, fields) {
     categories.hidden = false;
   }
   const link = field(card, 'title');
-  link.textContent = fields.title || fields.url || '（無題）';
+  link.textContent = fields.title || fields.url || t('common.untitled');
   link.href = external ? fields.url : postUrl(slug, fields);
   if (external) {
     link.target = '_blank';
@@ -286,7 +287,7 @@ function showStaleNotice() {
   const main = document.querySelector('main');
   if (!main) return;
   main.prepend(
-    el('p', 'pending-notice', '公開した記事が反映されていない可能性があります（Actions を確認してください）'),
+    el('p', 'pending-notice', t('pending.not_reflected')),
   );
 }
 

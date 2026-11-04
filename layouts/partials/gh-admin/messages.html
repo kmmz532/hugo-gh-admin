@@ -1,0 +1,4 @@
+{{- /* 管理画面だけで使う文言を JSON で返す。全ページで使う common・pending・preview は meta の messages に入るので除く。引数は文言の辞書 */ -}}
+{{- $admin := dict -}}
+{{- range $section, $values := . }}{{ if not (in (slice "common" "pending" "preview") $section) }}{{ $admin = merge $admin (dict $section $values) }}{{ end }}{{ end -}}
+{{- $admin | jsonify -}}
