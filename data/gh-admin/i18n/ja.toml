@@ -14,6 +14,7 @@ bulk_admin = "一括管理"
 new_post = "新規記事"
 edit_post = "この記事を編集"
 top = "トップ"
+breadcrumb = "パンくず"
 
 [pending]
 band = "反映待ち（この端末だけの表示）"

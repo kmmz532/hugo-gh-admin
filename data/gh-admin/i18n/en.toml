@@ -14,6 +14,7 @@ bulk_admin = "Bulk management"
 new_post = "New post"
 edit_post = "Edit this post"
 top = "Top"
+breadcrumb = "Breadcrumb"
 
 [pending]
 band = "Pending (shown only on this device)"
