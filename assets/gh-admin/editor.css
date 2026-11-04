@@ -165,6 +165,7 @@
   padding: 0 14px;
   border: none;
   background: none;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 14px;
 }
