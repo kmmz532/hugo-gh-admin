@@ -137,6 +137,22 @@ export async function getPost(slug) {
   return { sha: json.sha, text: fromBase64(json.content) };
 }
 
+export const COMMITS_PER_PAGE = 30;
+
+// 記事ファイルのコミット履歴を新しい順に返す。page は 1 始まり。
+// 名前の変更（slug の変更）はたどらない。履歴が無ければ空の配列
+export async function listPostCommits(slug, { page = 1 } = {}) {
+  const path = encodeURIComponent(postPath(slug));
+  const json = await api(`/repos/${repo}/commits?path=${path}&sha=${encodeURIComponent(branch)}&per_page=${COMMITS_PER_PAGE}&page=${page}`);
+  return (json ?? []).map((item) => ({
+    sha: item.sha,
+    message: item.commit.message,
+    date: item.commit.author.date,
+    author: item.author?.login ?? item.commit.author.name,
+    url: item.html_url,
+  }));
+}
+
 // sha を省略すると新規作成。既存ファイルがあれば ConflictError。新しい sha を返す
 export async function savePost(slug, text, sha) {
   const json = await api(contentsUrl(postPath(slug)), {

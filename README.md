@@ -103,6 +103,14 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 `title`・`date`・`lastmod`・`author`・`categories`・`tags`・`summary`・`image`・`aliases`・`external`・`source`・`build`・`sitemap`
 
+## 編集履歴
+
+編集画面の「履歴」は、記事ファイルのGitHubのコミット履歴を新しい順に出す。30件ずつ読み込み、「さらに読み込む」で続きを出す。
+
+- 名前の変更（slug の変更）はたどらない。変更後のパスの履歴だけが出る。slug を変えた記事の古いパスの履歴は出ない。
+- 保存していない変更（この端末の下書き）は出ない。
+- 新規記事はまだファイルが無いため、「まだ保存されていません」と出る。
+
 ## 版の約束
 
 - 版は [Semantic Versioning](https://semver.org/lang/ja/) に従い、タグで示す（`v0.1.0` など）。

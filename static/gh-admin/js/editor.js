@@ -18,6 +18,7 @@ import { createSlug } from './slug.js';
 import { createThumb } from './thumb.js';
 import { createDrafts } from './drafts.js';
 import { createSave } from './save.js';
+import { createHistory } from './history.js';
 
 const $ = (id) => document.getElementById(id);
 const SUMMARY_TARGET = 120;
@@ -77,6 +78,7 @@ function debounce(fn, ms) {
 const cancelDraft = () => state.schedule.draft.cancel?.();
 const drafts = createDrafts({ state, readForm, writeForm, refreshPreview, updateChrome });
 const save = createSave({ state, readForm, validate, slugs, drafts, cancelDraft, updateChrome });
+const commitHistory = createHistory({ state });
 
 function markDirty() {
   state.dirty = true;
@@ -447,7 +449,12 @@ function start() {
   state.schedule.draft = debounce(drafts.saveDraft, 1000);
   state.schedule.refresh = debounce(refreshPreview, 300);
 
-  form.addEventListener('submit', save.publish);
+  form.addEventListener('submit', async (event) => {
+    await save.publish(event);
+    // 保存できたときは未保存の変更が残らない。開いていれば履歴を読み直す
+    if (!state.dirty) commitHistory.reload();
+  });
+  commitHistory.attach();
   form.addEventListener('input', (event) => {
     if (event.target.id === 'f-external') externals.onExternalUrlInput();
     if (event.target.id === 'f-date') {

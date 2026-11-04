@@ -525,6 +525,34 @@
   gap: 0.4rem;
 }
 
+/* 編集履歴（history.js）。件数が多くても横に広がらないよう、長い文字は折り返す */
+.history-status {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.history-list {
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.history-list li {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.history-meta {
+  color: var(--text-secondary);
+}
+
+.history-message {
+  overflow-wrap: anywhere;
+}
+
+.history-list a {
+  font-size: 0.8rem;
+}
+
 .drafts h2 {
   font-size: 0.9rem;
   color: var(--text-secondary);
