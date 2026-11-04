@@ -53,8 +53,10 @@ function restoreCaret(textarea) {
 }
 
 // 画像は単独の段落にする。前後が文字や別の画像と同じ行に続かないよう、空行を足して選択範囲に置く
-function insertBlock(textarea, text) {
-  restoreCaret(textarea);
+// caret を渡したときは、その位置（貼り付けた時点の選択範囲）に置く
+function insertBlock(textarea, text, caret = null) {
+  if (caret) textarea.setSelectionRange(caret[0], caret[1]);
+  else restoreCaret(textarea);
   const { value, selectionStart: start, selectionEnd: end } = textarea;
   const gap = (side, edge) => {
     if (side === '') return '';
@@ -70,10 +72,10 @@ function insertBlock(textarea, text) {
 }
 
 // 仮テキストを置き、保存が終わったら差し替える。すべて textarea の input イベントで通知する
-async function insertImage(textarea, file, upload, onError, width = '') {
+async function insertImage(textarea, file, upload, onError, width = '', caret = null) {
   // 仮テキストに番号を付け、同時に複数の画像を貼っても差し替え先を取り違えないようにする
   const placeholder = `![アップロード中…(${++uploadCount})]()`;
-  insertBlock(textarea, placeholder);
+  insertBlock(textarea, placeholder, caret);
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
   const alt = withWidth(altFrom(file), width);
@@ -126,9 +128,11 @@ export function attachToolbar({ textarea, toolbar, fileInput, upload, onError, c
 
   // 貼り付け・ドロップは誤爆しやすいので、上げる前に確認する。画像ボタンは自分でファイルを選ぶので確認しない
   async function insertConfirmed(file) {
+    // 確認の間に選択範囲が変わっても、貼り付けた時点の位置に入れる（確認の後で先頭に入る不具合の対策）
+    const caret = [textarea.selectionStart, textarea.selectionEnd];
     // 確認の戻り値は表示幅（'' は元のまま）。やめるなら null
     const width = await confirmUpload(file);
-    if (width !== null) insertImage(textarea, file, upload, onError, width);
+    if (width !== null) insertImage(textarea, file, upload, onError, width, caret);
     textarea.focus();
   }
 
