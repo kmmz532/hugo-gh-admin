@@ -1014,3 +1014,31 @@ body:has(.editor) .footer {
 .external-fields[hidden] {
   display: none;
 }
+
+
+/* サイト設定（/admin2/）。既存の管理画面のレイアウトには影響させない */
+.admin2-card {
+  max-width: 42rem;
+  margin: 1rem 0;
+}
+
+.admin2-icon-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+}
+
+.admin2-icon-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+#admin2-auth-status.error,
+#admin2-status.error {
+  color: var(--danger);
+}
