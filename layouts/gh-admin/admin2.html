@@ -1,0 +1,40 @@
+{{ define "main" }}
+{{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
+<h1 class="page-title">サイト設定</h1>
+<p class="admin-note">ブログ名とファビコンを変更する。変更内容はブログ本体の hugo.toml にコミットされ、次回のサイトビルドから反映される。</p>
+
+<section class="settings-card admin2-card">
+  <h2>GitHub 認証</h2>
+  <p class="admin-note">ブログ本体リポジトリ <code>{{ $gh.siteRepo }}</code> の Contents に書き込める Personal access token が必要だ。</p>
+  <form id="admin2-auth-form" class="login-form">
+    <label class="field">Personal access token
+      <input id="admin2-token" type="password" autocomplete="off" placeholder="既存の管理セッションを利用する場合は空欄">
+    </label>
+    <button class="btn" type="submit">接続</button>
+  </form>
+  <p id="admin2-auth-status" class="bulk-status" role="status"></p>
+</section>
+
+<form id="admin2-settings-form" class="settings-card admin2-card" hidden>
+  <h2>基本設定</h2>
+  <label class="field">ブログ名
+    <input id="admin2-title" type="text" maxlength="100" required>
+  </label>
+  <label class="field">ファビコン
+    <input id="admin2-favicon" type="file" accept=".ico,.png,.svg,image/x-icon,image/png,image/svg+xml">
+  </label>
+  <div class="admin2-icon-preview">
+    <img id="admin2-icon-preview" alt="現在のファビコン" hidden>
+    <span id="admin2-icon-path" class="admin-note"></span>
+  </div>
+  <p class="admin-note">ICO・PNG・SVGに対応。アップロードした画像はブログ本体リポジトリの static/ に保存する。</p>
+  <button class="btn primary" type="submit">変更を保存</button>
+</form>
+<p id="admin2-status" class="bulk-status" role="status"></p>
+
+<script type="application/json" id="admin2-config">{{ dict "repo" $gh.siteRepo "branch" $gh.siteBranch "path" $gh.siteConfigPath | jsonify | safeJS }}</script>
+{{ end }}
+
+{{ define "scripts" }}
+<script type="module" src="{{ "gh-admin/js/admin2.js" | relURL }}"></script>
+{{ end }}
