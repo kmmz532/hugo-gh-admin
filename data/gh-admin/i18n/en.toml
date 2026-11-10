@@ -246,6 +246,20 @@ saved = "Saved {count} posts. They will appear in 1 to 2 minutes."
 conflict = "This was updated elsewhere. Reload and try again (nothing was changed)."
 reading = "Loading ({read} / {total})"
 
+[settings]
+token_required = "Enter a Personal access token."
+repo_write_denied = "GitHub rejected the write request. Add \"{repo}\" to Repository access in your fine-grained PAT and set Repository permissions > Contents to Read and write. Metadata can remain Read-only. Reconnect after changing the token."
+repo_no_write = "This token does not have write access to \"{repo}\". Add the repository to Repository access in your fine-grained PAT and set Contents to Read and write."
+connected = "Connected: {repo}"
+extension_unsupported = "Unsupported file type. Allowed formats: {extensions}"
+file_too_large = "The file size must be {size} MB or less."
+upload_failed = "The image could not be saved to GitHub. Please try again later."
+connecting = "Connecting to GitHub…"
+saving = "Saving…"
+title_required = "Enter a blog title."
+saved = "Saved. Commit: {commit}. Changes will appear after the site is rebuilt."
+saved_token_invalid = "The saved credentials could not connect. Enter a PAT for the site repository. Details: {message}"
+
 [login]
 step_create = "Create a new token under GitHub Settings → Developer settings → Fine-grained tokens."
 step_repo = "For Repository access, choose \"Only select repositories\" and select only {repo}."
