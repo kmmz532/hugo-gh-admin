@@ -1126,3 +1126,13 @@ body:has(.editor) .footer {
 #admin-settings-settings-form[hidden] {
   display: none;
 }
+
+
+/* 記事一覧のテンプレート操作はタイトルから分離し、専用列に配置する */
+.template-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-decoration: none;
+}
