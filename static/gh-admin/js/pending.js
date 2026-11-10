@@ -200,7 +200,7 @@ async function renderArticle(container, slug, fields) {
     link.textContent = name;
     link.href = index === 0
       ? config.rootURL
-      : `${config.rootURL.replace(/\/$/, '')}/categories/${encodeURIComponent(String(name).toLowerCase().trim().replace(/\\s+/g, '-'))}/`;
+      : `${config.rootURL.replace(/\/$/, '')}/categories/${encodeURIComponent(String(name).toLowerCase().trim().replace(/\s+/g, '-'))}/`;
     node.append(link);
   });
   field(article, 'title').textContent = title;
@@ -211,7 +211,7 @@ async function renderArticle(container, slug, fields) {
     tags.hidden = false;
     fillItems(tags, fields.tags, (node, tag) => {
       node.textContent = `#${tag}`;
-      node.href = `${config.rootURL.replace(/\/$/, '')}/tags/${encodeURIComponent(String(tag).toLowerCase().trim().replace(/\\s+/g, '-'))}/`;
+      node.href = `${config.rootURL.replace(/\/$/, '')}/tags/${encodeURIComponent(String(tag).toLowerCase().trim().replace(/\s+/g, '-'))}/`;
     });
   }
   // 編集ボタンは任意（雛形に data-field="edit" があるときだけ）
