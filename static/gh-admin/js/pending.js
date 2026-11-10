@@ -188,6 +188,13 @@ async function renderArticle(container, slug, fields) {
   renderPreview(fields.body, null, scratch);
 
   const title = fields.title || t('common.untitled');
+  const categoryURLData = document.getElementById('gh-admin-category-urls');
+  let categoryURLs = {};
+  try {
+    categoryURLs = JSON.parse(categoryURLData?.textContent || '{}');
+  } catch {
+    // URLデータが壊れている場合はカテゴリをリンクにしない
+  }
   const crumbs = [t('common.top'), ...(fields.categories ?? []), title];
   fillItems(field(article, 'crumbs'), crumbs, (node, name, index) => {
     node.replaceChildren();
@@ -198,9 +205,15 @@ async function renderArticle(container, slug, fields) {
     }
     const link = el('a');
     link.textContent = name;
-    link.href = index === 0
-      ? config.rootURL
-      : `${config.rootURL.replace(/\/$/, '')}/categories/${encodeURIComponent(String(name).toLowerCase().trim().replace(/\s+/g, '-'))}/`;
+    const categoryURL = categoryURLs[name];
+    if (index === 0) {
+      link.href = config.rootURL;
+    } else if (categoryURL) {
+      link.href = categoryURL;
+    } else {
+      node.textContent = name;
+      return;
+    }
     node.append(link);
   });
   field(article, 'title').textContent = title;
