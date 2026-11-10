@@ -61,12 +61,13 @@ function row(item) {
   title.textContent = item.title || item.url || t('common.untitled');
   const titleCell = document.createElement('td');
   titleCell.append(title);
+  const actionCell = document.createElement('td');
   if (!item.external) {
     const copy = document.createElement('a');
     copy.href = `${config.editURL}?from=${encodeURIComponent(item.slug)}`;
-    copy.className = 'template-link';
+    copy.className = 'btn template-action';
     copy.textContent = t('admin.make_template');
-    titleCell.append(' ', copy);
+    actionCell.append(copy);
   }
 
   tr.append(
@@ -76,6 +77,7 @@ function row(item) {
     cell(item.external ? t('admin.kind_external') : t('admin.kind_article')),
     cell((item.categories ?? []).join(' / ')),
     cell((item.tags ?? []).map((tag) => `#${tag}`).join(' ')),
+    actionCell,
   );
   return tr;
 }
