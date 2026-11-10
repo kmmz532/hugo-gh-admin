@@ -1,8 +1,8 @@
-// /adminSettings/ 専用のサイト設定画面。既存の /admin/ の認証・画面には手を加えない。
+// /admin-settings/ 専用のサイト設定画面。既存の /admin/ の認証・画面には手を加えない。
 import { getToken } from './github.js';
 
 const $ = (id) => document.getElementById(id);
-const settings = JSON.parse($('adminSettings-config').textContent);
+const settings = JSON.parse($('admin-settings-config').textContent);
 const API = 'https://api.github.com';
 const TOKEN_KEY = 'gh_admin2_token';
 let token = sessionStorage.getItem(TOKEN_KEY) || getToken() || '';
@@ -71,10 +71,10 @@ async function connect(candidate) {
   sessionStorage.setItem(TOKEN_KEY, token);
   configFile = file;
   loadForm(decodeBase64(file.content));
-  $('adminSettings-settings-form').hidden = false;
-  $('adminSettings-auth-form').hidden = true;
-  status('adminSettings-auth-status', `接続済み: ${settings.repo}`);
-  status('adminSettings-status', '');
+  $('admin-settings-settings-form').hidden = false;
+  $('admin-settings-auth-form').hidden = true;
+  status('admin-settings-auth-status', `接続済み: ${settings.repo}`);
+  status('admin-settings-status', '');
 }
 
 // この画面が変更する TOML キーだけを対象に、該当セクション内の行を置換する。
@@ -130,8 +130,8 @@ function writeString(lines, key, value, table = '') {
 }
 
 function showPreview(id, path) {
-  const image = $(id === 'icon' ? 'adminSettings-icon-preview' : 'adminSettings-thumbnail-preview');
-  const label = $(id === 'icon' ? 'adminSettings-icon-path' : 'adminSettings-thumbnail-path');
+  const image = $(id === 'icon' ? 'admin-settings-icon-preview' : 'admin-settings-thumbnail-preview');
+  const label = $(id === 'icon' ? 'admin-settings-icon-path' : 'admin-settings-thumbnail-path');
   label.textContent = path || '未設定';
   if (path) {
     image.src = new URL(path, location.origin).href;
@@ -144,7 +144,7 @@ function showPreview(id, path) {
 
 function loadForm(text) {
   const lines = text.split(/\r?\n/);
-  $('adminSettings-title').value = readString(lines, 'title');
+  $('admin-settings-title').value = readString(lines, 'title');
   showPreview('icon', readString(lines, 'icon', 'params'));
   showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
 }
@@ -168,40 +168,40 @@ async function uploadAsset(file, prefix, allowedExtensions, maxSize) {
   return `/${path.slice('static/'.length)}`;
 }
 
-$('adminSettings-auth-form').addEventListener('submit', async (event) => {
+$('admin-settings-auth-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  status('adminSettings-auth-status', 'GitHub に接続中…');
+  status('admin-settings-auth-status', 'GitHub に接続中…');
   try {
-    await connect($('adminSettings-token').value.trim());
+    await connect($('admin-settings-token').value.trim());
   } catch (error) {
-    status('adminSettings-auth-status', error.message, true);
+    status('admin-settings-auth-status', error.message, true);
   }
 });
 
-$('adminSettings-settings-form').addEventListener('submit', async (event) => {
+$('admin-settings-settings-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const button = $('adminSettings-settings-form').querySelector('button[type="submit"]');
+  const button = $('admin-settings-settings-form').querySelector('button[type="submit"]');
   button.disabled = true;
-  status('adminSettings-status', '保存中…');
+  status('admin-settings-status', '保存中…');
   try {
     const lines = decodeBase64(configFile.content).split(/\r?\n/);
-    const title = $('adminSettings-title').value.trim();
+    const title = $('admin-settings-title').value.trim();
     if (!title) throw new Error('ブログ名を入力してほしい。');
     writeString(lines, 'title', title);
     writeString(lines, 'headerTitle', title, 'params');
 
-    const favicon = $('adminSettings-favicon').files[0];
+    const favicon = $('admin-settings-favicon').files[0];
     if (favicon) {
       const iconPath = await uploadAsset(favicon, 'favicon', ['ico', 'png', 'svg'], 1024 * 1024);
       writeString(lines, 'icon', iconPath, 'params');
       if (favicon.name.toLowerCase().endsWith('.png')) writeString(lines, 'appleIcon', iconPath, 'params');
     }
 
-    const thumbnail = $('adminSettings-thumbnail').files[0];
+    const thumbnail = $('admin-settings-thumbnail').files[0];
     if (thumbnail) {
       const thumbnailPath = await uploadAsset(thumbnail, 'default-thumbnail', ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], 5 * 1024 * 1024);
       writeString(lines, 'defaultThumbnail', thumbnailPath, 'params');
-    } else if ($('adminSettings-clear-thumbnail').checked) {
+    } else if ($('admin-settings-clear-thumbnail').checked) {
       writeString(lines, 'defaultThumbnail', '', 'params');
     }
 
@@ -209,12 +209,12 @@ $('adminSettings-settings-form').addEventListener('submit', async (event) => {
     configFile = await getFile(settings.path);
     showPreview('icon', readString(lines, 'icon', 'params'));
     showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
-    $('adminSettings-favicon').value = '';
-    $('adminSettings-thumbnail').value = '';
-    $('adminSettings-clear-thumbnail').checked = false;
-    status('adminSettings-status', `保存した。コミット: ${result.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
+    $('admin-settings-favicon').value = '';
+    $('admin-settings-thumbnail').value = '';
+    $('admin-settings-clear-thumbnail').checked = false;
+    status('admin-settings-status', `保存した。コミット: ${result.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
   } catch (error) {
-    status('adminSettings-status', error.message, true);
+    status('admin-settings-status', error.message, true);
   } finally {
     button.disabled = false;
   }
@@ -222,9 +222,9 @@ $('adminSettings-settings-form').addEventListener('submit', async (event) => {
 
 if (token) {
   connect(token).catch((error) => {
-    status('adminSettings-auth-status', `保存済みの認証情報では接続できなかった。サイト本体リポジトリ用の PAT を入力してほしい。詳細: ${error.message}`, true);
-    $('adminSettings-auth-form').hidden = false;
+    status('admin-settings-auth-status', `保存済みの認証情報では接続できなかった。サイト本体リポジトリ用の PAT を入力してほしい。詳細: ${error.message}`, true);
+    $('admin-settings-auth-form').hidden = false;
   });
 } else {
-  $('adminSettings-auth-form').hidden = false;
+  $('admin-settings-auth-form').hidden = false;
 }
