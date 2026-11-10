@@ -1,11 +1,10 @@
 {{ define "main" }}
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
-<h1 class="page-title">サイト設定</h1>
-<p class="admin-note">ブログ名、ファビコン、記事カードのデフォルトサムネイルを変更する。変更内容はブログ本体の hugo.toml にコミットされ、次回のサイトビルドから反映される。</p>
+<h1 class="page-title">設定</h1>
 
 <section class="settings-card admin2-card">
-  <h2>GitHub 認証</h2>
-  <p class="admin-note">ブログ本体リポジトリ <code>{{ $gh.siteRepo }}</code> の Contents に書き込める権限が必要だ。</p>
+  <h2>GitHub認証</h2>
+  <p class="admin-note">リポジトリ <code>{{ $gh.siteRepo }}</code> の Contents に書き込む権限が必要です。</p>
   <form id="admin2-auth-form" class="login-form" hidden>
     <label class="field">Personal access token
       <input id="admin2-token" type="password" autocomplete="off" placeholder="Personal access token">
@@ -16,7 +15,7 @@
 </section>
 
 <form id="admin2-settings-form" class="settings-card admin2-card" hidden>
-  <h2>基本設定</h2>
+  <h2>サイト設定</h2>
   <label class="field">ブログ名
     <input id="admin2-title" type="text" maxlength="100" required>
   </label>
@@ -27,7 +26,6 @@
     <img id="admin2-icon-preview" alt="現在のファビコン" hidden>
     <span id="admin2-icon-path" class="admin-note"></span>
   </div>
-  <p class="admin-note">ICO・PNG・SVGに対応。アップロードした画像はブログ本体リポジトリの static/ に保存する。</p>
 
   <h2>記事カード</h2>
   <label class="field">デフォルトサムネイル
@@ -41,7 +39,6 @@
     <input id="admin2-clear-thumbnail" type="checkbox">
     デフォルトサムネイルを解除する
   </label>
-  <p class="admin-note">記事に個別のサムネイルがない場合、記事カードにこの画像を表示する。未設定なら従来どおり画像を表示しない。OGP画像には適用しない。</p>
 
   <button class="btn primary" type="submit">変更を保存</button>
 </form>
