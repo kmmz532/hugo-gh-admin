@@ -29,7 +29,13 @@ async function api(path, options = {}) {
     cache: 'no-store',
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.message || `GitHub API error: ${response.status}`);
+  if (!response.ok) {
+    const message = body.message || `GitHub API error: ${response.status}`;
+    if (response.status === 403 && /Resource not accessible by personal access token/i.test(message)) {
+      throw new Error(`GitHub がブログ本体リポジトリへの書き込みを拒否した。Fine-grained PAT の Repository access に「${settings.repo}」を含め、Repository permissions の Contents を Read and write に設定してほしい。Metadata は Read-only でよい。トークンを変更した場合は、この画面で再接続してね。`);
+    }
+    throw new Error(message);
+  }
   return body;
 }
 
@@ -65,7 +71,7 @@ async function connect(candidate) {
   token = candidate;
   const repository = await api(`/repos/${settings.repo}`);
   if (repository.permissions?.push !== true) {
-    throw new Error(`このトークンには ${settings.repo} への書き込み権限がない。`);
+    throw new Error(`このトークンには ${settings.repo} への書き込み権限がない。Fine-grained PAT なら Repository access にこのリポジトリを含め、Contents を Read and write に設定してほしい。`);
   }
   const file = await getFile(settings.path);
   sessionStorage.setItem(TOKEN_KEY, token);
