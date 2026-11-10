@@ -7,7 +7,6 @@ const API = 'https://api.github.com';
 const TOKEN_KEY = 'gh_admin2_token';
 let token = sessionStorage.getItem(TOKEN_KEY) || getToken() || '';
 let configFile = null;
-let currentIcon = '';
 
 function status(id, message, error = false) {
   const el = $(id);
@@ -30,14 +29,14 @@ async function api(path, options = {}) {
     cache: 'no-store',
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(body.message || `GitHub API error: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(body.message || `GitHub API error: ${response.status}`);
   return body;
 }
 
+const apiPath = (path) => path.split('/').map(encodeURIComponent).join('/');
+
 function decodeBase64(value) {
-  const binary = atob(value.replace(/\\s/g, ''));
+  const binary = atob(value.replace(/\s/g, ''));
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
@@ -50,11 +49,11 @@ function encodeBase64(value) {
 }
 
 async function getFile(path) {
-  return api(`/repos/${settings.repo}/contents/${encodeURIComponent(path).replaceAll('%2F', '/') }?ref=${encodeURIComponent(settings.branch)}`);
+  return api(`/repos/${settings.repo}/contents/${apiPath(path)}?ref=${encodeURIComponent(settings.branch)}`);
 }
 
 async function putFile(path, content, message, sha) {
-  return api(`/repos/${settings.repo}/contents/${encodeURIComponent(path).replaceAll('%2F', '/') }`, {
+  return api(`/repos/${settings.repo}/contents/${apiPath(path)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -67,66 +66,81 @@ async function putFile(path, content, message, sha) {
 }
 
 async function connect(candidate) {
+  if (!candidate) throw new Error('Personal access token を入力してほしい。');
   token = candidate;
   const repository = await api(`/repos/${settings.repo}`);
   if (repository.permissions?.push !== true) {
     throw new Error(`このトークンには ${settings.repo} への書き込み権限がない。`);
   }
+  const file = await getFile(settings.path);
   sessionStorage.setItem(TOKEN_KEY, token);
-  configFile = await getFile(settings.path);
-  const text = decodeBase64(configFile.content);
-  loadForm(text);
+  configFile = file;
+  loadForm(decodeBase64(file.content));
   $('admin2-settings-form').hidden = false;
   status('admin2-auth-status', `接続済み: ${settings.repo}`);
   status('admin2-status', '');
 }
 
-function findTomlString(text, key, table = '') {
-  const escaped = key.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
-  if (!table) {
-    const match = text.match(new RegExp(`^\\s*${escaped}\\s*=\\s*"((?:\\\\.|[^"])*)"`, 'm'));
-    return match?.[1] ?? '';
-  }
-  const section = text.match(new RegExp(`^\\[${table.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\]\\s*$([\\s\\S]*?)(?=^\\[|$)`, 'm'));
-  const match = section?.[1].match(new RegExp(`^\\s*${escaped}\\s*=\\s*"((?:\\\\.|[^"])*)"`, 'm'));
-  return match?.[1] ?? '';
+// この画面が変更する TOML キーだけを対象に、該当セクション内の行を置換する。
+// TOML 全体を再シリアライズしないため、他の設定・コメント・順序を保持する。
+function sectionRange(lines, table) {
+  const header = `[${table}]`;
+  const start = lines.findIndex((line) => line.trim() === header);
+  if (start < 0) return null;
+  let end = lines.findIndex((line, index) => index > start && /^\s*\[[^\]]+\]\s*$/.test(line));
+  if (end < 0) end = lines.length;
+  return { start, end };
 }
 
-function tomlQuote(value) {
-  return JSON.stringify(value);
+function readString(lines, key, table = '') {
+  let start = 0;
+  let end = lines.length;
+  if (table) {
+    const range = sectionRange(lines, table);
+    if (!range) return '';
+    start = range.start + 1;
+    end = range.end;
+  } else {
+    end = lines.findIndex((line) => /^\s*\[/.test(line));
+    if (end < 0) end = lines.length;
+  }
+  const line = lines.slice(start, end).find((item) => new RegExp(`^\\s*${key}\\s*=`).test(item));
+  if (!line) return '';
+  const value = line.slice(line.indexOf('=') + 1).trim();
+  if (!value.startsWith('"')) return '';
+  try { return JSON.parse(value); } catch { return value.slice(1, value.lastIndexOf('"')); }
 }
 
-function setTomlValue(text, key, value, table = '') {
-  const line = `${key} = ${tomlQuote(value)}`;
-  if (!table) {
-    const pattern = new RegExp(`^\\s*${key}\\s*=.*$`, 'm');
-    if (!pattern.test(text)) throw new Error(`hugo.toml に ${key} の設定が見つからない。`);
-    return text.replace(pattern, line);
+function writeString(lines, key, value, table = '') {
+  const replacement = `  ${key} = ${JSON.stringify(value)}`;
+  let start = 0;
+  let end = lines.length;
+  if (table) {
+    let range = sectionRange(lines, table);
+    if (!range) {
+      if (lines.length && lines.at(-1).trim()) lines.push('');
+      lines.push(`[${table}]`, replacement);
+      return;
+    }
+    start = range.start + 1;
+    end = range.end;
+  } else {
+    end = lines.findIndex((line) => /^\s*\[/.test(line));
+    if (end < 0) end = lines.length;
   }
-
-  const header = new RegExp(`^\\[${table}\\]\\s*$`, 'm');
-  const match = header.exec(text);
-  if (!match) return `${text.trimEnd()}\\n\\n[${table}]\\n${line}\\n`;
-  const start = match.index + match[0].length;
-  const rest = text.slice(start);
-  const next = /^\\s*\\[[^\\]]+\\]\\s*$/m.exec(rest);
-  const end = next ? start + next.index : text.length;
-  const section = text.slice(start, end);
-  const pattern = new RegExp(`^\\s*${key}\\s*=.*$`, 'm');
-  const updated = pattern.test(section)
-    ? section.replace(pattern, line)
-    : `${section.replace(/\\s*$/, '')}\\n${line}\\n`;
-  return text.slice(0, start) + updated + text.slice(end);
+  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\s*${key}\\s*=`).test(line));
+  if (index >= 0) lines[index] = replacement;
+  else lines.splice(end, 0, replacement);
 }
 
 function loadForm(text) {
-  $('admin2-title').value = findTomlString(text, 'title');
-  currentIcon = findTomlString(text, 'icon', 'params');
-  $('admin2-icon-path').textContent = currentIcon || '未設定';
-  if (currentIcon) {
-    const image = $('admin2-icon-preview');
-    image.src = new URL(currentIcon, location.origin).href;
-    image.hidden = false;
+  const lines = text.split(/\r?\n/);
+  $('admin2-title').value = readString(lines, 'title');
+  const icon = readString(lines, 'icon', 'params');
+  $('admin2-icon-path').textContent = icon || '未設定';
+  if (icon) {
+    $('admin2-icon-preview').src = new URL(icon, location.origin).href;
+    $('admin2-icon-preview').hidden = false;
   }
 }
 
@@ -134,6 +148,7 @@ async function uploadIcon(file) {
   const extension = file.name.split('.').pop().toLowerCase();
   if (!['ico', 'png', 'svg'].includes(extension)) throw new Error('ICO・PNG・SVGファイルを選択してほしい。');
   if (file.size > 1024 * 1024) throw new Error('ファビコンは1MB以下にしてほしい。');
+
   const path = `static/favicon.${extension}`;
   let existing = null;
   try {
@@ -150,10 +165,9 @@ async function uploadIcon(file) {
 
 $('admin2-auth-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const supplied = $('admin2-token').value.trim();
   status('admin2-auth-status', 'GitHub に接続中…');
   try {
-    await connect(supplied || token);
+    await connect($('admin2-token').value.trim() || token);
   } catch (error) {
     status('admin2-auth-status', error.message, true);
     $('admin2-settings-form').hidden = true;
@@ -166,31 +180,31 @@ $('admin2-settings-form').addEventListener('submit', async (event) => {
   button.disabled = true;
   status('admin2-status', '保存中…');
   try {
-    let text = decodeBase64(configFile.content);
+    const lines = decodeBase64(configFile.content).split(/\r?\n/);
     const title = $('admin2-title').value.trim();
     if (!title) throw new Error('ブログ名を入力してほしい。');
-    text = setTomlValue(text, 'title', title);
-    text = setTomlValue(text, 'headerTitle', title, 'params');
+    writeString(lines, 'title', title);
+    writeString(lines, 'headerTitle', title, 'params');
 
     const file = $('admin2-favicon').files[0];
     if (file) {
       const iconPath = await uploadIcon(file);
-      text = setTomlValue(text, 'icon', iconPath, 'params');
+      writeString(lines, 'icon', iconPath, 'params');
       if (file.name.toLowerCase().endsWith('.png')) {
-        text = setTomlValue(text, 'appleIcon', iconPath, 'params');
+        writeString(lines, 'appleIcon', iconPath, 'params');
       }
     }
 
-    const saved = await putFile(settings.path, encodeBase64(text), 'Update blog appearance settings', configFile.sha);
+    const result = await putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.sha);
     configFile = await getFile(settings.path);
-    currentIcon = findTomlString(text, 'icon', 'params');
-    $('admin2-icon-path').textContent = currentIcon || '未設定';
-    if (currentIcon) {
-      $('admin2-icon-preview').src = new URL(currentIcon, location.origin).href;
+    const icon = readString(lines, 'icon', 'params');
+    $('admin2-icon-path').textContent = icon || '未設定';
+    if (icon) {
+      $('admin2-icon-preview').src = new URL(icon, location.origin).href;
       $('admin2-icon-preview').hidden = false;
     }
     $('admin2-favicon').value = '';
-    status('admin2-status', `保存した。コミット: ${saved.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
+    status('admin2-status', `保存した。コミット: ${result.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
   } catch (error) {
     status('admin2-status', error.message, true);
   } finally {
@@ -200,7 +214,6 @@ $('admin2-settings-form').addEventListener('submit', async (event) => {
 
 if (token) {
   connect(token).catch((error) => {
-    sessionStorage.removeItem(TOKEN_KEY);
     status('admin2-auth-status', `既存の認証情報では接続できない。ブログ本体リポジトリ用の PAT を入力してほしい。詳細: ${error.message}`, true);
   });
 }
