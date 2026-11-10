@@ -188,10 +188,23 @@ async function renderArticle(container, slug, fields) {
   renderPreview(fields.body, null, scratch);
 
   const title = fields.title || t('common.untitled');
-  fillItems(field(article, 'crumbs'), [t('common.top'), ...(fields.categories ?? []), title], (node, name) => {
-    node.textContent = name;
+  const crumbs = [t('common.top'), ...(fields.categories ?? []), title];
+  fillItems(field(article, 'crumbs'), crumbs, (node, name, index) => {
+    node.replaceChildren();
+    if (index === crumbs.length - 1) {
+      node.textContent = name;
+      node.setAttribute('aria-current', 'page');
+      return;
+    }
+    const link = el('a');
+    link.textContent = name;
+    link.href = index === 0
+      ? config.rootURL
+      : `${config.rootURL.replace(/\\/$/, '')}/categories/${encodeURIComponent(String(name).toLowerCase().trim().replace(/\\s+/g, '-'))}/`;
+    node.append(link);
   });
   field(article, 'title').textContent = title;
+  document.title = title;
   setDate(article, fields.date);
   if (fields.tags?.length) {
     const tags = field(article, 'tags');
