@@ -2,9 +2,10 @@
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
 {{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
 <h1 class="page-title">{{ $i18n.title.admin }}</h1>
-<nav class="admin-nav" aria-label="{{ $i18n.admin.nav_label }}">
-  <a href="{{ $gh.adminURL }}" aria-current="page">{{ $i18n.admin.nav_articles }}</a>
-  <a href="{{ $gh.adminImagesURL }}">{{ $i18n.admin.nav_images }}</a>
+<nav class="admin-nav" aria-label="管理メニュー">
+  <a href="{{ $gh.adminURL }}"{{ if eq .Layout "admin" }} aria-current="page"{{ end }}>記事</a>
+  <a href="{{ $gh.adminImagesURL }}"{{ if eq .Layout "admin-images" }} aria-current="page"{{ end }}>画像</a>
+  <a href="{{ "admin/settings/" | relURL }}"{{ if eq .Layout "admin-settings" }} aria-current="page"{{ end }}>設定</a>
 </nav>
 <p class="admin-note">{{ $i18n.admin.note }}</p>
 
