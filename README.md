@@ -43,10 +43,10 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `adminURL` | `/admin/` | 一括管理のURL |
 | `adminImagesURL` | `/admin/images/` | 画像の管理のURL |
 | `postURL` | `/posts/{slug}/` | 記事のURLの形。`{slug}`（ファイル名）・`{name}`（先頭の日付を除いた名前）・`{yyyy}`・`{mm}`・`{dd}` を置き換える。反映待ちの表示で利用する |
-| `lang` | `languageCode` の先頭（`ja-jp` → `ja`） | 管理画面の文言の言語。辞書が無ければ `en`。辞書は `data/gh-admin/i18n/<lang>.toml` |
+| `lang` | `languageCode` の先頭（`ja-jp` → `ja`） | 管理画面の文言の言語。辞書が無ければ `en`。辞書は `data/gh-admin/i18n/<lang>.toml` |\n| `siteRepo` | なし | `/admin2/` がブログ名・ファビコンの設定を書き込むサイト本体リポジトリ（`owner/name`） |\n| `siteBranch` | `main` | サイト本体リポジトリのブランチ |\n| `siteConfigPath` | `hugo.toml` | サイト本体リポジトリ内の Hugo 設定ファイル |
 | `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()` を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
 
-画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。
+画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。\n\n### サイト設定（`/admin2/`）\n\n`siteRepo` を設定すると、`/admin2/` からブログ名（`title`・`params.headerTitle`）とファビコンを変更できます。ファビコンは ICO・PNG・SVG を `static/` にアップロードし、`hugo.toml` の設定を更新します。変更は GitHub にコミットされ、サイトの再ビルド後に反映されます。\n\nこの画面は既存の `/admin/` と独立しています。記事リポジトリ用の PAT とは別に、サイト本体リポジトリの Contents に Read and write 権限を持つ PAT が必要です。トークンはこのタブの `sessionStorage` にのみ保存します。
 
 ```toml
 [params.ghAdmin]
