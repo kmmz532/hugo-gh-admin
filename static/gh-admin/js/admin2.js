@@ -36,7 +36,7 @@ async function api(path, options = {}) {
 const apiPath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
 function decodeBase64(value) {
-  const binary = atob(value.replace(/\\s/g, ''));
+  const binary = atob(value.replace(/\s/g, ''));
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
@@ -83,7 +83,7 @@ function sectionRange(lines, table) {
   const header = `[${table}]`;
   const start = lines.findIndex((line) => line.trim() === header);
   if (start < 0) return null;
-  let end = lines.findIndex((line, index) => index > start && /^\\s*\\[[^\\]]+\\]\\s*$/.test(line));
+  let end = lines.findIndex((line, index) => index > start && /^\s*\[[^\]]+\]\s*$/.test(line));
   if (end < 0) end = lines.length;
   return { start, end };
 }
@@ -97,10 +97,10 @@ function readString(lines, key, table = '') {
     start = range.start + 1;
     end = range.end;
   } else {
-    end = lines.findIndex((line) => /^\\s*\\[/.test(line));
+    end = lines.findIndex((line) => /^\s*\[/.test(line));
     if (end < 0) end = lines.length;
   }
-  const line = lines.slice(start, end).find((item) => new RegExp(`^\\\\s*${key}\\\\s*=`).test(item));
+  const line = lines.slice(start, end).find((item) => new RegExp(`^\\s*${key}\\s*=`).test(item));
   if (!line) return '';
   const value = line.slice(line.indexOf('=') + 1).trim();
   if (!value.startsWith('"')) return '';
@@ -121,10 +121,10 @@ function writeString(lines, key, value, table = '') {
     start = range.start + 1;
     end = range.end;
   } else {
-    end = lines.findIndex((line) => /^\\s*\\[/.test(line));
+    end = lines.findIndex((line) => /^\s*\[/.test(line));
     if (end < 0) end = lines.length;
   }
-  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\\\s*${key}\\\\s*=`).test(line));
+  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\s*${key}\\s*=`).test(line));
   if (index >= 0) lines[index] = replacement;
   else lines.splice(end, 0, replacement);
 }
@@ -143,7 +143,7 @@ function showPreview(id, path) {
 }
 
 function loadForm(text) {
-  const lines = text.split(/\\r?\\n/);
+  const lines = text.split(/\r?\n/);
   $('admin2-title').value = readString(lines, 'title');
   showPreview('icon', readString(lines, 'icon', 'params'));
   showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
@@ -184,7 +184,7 @@ $('admin2-settings-form').addEventListener('submit', async (event) => {
   button.disabled = true;
   status('admin2-status', '保存中…');
   try {
-    const lines = decodeBase64(configFile.content).split(/\\r?\\n/);
+    const lines = decodeBase64(configFile.content).split(/\r?\n/);
     const title = $('admin2-title').value.trim();
     if (!title) throw new Error('ブログ名を入力してほしい。');
     writeString(lines, 'title', title);
@@ -205,7 +205,7 @@ $('admin2-settings-form').addEventListener('submit', async (event) => {
       writeString(lines, 'defaultThumbnail', '', 'params');
     }
 
-    const result = await putFile(settings.path, encodeBase64(lines.join('\\n')), 'Update blog appearance settings', configFile.sha);
+    const result = await putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.sha);
     configFile = await getFile(settings.path);
     showPreview('icon', readString(lines, 'icon', 'params'));
     showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
