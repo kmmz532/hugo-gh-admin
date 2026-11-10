@@ -405,7 +405,7 @@ async function load() {
     }
     state.extra = parsed.extra;
     templateTitle = parsed.fields.title || t('common.untitled');
-    server = { ...parsed.fields, kind: 'article', slug: '', date: nowJst() };
+    server = { ...parsed.fields, image: '', kind: 'article', slug: '', date: nowJst() };
     server.slug = slugs.autoSlugFor(server);
   } else {
     server = {
