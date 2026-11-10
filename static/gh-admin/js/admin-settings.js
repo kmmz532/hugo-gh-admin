@@ -198,33 +198,51 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
   status('admin-settings-status', t('settings.saving'));
   try {
     const lines = decodeBase64(configFile.content).split(/\r?\n/);
+    let configChanged = false;
     const title = $('admin-settings-title').value.trim();
     if (!title) throw new Error(t('settings.title_required'));
-    writeString(lines, 'title', title);
+    if (title !== readString(lines, 'title')) {
+      writeString(lines, 'title', title);
+      configChanged = true;
+    }
 
     const favicon = $('admin-settings-favicon').files[0];
     if (favicon) {
       const iconPath = await uploadAsset(favicon, 'favicon', ['ico', 'png', 'svg'], 1024 * 1024);
-      writeString(lines, 'icon', iconPath, 'params');
-      if (favicon.name.toLowerCase().endsWith('.png')) writeString(lines, 'appleIcon', iconPath, 'params');
+      if (iconPath !== readString(lines, 'icon', 'params')) {
+        writeString(lines, 'icon', iconPath, 'params');
+        configChanged = true;
+      }
+      if (favicon.name.toLowerCase().endsWith('.png') && iconPath !== readString(lines, 'appleIcon', 'params')) {
+        writeString(lines, 'appleIcon', iconPath, 'params');
+        configChanged = true;
+      }
     }
 
     const thumbnail = $('admin-settings-thumbnail').files[0];
     if (thumbnail) {
       const thumbnailPath = await uploadAsset(thumbnail, 'default-thumbnail', ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], 5 * 1024 * 1024);
-      writeString(lines, 'defaultThumbnail', thumbnailPath, 'params');
-    } else if ($('admin-settings-clear-thumbnail').checked) {
+      if (thumbnailPath !== readString(lines, 'defaultThumbnail', 'params')) {
+        writeString(lines, 'defaultThumbnail', thumbnailPath, 'params');
+        configChanged = true;
+      }
+    } else if ($('admin-settings-clear-thumbnail').checked && readString(lines, 'defaultThumbnail', 'params')) {
       writeString(lines, 'defaultThumbnail', '', 'params');
+      configChanged = true;
     }
 
-    const result = await putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.sha);
-    configFile = await getFile(settings.path);
+    let commit = '変更なし';
+    if (configChanged) {
+      const result = await putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.sha);
+      configFile = await getFile(settings.path);
+      commit = result.commit?.sha?.slice(0, 7) || '完了';
+    }
     showPreview('icon', readString(lines, 'icon', 'params'));
     showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
     $('admin-settings-favicon').value = '';
     $('admin-settings-thumbnail').value = '';
     $('admin-settings-clear-thumbnail').checked = false;
-    status('admin-settings-status', t('settings.saved', { commit: result.commit?.sha?.slice(0, 7) || '完了' }));
+    status('admin-settings-status', t('settings.saved', { commit }));
   } catch (error) {
     if (/Fine-grained PAT/.test(error.message)) {
       // サイト設定用の権限が足りない場合、別の PAT を入力し直せるようにする。
