@@ -1049,3 +1049,74 @@ body:has(.editor) .footer {
   height: 90px;
   object-fit: cover;
 }
+
+/* 統合管理画面 */
+.admin-nav {
+  flex-wrap: wrap;
+}
+
+.admin-table {
+  min-width: 680px;
+}
+
+.admin2-card {
+  width: 100%;
+  max-width: 42rem;
+  margin: 1rem 0;
+}
+
+.admin2-card .field input:not([type="checkbox"]):not([type="file"]) {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.admin2-card input[type="file"] {
+  max-width: 100%;
+}
+
+.admin2-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin2-checkbox input {
+  width: auto;
+}
+
+@media (max-width: 600px) {
+  .admin-nav {
+    gap: 0.75rem;
+  }
+
+  .admin-tools {
+    align-items: stretch;
+  }
+
+  .admin-tools input,
+  .admin-tools select {
+    flex: 1 1 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+  }
+
+  .bulk-controls {
+    align-items: stretch;
+  }
+
+  .bulk-controls input,
+  .bulk-controls select,
+  .bulk-controls .btn {
+    flex: 1 1 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+  }
+
+  .admin2-card {
+    padding: 1rem;
+  }
+
+  .admin2-thumbnail-preview img {
+    max-width: 100%;
+  }
+}
