@@ -1,5 +1,6 @@
 // /admin-settings/ 専用のサイト設定画面。既存の /admin/ の認証・画面には手を加えない。
 import { getToken } from './github.js';
+import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-settings-config').textContent);
@@ -32,7 +33,7 @@ async function api(path, options = {}) {
   if (!response.ok) {
     const message = body.message || `GitHub API error: ${response.status}`;
     if (response.status === 403 && /Resource not accessible by personal access token/i.test(message)) {
-      throw new Error(`GitHub がブログ本体リポジトリへの書き込みを拒否した。Fine-grained PAT の Repository access に「${settings.repo}」を含め、Repository permissions の Contents を Read and write に設定してほしい。Metadata は Read-only でよい。トークンを変更した場合は、この画面で再接続してね。`);
+      throw new Error(t('settings.repo_write_denied', { repo: settings.repo }));
     }
     throw new Error(message);
   }
@@ -67,11 +68,11 @@ async function putFile(path, content, message, sha) {
 }
 
 async function connect(candidate) {
-  if (!candidate) throw new Error('Personal access token を入力してほしい。');
+  if (!candidate) throw new Error(t('settings.token_required'));
   token = candidate;
   const repository = await api(`/repos/${settings.repo}`);
   if (repository.permissions?.push !== true) {
-    throw new Error(`このトークンには ${settings.repo} への書き込み権限がない。Fine-grained PAT なら Repository access にこのリポジトリを含め、Contents を Read and write に設定してほしい。`);
+    throw new Error(t('settings.repo_no_write', { repo: settings.repo }));
   }
   const file = await getFile(settings.path);
   sessionStorage.setItem(TOKEN_KEY, token);
@@ -79,7 +80,7 @@ async function connect(candidate) {
   loadForm(decodeBase64(file.content));
   $('admin-settings-settings-form').hidden = false;
   $('admin-settings-auth-form').hidden = true;
-  status('admin-settings-auth-status', `接続済み: ${settings.repo}`);
+  status('admin-settings-auth-status', t('settings.connected', { repo: settings.repo }));
   status('admin-settings-status', '');
 }
 
@@ -114,23 +115,25 @@ function readString(lines, key, table = '') {
 }
 
 function writeString(lines, key, value, table = '') {
-  const replacement = `  ${key} = ${JSON.stringify(value)}`;
   let start = 0;
   let end = lines.length;
   if (table) {
     const range = sectionRange(lines, table);
     if (!range) {
       if (lines.length && lines.at(-1).trim()) lines.push('');
-      lines.push(`[${table}]`, replacement);
+      lines.push(`[${table}]`, `  ${key} = ${JSON.stringify(value)}`);
       return;
     }
     start = range.start + 1;
     end = range.end;
   } else {
-    end = lines.findIndex((line) => /^\s*\[/.test(line));
+    end = lines.findIndex((line) => /^\\s*\\[/.test(line));
     if (end < 0) end = lines.length;
   }
-  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\s*${key}\\s*=`).test(line));
+
+  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\\\s*${key}\\\\s*=`).test(line));
+  const indent = table && index >= 0 ? lines[index].match(/^\\s*/)[0] : (table ? '  ' : '');
+  const replacement = `${indent}${key} = ${JSON.stringify(value)}`;
   if (index >= 0) lines[index] = replacement;
   else lines.splice(end, 0, replacement);
 }
@@ -157,8 +160,8 @@ function loadForm(text) {
 
 async function uploadAsset(file, prefix, allowedExtensions, maxSize) {
   const extension = file.name.split('.').pop().toLowerCase();
-  if (!allowedExtensions.includes(extension)) throw new Error(`対応していないファイル形式だ: ${allowedExtensions.join('・')}`);
-  if (file.size > maxSize) throw new Error(`ファイルサイズは${Math.floor(maxSize / 1024 / 1024)}MB以下にしてほしい。`);
+  if (!allowedExtensions.includes(extension)) throw new Error(t('settings.extension_unsupported', { extensions: allowedExtensions.join('・') }));
+  if (file.size > maxSize) throw new Error(t('settings.file_too_large', { size: Math.floor(maxSize / 1024 / 1024) }));
 
   const path = `static/${prefix}.${extension}`;
   let existing = null;
@@ -170,13 +173,16 @@ async function uploadAsset(file, prefix, allowedExtensions, maxSize) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  await putFile(path, btoa(binary), `Update site ${prefix}`, existing?.sha);
+  const saved = await putFile(path, btoa(binary), `Update site ${prefix}`, existing?.sha);
+  if (saved.content?.path !== path || !saved.content?.sha) throw new Error(t('settings.upload_failed'));
+  const verified = await getFile(path);
+  if (verified.path !== path || verified.sha !== saved.content.sha) throw new Error(t('settings.upload_failed'));
   return `/${path.slice('static/'.length)}`;
 }
 
 $('admin-settings-auth-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  status('admin-settings-auth-status', 'GitHub に接続中…');
+  status('admin-settings-auth-status', t('settings.connecting'));
   try {
     await connect($('admin-settings-token').value.trim());
   } catch (error) {
@@ -188,13 +194,12 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = $('admin-settings-settings-form').querySelector('button[type="submit"]');
   button.disabled = true;
-  status('admin-settings-status', '保存中…');
+  status('admin-settings-status', t('settings.saving'));
   try {
     const lines = decodeBase64(configFile.content).split(/\r?\n/);
     const title = $('admin-settings-title').value.trim();
-    if (!title) throw new Error('ブログ名を入力してほしい。');
+    if (!title) throw new Error(t('settings.title_required'));
     writeString(lines, 'title', title);
-    writeString(lines, 'headerTitle', title, 'params');
 
     const favicon = $('admin-settings-favicon').files[0];
     if (favicon) {
@@ -218,7 +223,7 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
     $('admin-settings-favicon').value = '';
     $('admin-settings-thumbnail').value = '';
     $('admin-settings-clear-thumbnail').checked = false;
-    status('admin-settings-status', `保存した。コミット: ${result.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
+    status('admin-settings-status', t('settings.saved', { commit: result.commit?.sha?.slice(0, 7) || '完了' }));
   } catch (error) {
     if (/Fine-grained PAT/.test(error.message)) {
       // サイト設定用の権限が足りない場合、別の PAT を入力し直せるようにする。
@@ -238,7 +243,7 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
 
 if (token) {
   connect(token).catch((error) => {
-    status('admin-settings-auth-status', `保存済みの認証情報では接続できなかった。サイト本体リポジトリ用の PAT を入力してほしい。詳細: ${error.message}`, true);
+    status('admin-settings-auth-status', t('settings.saved_token_invalid', { message: error.message }), true);
     $('admin-settings-auth-form').hidden = false;
   });
 } else {
