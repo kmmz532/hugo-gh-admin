@@ -17,7 +17,7 @@ top = "Top"
 breadcrumb = "Breadcrumb"
 
 [pending]
-band = "Pending (shown only on this device)"
+band = "Pending"
 band_deleted = "This post has been deleted (pending)"
 not_reflected = "The published post may not be reflected yet. Check Actions."
 
