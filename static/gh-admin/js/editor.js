@@ -235,7 +235,7 @@ function autoSummary(markdown) {
     return result;
   }
 
-  const text = extract(template.content).replace(/\\s+/g, ' ').trim();
+  const text = extract(template.content).replace(/\s+/g, ' ').trim();
   const chars = [...text];
   return chars.length > SUMMARY_TARGET ? `${chars.slice(0, SUMMARY_TARGET).join('')}…` : text;
 }
