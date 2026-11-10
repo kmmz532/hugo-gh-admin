@@ -1042,3 +1042,10 @@ body:has(.editor) .footer {
 #admin2-status.error {
   color: var(--danger);
 }
+
+
+.admin2-thumbnail-preview img {
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+}
