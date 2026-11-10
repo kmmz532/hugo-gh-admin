@@ -205,8 +205,37 @@ function autoSummary(markdown) {
   if (!window.marked || !markdown.trim()) return '';
   const template = document.createElement('template');
   template.innerHTML = window.marked.parse(markdown);
-  template.content.querySelectorAll('pre').forEach((el) => el.remove());
-  const text = template.content.textContent.replace(/\s+/g, ' ').trim();
+  template.content.querySelectorAll('h1, h2, h3, h4, h5, h6, pre, script, style, img, hr').forEach((el) => el.remove());
+
+  const blockTags = new Set(['blockquote', 'div', 'ol', 'p', 'section', 'table', 'tbody', 'thead', 'tr', 'ul']);
+  function extract(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+    if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return '';
+    const tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toLowerCase() : '';
+    if (tag === 'ul' || tag === 'ol') {
+      return [...node.children]
+        .filter((child) => child.tagName.toLowerCase() === 'li')
+        .map(extract)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .join('、');
+    }
+
+    let previousWasBlock = false;
+    let result = '';
+    for (const child of node.childNodes) {
+      const isBlock = child.nodeType === Node.ELEMENT_NODE && blockTags.has(child.tagName.toLowerCase());
+      const value = extract(child);
+      if (value) {
+        if (result && (previousWasBlock || isBlock)) result += ' ';
+        result += value;
+      }
+      previousWasBlock = isBlock;
+    }
+    return result;
+  }
+
+  const text = extract(template.content).replace(/\\s+/g, ' ').trim();
   const chars = [...text];
   return chars.length > SUMMARY_TARGET ? `${chars.slice(0, SUMMARY_TARGET).join('')}…` : text;
 }
