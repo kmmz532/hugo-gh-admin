@@ -220,7 +220,17 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
     $('admin-settings-clear-thumbnail').checked = false;
     status('admin-settings-status', `保存した。コミット: ${result.commit?.sha?.slice(0, 7) || '完了'}。サイトの再ビルド後に反映される。`);
   } catch (error) {
-    status('admin-settings-status', error.message, true);
+    if (/Fine-grained PAT/.test(error.message)) {
+      // サイト設定用の権限が足りない場合、別の PAT を入力し直せるようにする。
+      sessionStorage.removeItem(TOKEN_KEY);
+      $('admin-settings-settings-form').hidden = true;
+      $('admin-settings-auth-form').hidden = false;
+      $('admin-settings-token').value = '';
+      status('admin-settings-auth-status', error.message, true);
+      status('admin-settings-status', '');
+    } else {
+      status('admin-settings-status', error.message, true);
+    }
   } finally {
     button.disabled = false;
   }
