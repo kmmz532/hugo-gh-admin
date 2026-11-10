@@ -173,24 +173,10 @@ async function uploadAsset(file, prefix, allowedExtensions, maxSize) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  let saved;
   try {
-    saved = await putFile(path, btoa(binary), `Update site ${prefix}`, existing?.sha);
+    await putFile(path, btoa(binary), `Update site ${prefix}`, existing?.sha);
   } catch (error) {
     throw new Error(`${t('settings.upload_failed')} (GitHub API: ${error.message})`);
-  }
-  if (saved.content?.path !== path || !saved.content?.sha) {
-    throw new Error(`${t('settings.upload_failed')} (GitHub API response did not include the saved file)`);
-  }
-
-  let verified;
-  try {
-    verified = await getFile(path);
-  } catch (error) {
-    throw new Error(`${t('settings.upload_failed')} (verification failed: ${error.message})`);
-  }
-  if (verified.path !== path || verified.sha !== saved.content.sha) {
-    throw new Error(`${t('settings.upload_failed')} (uploaded file SHA does not match)`);
   }
   return `/${path.slice('static/'.length)}`;
 }
