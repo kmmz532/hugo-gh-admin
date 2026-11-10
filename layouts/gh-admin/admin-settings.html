@@ -1,5 +1,6 @@
 {{ define "main" }}
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
+{{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
 <h1 class="page-title">設定</h1>
 <nav class="admin-nav" aria-label="管理メニュー">
   <a href="{{ $gh.adminURL }}"{{ if eq .Layout "admin" }} aria-current="page"{{ end }}>記事</a>
@@ -16,6 +17,7 @@
     <button class="btn" type="submit">接続</button>
   </form>
   <p id="admin-settings-auth-status" class="bulk-status" role="status"></p>
+  <script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
 </section>
 
 <form id="admin-settings-settings-form" class="settings-card admin-settings-card" hidden>
