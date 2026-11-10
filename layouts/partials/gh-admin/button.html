@@ -10,7 +10,7 @@
   {{- $vis := "admin-only" -}}
   {{- $href := $gh.adminURL -}}
   {{- $label := .label | default $i18n.common.bulk_admin -}}
-  {{- $icon := "fa-solid fa-table-list" -}}
+  {{- $icon := "fa-solid fa-gear" -}}
   {{- if eq $kind "edit" -}}
     {{- $href = printf "%s?slug=%s" $gh.editURL (.page.File.ContentBaseName | urlquery) -}}
     {{- $label = .label | default $i18n.common.edit_post -}}
