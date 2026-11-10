@@ -246,6 +246,20 @@ saved = "{count} 件を保存しました。1〜2 分後に反映されます。
 conflict = "他で更新されています。再読み込みしてからもう一度行ってください（何も変えていません）。"
 reading = "読み込み中（{read} / {total}）"
 
+[settings]
+token_required = "Personal access token を入力してください。"
+repo_write_denied = "GitHub API による書き込みが拒否されました。Fine-grained PAT の Repository access に「{repo}」を追加し、Repository permissions の Contents を Read and write に設定してください。Metadata は Read-only で構いません。トークンを変更した場合は、再接続してください。"
+repo_no_write = "このトークンには「{repo}」への書き込み権限がありません。Fine-grained PAT の Repository access に対象リポジトリを追加し、Contents を Read and write に設定してください。"
+connected = "接続済み: {repo}"
+extension_unsupported = "対応していないファイル形式です。使用できる形式: {extensions}"
+file_too_large = "ファイルサイズは {size} MB 以下にしてください。"
+upload_failed = "画像を GitHub に保存できませんでした。時間をおいて再試行してください。"
+connecting = "GitHub に接続しています…"
+saving = "保存しています…"
+title_required = "ブログ名を入力してください。"
+saved = "保存しました。コミット: {commit}。サイトの再ビルド後に反映されます。"
+saved_token_invalid = "保存済みの認証情報では接続できません。サイト本体リポジトリ用の PAT を入力してください。詳細: {message}"
+
 [login]
 step_create = "GitHub の Settings → Developer settings → Fine-grained tokens で新しいトークンを作成する。"
 step_repo = "Repository access は「Only select repositories」で {repo} のみを選ぶ。"
