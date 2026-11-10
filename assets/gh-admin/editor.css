@@ -1120,3 +1120,9 @@ body:has(.editor) .footer {
     max-width: 100%;
   }
 }
+
+/* 設定フォームの表示切り替えはコンポーネント側の display 指定より hidden を優先する */
+#admin-settings-auth-form[hidden],
+#admin-settings-settings-form[hidden] {
+  display: none;
+}
