@@ -100,11 +100,11 @@ const field = (root, name) => root.querySelector(`[data-field="${name}"]`);
 function fillItems(box, items, fill) {
   const template = box.querySelector('template[data-item]');
   template.remove();
-  for (const item of items) {
+  items.forEach((item, index) => {
     const node = template.content.firstElementChild.cloneNode(true);
-    fill(node, item);
+    fill(node, item, index);
     box.append(node);
-  }
+  });
 }
 
 // 記事の URL。設定 postURL の {slug}（ファイル名）・{name}（先頭の日付を除いた名前）・{yyyy}・{mm}・{dd} を置き換える。
