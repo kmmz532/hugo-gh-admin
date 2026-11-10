@@ -211,12 +211,13 @@ async function renderArticle(container, slug, fields) {
     tags.hidden = false;
     fillItems(tags, fields.tags, (node, tag) => {
       node.textContent = `#${tag}`;
+      node.href = `${config.rootURL.replace(/\\/$/, '')}/tags/${encodeURIComponent(String(tag).toLowerCase().trim().replace(/\\s+/g, '-'))}/`;
     });
   }
   // 編集ボタンは任意（雛形に data-field="edit" があるときだけ）
   const edit = field(article, 'edit');
   if (edit) edit.href = `${config.editURL}?slug=${encodeURIComponent(slug)}`;
-  field(article, 'body').replaceWith(...scratch.childNodes);
+  field(article, 'body').replaceChildren(...scratch.childNodes);
   container.replaceChildren(...article.childNodes);
 }
 
