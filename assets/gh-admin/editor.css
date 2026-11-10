@@ -1016,20 +1016,20 @@ body:has(.editor) .footer {
 }
 
 
-/* サイト設定（/admin2/）。既存の管理画面のレイアウトには影響させない */
-.admin2-card {
+/* サイト設定（/admin-settings/）。既存の管理画面のレイアウトには影響させない */
+.admin-settings-card {
   max-width: 42rem;
   margin: 1rem 0;
 }
 
-.admin2-icon-preview {
+.admin-settings-icon-preview {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-height: 48px;
 }
 
-.admin2-icon-preview img {
+.admin-settings-icon-preview img {
   width: 48px;
   height: 48px;
   object-fit: contain;
@@ -1038,13 +1038,13 @@ body:has(.editor) .footer {
   background: var(--background);
 }
 
-#admin2-auth-status.error,
-#admin2-status.error {
+#admin-settings-auth-status.error,
+#admin-settings-status.error {
   color: var(--danger);
 }
 
 
-.admin2-thumbnail-preview img {
+.admin-settings-thumbnail-preview img {
   width: 160px;
   height: 90px;
   object-fit: cover;
@@ -1059,28 +1059,28 @@ body:has(.editor) .footer {
   min-width: 680px;
 }
 
-.admin2-card {
+.admin-settings-card {
   width: 100%;
   max-width: 42rem;
   margin: 1rem 0;
 }
 
-.admin2-card .field input:not([type="checkbox"]):not([type="file"]) {
+.admin-settings-card .field input:not([type="checkbox"]):not([type="file"]) {
   box-sizing: border-box;
   min-width: 0;
 }
 
-.admin2-card input[type="file"] {
+.admin-settings-card input[type="file"] {
   max-width: 100%;
 }
 
-.admin2-checkbox {
+.admin-settings-checkbox {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.admin2-checkbox input {
+.admin-settings-checkbox input {
   width: auto;
 }
 
@@ -1112,11 +1112,11 @@ body:has(.editor) .footer {
     min-height: 2.75rem;
   }
 
-  .admin2-card {
+  .admin-settings-card {
     padding: 1rem;
   }
 
-  .admin2-thumbnail-preview img {
+  .admin-settings-thumbnail-preview img {
     max-width: 100%;
   }
 }
