@@ -127,12 +127,12 @@ function writeString(lines, key, value, table = '') {
     start = range.start + 1;
     end = range.end;
   } else {
-    end = lines.findIndex((line) => /^\\s*\\[/.test(line));
+    end = lines.findIndex((line) => /^\s*\[/.test(line));
     if (end < 0) end = lines.length;
   }
 
-  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\\\s*${key}\\\\s*=`).test(line));
-  const indent = table && index >= 0 ? lines[index].match(/^\\s*/)[0] : (table ? '  ' : '');
+  const index = lines.findIndex((line, i) => i >= start && i < end && new RegExp(`^\\s*${key}\\s*=`).test(line));
+  const indent = table && index >= 0 ? lines[index].match(/^\s*/)[0] : (table ? '  ' : '');
   const replacement = `${indent}${key} = ${JSON.stringify(value)}`;
   if (index >= 0) lines[index] = replacement;
   else lines.splice(end, 0, replacement);
