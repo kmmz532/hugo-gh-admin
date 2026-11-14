@@ -203,8 +203,10 @@ function updateSummaryCount() {
 // 本文から概要を作る。見出し・コード・画像・リンクカードを除き、文字を整え、120 字で切る
 function autoSummary(markdown) {
   if (!window.marked || !markdown.trim()) return '';
+  // Hugo の link-card ショートコードは marked ではHTML化されず、文字列として残るため先に除外する
+  const source = markdown.replace(/\{\{[<%]\s*link-card\b[\s\S]*?[>%]\}\}/gi, '');
   const template = document.createElement('template');
-  template.innerHTML = window.marked.parse(markdown);
+  template.innerHTML = window.marked.parse(source);
   template.content.querySelectorAll('h1, h2, h3, h4, h5, h6, pre, script, style, img, hr, .link-card').forEach((el) => el.remove());
 
   const blockTags = new Set(['blockquote', 'div', 'ol', 'p', 'section', 'table', 'tbody', 'thead', 'tr', 'ul']);
