@@ -200,12 +200,12 @@ function updateSummaryCount() {
   count.classList.toggle('warn', length > SUMMARY_TARGET);
 }
 
-// 本文から概要を作る。<pre> を除き、文字を整え、120 字で切る
+// 本文から概要を作る。見出し・コード・画像・リンクカードを除き、文字を整え、120 字で切る
 function autoSummary(markdown) {
   if (!window.marked || !markdown.trim()) return '';
   const template = document.createElement('template');
   template.innerHTML = window.marked.parse(markdown);
-  template.content.querySelectorAll('h1, h2, h3, h4, h5, h6, pre, script, style, img, hr').forEach((el) => el.remove());
+  template.content.querySelectorAll('h1, h2, h3, h4, h5, h6, pre, script, style, img, hr, .link-card').forEach((el) => el.remove());
 
   const blockTags = new Set(['blockquote', 'div', 'ol', 'p', 'section', 'table', 'tbody', 'thead', 'tr', 'ul']);
   function extract(node) {
