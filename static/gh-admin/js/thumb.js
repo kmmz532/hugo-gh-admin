@@ -32,7 +32,9 @@ export function createThumb({ state, markDirty }) {
     const external = state.kind === 'external';
     const preview = $('thumb-preview');
     preview.hidden = !url;
-    preview.src = imageSrc(url);
+    // 空の src は今のページを画像として読みに行くので、画像が無いときは外す
+    if (url) preview.src = imageSrc(url);
+    else preview.removeAttribute('src');
     $('thumb-state').textContent = label;
     $('thumb-pick').textContent = external ? t('thumb.pick_ogp') : t('thumb.pick_body');
     $('thumb-url-row').hidden = !external;

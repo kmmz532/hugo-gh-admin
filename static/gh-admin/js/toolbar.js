@@ -185,8 +185,10 @@ export function attachToolbar({ textarea, toolbar, fileInput, upload, onError, c
     insertCardFromUrl(textarea, url);
   });
 
+  // ドラッグ中は files が空になる（中身はドロップまで読めない）ので、items の種類で画像かどうかを見る
+  const dragsImage = (transfer) => [...(transfer?.items ?? [])].some((item) => item.kind === 'file' && item.type.startsWith('image/'));
   textarea.addEventListener('dragover', (event) => {
-    if (!imageFile(event.dataTransfer?.files)) return;
+    if (!dragsImage(event.dataTransfer)) return;
     event.preventDefault();
     textarea.classList.add('dragover');
   });

@@ -6,7 +6,8 @@ import { t } from './i18n.js';
 // marked の出力は HTML として挿入するため、危険な要素と属性を落としてから描画する。
 // 記事詳細（single.html）と同じ見た目になるよう、タイトルと本文を同じクラスで出す。
 // title が null のときはタイトルを出さない（編集画面は本文欄の上にタイトル入力があるため）。
-const DROP = 'script, iframe, object, embed, style, link, meta, base, form';
+// SVG の animate・set は、to・values などで href を javascript: に書き換えられるので消す
+const DROP = 'script, iframe, frame, frameset, object, embed, applet, style, link, meta, base, form, animate, animateMotion, animateTransform, set';
 // 本文の記法。コードブロックの外だけ変換する。行の途中にあっても変換する
 const SHORTCODE_LINE = /\{\{<\s*(link-card|tweet|youtube|instagram|vimeo|niconico|soundcloud|facebook)\s+(?:url|id)="([^"]+)"\s*>\}\}/g;
 const TWEET_URL = /^https:\/\/(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/\d+/;
@@ -275,10 +276,10 @@ export function renderPreview(markdown, title, container, { onThumb } = {}) {
   content.querySelectorAll(DROP).forEach((el) => el.remove());
   for (const el of content.querySelectorAll('*')) {
     for (const { name, value } of [...el.attributes]) {
-      const isUrl = name === 'href' || name === 'src' || name === 'xlink:href' || name === 'formaction';
-      // ブラウザは URL 中のタブ・改行・制御文字を無視するので、除いてから判定する
+      // ブラウザは URL 中のタブ・改行・制御文字を無視するので、除いてから判定する。
+      // href・src 以外の属性（to・values・action など）でも URL として使われることがあるので、属性の名前によらず javascript: を消す
       const url = value.replace(/[\u0000- \u007f]/g, '');
-      if (name.startsWith('on') || (isUrl && /^javascript:/i.test(url))) {
+      if (name.startsWith('on') || /^(?:javascript|vbscript):/i.test(url) || name === 'srcdoc') {
         el.removeAttribute(name);
       }
     }

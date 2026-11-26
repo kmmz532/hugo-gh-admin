@@ -12,7 +12,14 @@ const OAUTH_KEY = 'gh_admin_oauth';
 // 同一 origin のパスだけ戻り先として許可する
 function returnPath(search = location.search) {
   const ret = new URLSearchParams(search).get('return') ?? config.rootURL;
-  return ret.startsWith('/') && !ret.startsWith('//') ? ret : config.rootURL;
+  // ブラウザは /\example.com を //example.com と同じに扱うので、文字列ではなく URL として origin を比べる
+  if (!ret.startsWith('/')) return config.rootURL;
+  try {
+    const url = new URL(ret, location.origin);
+    return url.origin === location.origin ? url.pathname + url.search + url.hash : config.rootURL;
+  } catch {
+    return config.rootURL;
+  }
 }
 
 function showError(el, message) {

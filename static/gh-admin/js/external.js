@@ -1,5 +1,6 @@
 import { showNotice } from './notice.js';
 import { t } from './i18n.js';
+import { toJstInput } from './time.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -8,12 +9,6 @@ const $ = (id) => document.getElementById(id);
 const HATENA_HOST = /\.(hatenablog\.com|hatenablog\.jp|hateblo\.jp|hatenadiary\.com|hatenadiary\.jp)$/;
 const SUMMARY_LENGTH = 120;
 
-// JST の 'YYYY-MM-DDTHH:mm'（datetime-local と同じ形式）
-function toJstInput(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
-}
 
 function plainText(markdown) {
   return markdown
