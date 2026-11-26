@@ -202,12 +202,15 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - 版は [Semantic Versioning](https://semver.org/lang/ja/) に従い、タグで示す（`v0.1.0` など）。
 - 次を変えるときはメジャー版を上げ、`CHANGELOG.md` に書く: `params.ghAdmin` の項目、partialの名前と引数、雛形の `id` と `data-field`、CSS変数とクラス名、索引のJSONの形。
 - 契約に触れない修正は、マイナー版かパッチ版にする。
+- リリースのたびに `layouts/partials/gh-admin/version.html` の版を更新する。JSの読み込みに `?v=` として付け、ブラウザのキャッシュに古いJSが残らないようにする。
+- タグを付けた直後は、Goのモジュールのプロキシ（proxy.golang.org）が新しい版を認識するまで数分から30分ほどかかる。版を固定していないサイトは、その間にビルドすると古い版のままになる。
 
 ## セキュリティ
 
 - Personal Access Tokenはブラウザの `localStorage` に保存される。共有の端末では利用しない。
 - GitHubでは、トークンはFine-grainedにし、記事のリポジトリだけに絞ってContentsの読み書きだけを付ける。期限は90日以内にする。
 - GitLabでは、トークンは記事のリポジトリのプロジェクトアクセストークンにし、スコープは `api` だけを付ける。期限は90日以内にする。
+- 「GitHubでログイン」で受け取るトークンはOAuthの `repo` スコープで、ログインしたアカウントの全リポジトリに書き込める。権限を記事のリポジトリだけに絞りたい場合は、Fine-grainedのトークンでログインする。
 - 管理ボタンの表示などは利便性のためだけ。権限はGitHubまたはGitLabが判定する。
 - 本体のContent-Security-Policyに、`csp.html` が返す送り先を含める。
 - GitLabでは、`connect-src` にGitLabのURL（既定値は `https://gitlab.com`）を含める。また、画像の公開前の表示は `<gitlabURL>/<repo>/-/raw/...` を読み込むため、記事のリポジトリは公開（public）にする。

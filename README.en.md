@@ -162,12 +162,15 @@ The "History" section in the editor lists the commit history of the post file on
 - Versions follow [Semantic Versioning](https://semver.org/) and are marked with tags (for example `v0.1.0`).
 - A change to any of the following needs a major version and an entry in `CHANGELOG.md`: items in `params.ghAdmin`, the names and arguments of partials, the `id` and `data-field` of the templates, CSS variables and class names, and the shape of the index JSON.
 - Fixes that do not touch the contract are minor or patch versions.
+- Update the version in `layouts/partials/gh-admin/version.html` on every release. It is added to the script URLs as `?v=` so browsers do not keep old JS in their cache.
+- Right after a tag, the Go module proxy (proxy.golang.org) can take a few minutes to about 30 minutes to see the new version. Sites that do not pin the version keep building with the old one until then.
 
 ## Security
 
 - The Personal Access Token is stored in the browser's `localStorage`. Do not use it on shared devices.
 - On GitHub, use a fine-grained token limited to the posts repository, with only Contents read and write. The expiry must be 90 days or less.
 - On GitLab, use a project access token for the posts repository with only the `api` scope. The expiry must be 90 days or less.
+- The token from "Log in with GitHub" has the OAuth `repo` scope and can write to every repository of the account. To limit it to the posts repository, log in with a fine-grained token instead.
 - Showing the admin buttons is only for convenience. GitHub or GitLab decides the permissions.
 - The site's Content-Security-Policy must include the sources that `csp.html` returns.
 - On GitLab, include the GitLab URL (default `https://gitlab.com`) in `connect-src`. The editor shows unpublished images from `<gitlabURL>/<repo>/-/raw/...`, so the posts repository must be public.
