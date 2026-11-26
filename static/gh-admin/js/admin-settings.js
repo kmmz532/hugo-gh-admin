@@ -263,25 +263,39 @@ function renderTheme(parent) {
       })
       .catch(() => {});
   });
+  // 管理ボタンを差し込むスクリプトの有無は、外部テーマ（候補にないテーマ）のときだけ確認する。
+  // Blogit のテーマは管理ボタンを組み込んでいるため不要で、無いファイルを読みに行くと 404 がコンソールに出る
+  let floatScript = null;
+  async function checkFloat(path) {
+    const external = Boolean(path) && !presets.some((preset) => preset.value === path);
+    if (!external || !files) {
+      missing.hidden = true;
+      return;
+    }
+    try {
+      floatScript ??= files.getFile(FLOAT_SCRIPT).then(Boolean);
+      missing.hidden = await floatScript;
+    } catch {
+      missing.hidden = true;
+    }
+  }
   input.addEventListener('input', () => {
     const path = normalizeThemeModule(input.value, themes);
     resolved.hidden = !path || path === input.value.trim();
     resolved.textContent = path ? t('settings.theme_resolved', { path }) : '';
   });
+  input.addEventListener('change', () => checkFloat(normalizeThemeModule(input.value, themes)));
 
   controls.push({
     async connect() {
-      try {
-        missing.hidden = Boolean(await files.getFile(FLOAT_SCRIPT));
-      } catch {
-        missing.hidden = true;
-      }
+      floatScript = null;
     },
     load(lines) {
       const path = currentTheme(lines);
       wrap.hidden = !path;
       input.value = path ?? '';
       resolved.hidden = true;
+      checkFloat(path);
     },
     save(lines) {
       const from = currentTheme(lines);
