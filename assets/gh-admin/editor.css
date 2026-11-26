@@ -879,6 +879,8 @@ body:has(.editor) .footer {
   max-width: 100%;
   margin: 0 auto;
   user-select: none;
+  /* 範囲外を暗くする影を画像の上だけに収め、ボタンまで暗くしない */
+  overflow: hidden;
 }
 
 .upload-crop-area.croppable {
