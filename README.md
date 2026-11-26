@@ -231,7 +231,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - バージョンは [Semantic Versioning](https://semver.org/lang/ja/) に従い、タグで示す（`v0.1.0` など）。
 - 次を変えるときはメジャーバージョンを上げ、`CHANGELOG.md` に書く: `params.ghAdmin` の項目、partialの名前と引数、雛形の `id` と `data-field`、CSS変数とクラス名、索引のJSONの形。
 - 契約に触れない修正は、マイナーバージョンかパッチバージョンにする。
-- リリースのたびに `layouts/partials/gh-admin/version.html` のバージョンを更新する。JSの読み込みに `?v=` として付け、ブラウザのキャッシュに古いJSが残らないようにする。
+- `static/gh-admin/js` に `.js` を追加・削除したら、`layouts/partials/gh-admin/importmap.html` の一覧も更新する（`node scripts/check-i18n.mjs` が確認する）。JS の `?v=` には、モジュールとして取り込んだときのバージョンが自動で付く。
 - タグを付けた直後は、Goのモジュールのプロキシ（proxy.golang.org）が新しいバージョンを認識するまで数分から30分ほどかかる。バージョンを固定していないサイトは、その間にビルドすると古いバージョンのままになる。
 
 ## セキュリティ

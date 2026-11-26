@@ -149,6 +149,14 @@ for (const [key, files] of used) {
 const unused = [...(flat.ja?.keys() ?? [])].filter((key) => !used.has(key));
 for (const key of process.argv.includes('--unused') ? unused : []) console.warn(`注意: 使われていないキー: ${key}`);
 
+// import map（layouts/partials/gh-admin/importmap.html）の一覧と static/gh-admin/js の .js が揃っているか
+const jsDir = join(root, 'static', 'gh-admin', 'js');
+const jsFiles = listFiles(jsDir, ['.js']).map((file) => relative(jsDir, file).replaceAll('\\', '/')).sort();
+const importmap = readFileSync(join(root, 'layouts', 'partials', 'gh-admin', 'importmap.html'), 'utf8');
+const mapped = [...(/\$files := slice ([^}]*)/.exec(importmap)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort();
+for (const file of jsFiles.filter((file) => !mapped.includes(file))) errors.push(`importmap.html の一覧に ${file} がありません`);
+for (const file of mapped.filter((file) => !jsFiles.includes(file))) errors.push(`importmap.html の一覧の ${file} はありません`);
+
 for (const error of errors) console.error(`エラー: ${error}`);
 console.log(`辞書: ${Object.keys(dicts).join(', ')} / キー ${flat.ja?.size ?? 0} 件 / 使用 ${used.size} 件 / 使われていないキー ${unused.length} 件 / エラー ${errors.length} 件`);
 process.exitCode = errors.length ? 1 : 0;

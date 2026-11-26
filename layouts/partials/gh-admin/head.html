@@ -2,4 +2,5 @@
 <meta name="gh-admin" content="{{ partial "gh-admin/settings.html" . }}">
 {{- $css := resources.Get "gh-admin/editor.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
+{{ partial "gh-admin/importmap.html" . }}
 <script type="module" src="{{ "gh-admin/js/admin.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>

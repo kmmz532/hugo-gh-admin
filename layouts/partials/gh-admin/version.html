@@ -1,1 +1,5 @@
-{{- /* JS の読み込みに付けるバージョン。リリースのたびに更新し、ブラウザのキャッシュに古い JS が残らないようにする */ -}}0.15.0
+{{- /* JS の読み込みに付けるバージョン。ブラウザのキャッシュに古い JS が残らないようにする。
+  モジュールとして取り込んだときは、そのバージョン（タグや疑似バージョン）を使う。手元のファイル（replace やこのリポジトリ自体）はビルドの時刻 */ -}}
+{{- $version := "" -}}
+{{- range hugo.Deps }}{{ if eq .Path "github.com/kmmz532/hugo-gh-admin" }}{{ $version = .Version }}{{ end }}{{ end -}}
+{{- $version | default (string now.Unix) -}}
