@@ -23,10 +23,12 @@ Add the following to the site's `go.mod` and `hugo.toml`.
 ```
 
 ```sh
-hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
+hugo mod get github.com/kmmz532/hugo-gh-admin@latest
 ```
 
-Pin the version with a tag. Check the differences before running `hugo mod get -u`.
+A `require` line in `go.mod` pins that version. Without it, Hugo fetches the latest version on every build. You can change the pinned version on the "Modules" or "Updates" admin screen.
+
+When a theme imports this module, we recommend not writing a `require` line in the theme's `go.mod`. Otherwise sites cannot use versions newer than the one the theme names.
 
 ## Settings (`params.ghAdmin`)
 
@@ -197,15 +199,64 @@ The "History" section in the editor lists the commit history of the post file on
 
 - The Personal Access Token is stored in the browser's `localStorage`. Do not use it on shared devices.
 - On GitHub, use a fine-grained token limited to the posts repository, with only Contents read and write. The expiry must be 90 days or less.
+- Changing the Hugo version on the "Updates" screen also needs write access to Workflows in the build repository, because it edits a file in `.github/workflows/`.
 - On GitLab, use a project access token for the posts repository with only the `api` scope. The expiry must be 90 days or less.
 - The token from "Log in with GitHub" has the OAuth `repo` scope and can write to every repository of the account. To limit it to the posts repository, log in with a fine-grained token instead.
 - Showing the admin buttons is only for convenience. GitHub or GitLab decides the permissions.
 - The site's Content-Security-Policy must include the sources that `csp.html` returns.
 - On GitLab, include the GitLab URL (default `https://gitlab.com`) in `connect-src`. The editor shows unpublished images from `<gitlabURL>/<repo>/-/raw/...`, so the posts repository must be public.
 
-## Changing the look
+## Customization
 
-To change how a shortcode in a post looks, put a file with the same name in the site (for example `layouts/shortcodes/*.html`). It overrides the module's file.
+Hugo prefers the site's files to those of imported modules. Among modules, the one higher in `[[module.imports]]` wins. Put a file with the same path in the site (or theme) to override hugo-gh-admin without editing it.
+
+An override replaces the whole file. Copy hugo-gh-admin's file first and then change it. Updating hugo-gh-admin does not update overridden files, so check `CHANGELOG.md` on each update.
+
+### Frame and look of the screens
+
+| Path | Contents |
+|---|---|
+| `layouts/gh-admin/baseof.html` | Frame of the admin screens (`<head>` and header). Override it to match the theme |
+| `assets/gh-admin/editor.css` | CSS of the admin screens. Themes that include the parts concatenate it with their own CSS |
+| `assets/gh-admin/standalone.css` | Base CSS that `baseof.html` loads for themes without the parts |
+
+To change only colors, define the CSS variables ([Class names and CSS variables](#class-names-and-css-variables)) in the theme instead of overriding a CSS file. To add a little CSS, override `layouts/gh-admin/baseof.html` and add a `<link>`, or use the theme's extra CSS file (`assets/css/custom.css` in the Blogit themes).
+
+### Screen templates
+
+| Screen | Template | Page (URL and title) |
+|---|---|---|
+| Bulk management | `layouts/gh-admin/admin.html` | `content/admin.md` |
+| Images | `layouts/gh-admin/admin-images.html` | `content/admin-images.md` |
+| Modules | `layouts/gh-admin/admin-modules.html` | `content/admin-modules.md` |
+| Updates | `layouts/gh-admin/admin-update.html` | `content/admin-update.md` |
+| Settings | `layouts/gh-admin/admin-settings.html` | `content/admin-settings.md` |
+| Editor | `layouts/gh-admin/edit.html` | `content/edit.md` |
+| Login | `layouts/gh-admin/login.html` | `content/login.md` |
+| Admin menu | `layouts/partials/gh-admin/admin-nav.html` | - |
+| Entry buttons | `layouts/partials/gh-admin/button.html` | - |
+
+The scripts look up elements by `id`. Keep the `id` values when you override a template.
+
+### URLs and titles of the screens
+
+Put a `content/*.md` file with the same path in the site and set `url:` and `title:`. When you change the URL of `/admin/`, `/edit/`, `/login/` or `/admin/images/`, set the same value in `adminURL`, `editURL`, `loginURL` or `adminImagesURL` of `params.ghAdmin`.
+
+### Messages
+
+See [Overriding messages](#overriding-messages).
+
+### Settings fields
+
+To add fields to "Theme settings" on the settings screen, write `data/gh-admin/settings.toml` ([Settings defined by the theme](#settings-defined-by-the-theme)).
+
+### Shortcodes
+
+To change how a shortcode in a post looks, put a file with the same name in the site (for example `layouts/shortcodes/*.html`).
+
+### Scripts
+
+Files in `static/gh-admin/js/` can also be overridden by path, but this is not recommended. The scripts depend on each other's function names and arguments, so an override easily breaks when hugo-gh-admin is updated.
 
 ## License
 

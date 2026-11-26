@@ -21,10 +21,12 @@ Hugoで作成したサイトにGitHubまたはGitLab上のMarkdown記事をブ�
 ```
 
 ```sh
-hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
+hugo mod get github.com/kmmz532/hugo-gh-admin@latest
 ```
 
-バージョンはタグで固定する。`hugo mod get -u` で更新する前に、差分を確認する。
+`go.mod` に `require` を書くと、そのバージョンに固定する。書かなければ、Hugo がビルドのたびに最新バージョンを取得する。固定したバージョンは、管理画面の「モジュール」か「更新」で変更できる。
+
+テーマから取り込むときも、テーマの `go.mod` には `require` を書かないことを推奨する。テーマが指定したバージョンより新しいものを、サイトが使えなくなるため。
 
 ## 設定（`params.ghAdmin`）
 
@@ -239,15 +241,64 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 - Personal Access Tokenはブラウザの `localStorage` に保存される。共有の端末では利用しない。
 - GitHubでは、トークンはFine-grainedにし、記事のリポジトリだけに絞ってContentsの読み書きだけを付ける。期限は90日以内にする。
+- 「更新」で Hugo のバージョンを変更するときは、ビルドのリポジトリの Workflows の書き込み権限も必要になる（`.github/workflows/` のファイルを書き換えるため）。
 - GitLabでは、トークンは記事のリポジトリのプロジェクトアクセストークンにし、スコープは `api` だけを付ける。期限は90日以内にする。
 - 「GitHubでログイン」で受け取るトークンはOAuthの `repo` スコープで、ログインしたアカウントの全リポジトリに書き込める。権限を記事のリポジトリだけに絞りたい場合は、Fine-grainedのトークンでログインする。
 - 管理ボタンの表示などは利便性のためだけ。権限はGitHubまたはGitLabが判定する。
 - 本体のContent-Security-Policyに、`csp.html` が返す送り先を含める。
 - GitLabでは、`connect-src` にGitLabのURL（既定値は `https://gitlab.com`）を含める。また、画像の公開前の表示は `<gitlabURL>/<repo>/-/raw/...` を読み込むため、記事のリポジトリは公開（public）にする。
 
-## 見た目を変える
+## カスタマイズ
 
-記事の書式（ショートコード）の見た目を変えるときは、本体に同じ名前のファイルを置く（例: `layouts/shortcodes/*.html`）。上書きされる。
+Hugo は、サイトのファイルを取り込んだモジュールのファイルより優先する。モジュールどうしでは、`[[module.imports]]` の上にあるものを優先する。hugo-gh-admin のファイルを変更せずに、サイト（またはテーマ）に同じパスのファイルを置いて上書きする。
+
+上書きはファイル単位で置き換わる。hugo-gh-admin のファイルをコピーしてから変更する。hugo-gh-admin を更新しても、上書きしたファイルには反映されないため、更新のたびに `CHANGELOG.md` で変更点を確認する。
+
+### 画面の枠と見た目
+
+| パス | 内容 |
+|---|---|
+| `layouts/gh-admin/baseof.html` | 管理画面の枠（`<head>`・ヘッダー）。テーマの見た目に合わせるときに上書きする |
+| `assets/gh-admin/editor.css` | 管理画面のCSS。部品を組み込んだテーマでは、テーマのCSSと連結して読む |
+| `assets/gh-admin/standalone.css` | 組み込んでいないテーマで、`baseof.html` が読む土台のCSS |
+
+色だけを変えるときは、CSSのファイルを上書きせず、テーマのCSSでCSS変数（[クラス名とCSS変数](#クラス名とcss変数)）を定義する。CSSを少し追加するときは、`layouts/gh-admin/baseof.html` を上書きして `<link>` を追加するか、テーマの追加用のCSSに書く（Blogit のテーマでは `assets/css/custom.css`）。
+
+### 画面のテンプレート
+
+| 画面 | テンプレート | ページ（URL・タイトル） |
+|---|---|---|
+| 一括管理 | `layouts/gh-admin/admin.html` | `content/admin.md` |
+| 画像 | `layouts/gh-admin/admin-images.html` | `content/admin-images.md` |
+| モジュール | `layouts/gh-admin/admin-modules.html` | `content/admin-modules.md` |
+| 更新 | `layouts/gh-admin/admin-update.html` | `content/admin-update.md` |
+| 設定 | `layouts/gh-admin/admin-settings.html` | `content/admin-settings.md` |
+| 編集 | `layouts/gh-admin/edit.html` | `content/edit.md` |
+| ログイン | `layouts/gh-admin/login.html` | `content/login.md` |
+| 管理画面のメニュー | `layouts/partials/gh-admin/admin-nav.html` | ― |
+| 管理画面への入口のボタン | `layouts/partials/gh-admin/button.html` | ― |
+
+テンプレートの要素の `id` は JS が参照する。上書きするときは `id` を変えない。
+
+### 画面の URL とタイトル
+
+サイトに同じパスの `content/*.md` を置き、`url:` と `title:` を書く。`/admin/`・`/edit/`・`/login/`・`/admin/images/` の URL を変えたときは、`params.ghAdmin` の `adminURL`・`editURL`・`loginURL`・`adminImagesURL` も同じ値にする。
+
+### 文言
+
+[文言の上書き](#文言の上書き)を参照。
+
+### 設定の項目
+
+サイト設定の「テーマの設定」に入力欄を追加するときは、`data/gh-admin/settings.toml` を書く（[テーマが定義する設定項目](#テーマが定義する設定項目)）。
+
+### 記事の書式（ショートコード）
+
+記事の書式の見た目を変えるときは、サイトに同じ名前のファイルを置く（例: `layouts/shortcodes/*.html`）。
+
+### JS
+
+`static/gh-admin/js/` のファイルも同じパスで上書きできるが、推奨しない。JS どうしは関数の名前と引数で結び付いており、hugo-gh-admin を更新したときに動かなくなりやすい。変更が必要な場合は、Issue で相談する。
 
 ## ライセンス
 
