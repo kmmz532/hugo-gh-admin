@@ -69,7 +69,7 @@ The admin screens switch between posts, images and site settings with a shared n
 
 - `/admin/`: bulk management of posts
 - `/admin/images/`: image management
-- `/admin/settings/`: the blog name, favicon and default thumbnail for post cards
+- `/admin/settings/`: the blog name, description, author, posts per page, language, favicon, default thumbnail for post cards, and settings defined by the theme
 
 The site settings change the blog name (`title` and `params.headerTitle`), the favicon and the default thumbnail. Images are uploaded to `static/`, and the settings in `hugo.toml` are updated. Changes are committed to GitHub or GitLab and take effect after the site is rebuilt.
 
@@ -78,6 +78,13 @@ The site settings change the blog name (`title` and `params.headerTitle`), the f
 - The default thumbnail applies only to post cards without their own image. It does not apply to OGP images.
 - When the default thumbnail is removed, post cards without an image are shown without one, as before.
 - If the existing credentials can write to the site repository, the token field is hidden. Only when they cannot, enter a PAT with Contents write access to the site repository.
+- The description is written to `params.description`, the author to `params.author`, posts per page to `pagination.pagerSize` and the language to `languageCode`. If `defaultContentLanguage` exists, it is updated to the first part of the language code (`ja-jp` → `ja`).
+
+#### Settings defined by the theme
+
+A theme (or the site) can add fields to "Theme settings" by writing `[[fields]]` in `data/gh-admin/settings.toml`. Each field has `key`, `table` (for example `params`; the top of the file if omitted), `type` (`text`, `textarea`, `url`, `number`, `checkbox`, `select` or `list`), `label` (a string or a table per language), and optionally `default`, `min`, `max`, `options` (`[[fields.options]]` with `value` and `label`) and `columns` (`[[fields.columns]]` for `list`, saved as an array of tables `[[table.key]]`). See the Japanese README for an example.
+
+Only strings, numbers and booleans are supported. Only the lines of changed settings are rewritten, and other settings and comments are kept.
 
 A token that can write to the site repository is required: on GitHub, a token with Contents read and write access; on GitLab, an access token with the `api` scope that can push to the target branch. The token is stored in this tab's `sessionStorage`.
 

@@ -61,17 +61,61 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 - `/admin/`：記事の一括管理
 - `/admin/images/`：画像の管理
-- `/admin/settings/`：ブログ名・ファビコン・記事カード用デフォルトサムネイルの設定
+- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
 
 サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は記事の保存先（GitHubまたはGitLab）にコミットされ、サイトの再ビルド後に反映される。
 
 - ブログ名は `title` と `params.headerTitle` に反映する。
 - ファビコンは ICO・PNG・SVG、デフォルトサムネイルは PNG・JPEG・WebP・GIF・SVG に対応する。
 - デフォルトサムネイルは記事固有の画像がない記事カードだけに適用する。OGP画像には適用しない。
+- 説明は `params.description`、著者は `params.author`、1ページあたりの記事数は `pagination.pagerSize`、言語は `languageCode` に反映する。`defaultContentLanguage` があれば、言語コードの先頭（`ja-jp` → `ja`）に合わせて更新する。
 - デフォルトサムネイルを解除すると、画像がない記事カードは従来どおり画像なしになる。
 - 既存の認証情報でサイト本体リポジトリへの書き込み権限を確認できた場合、トークン入力欄は表示しない。接続できない場合のみ、サイト本体リポジトリの Contents に書き込み可能な PAT を入力する。
 
 サイト本体リポジトリへの書き込み権限を持つトークンが必要で、トークンはこのタブの `sessionStorage` に保存する。GitHubでは Contents に Read and write 権限を持つトークン、GitLabでは対象ブランチへプッシュできる `api` スコープのアクセストークンを利用する。
+
+#### テーマが定義する設定項目
+
+テーマ（またはサイト）の `data/gh-admin/settings.toml` に `[[fields]]` を書くと、サイト設定の「テーマの設定」に入力欄を追加できる。
+
+```toml
+[[fields]]
+  key = "bio"
+  table = "params"
+  type = "textarea"
+  [fields.label]
+    ja = "自己紹介"
+    en = "Self-introduction"
+
+[[fields]]
+  key = "links"
+  table = "params"
+  type = "list"
+  [fields.label]
+    ja = "リンク"
+    en = "Links"
+  [[fields.columns]]
+    key = "name"
+    type = "text"
+    label = "Name"
+  [[fields.columns]]
+    key = "url"
+    type = "url"
+    label = "URL"
+```
+
+| キー | 内容 |
+|---|---|
+| `key` | 変更する設定のキー |
+| `table` | キーがあるテーブル（例: `params`）。省略時はファイルの先頭 |
+| `type` | `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list` |
+| `label` | 表示名。文字列か、言語ごとの表（`ja`・`en` など） |
+| `default` | 設定がないときの値（例: `checkbox` で既定が有効なら `true`） |
+| `min`・`max` | `number` の範囲 |
+| `options` | `select` の選択肢。`[[fields.options]]` に `value` と `label` を書く |
+| `columns` | `list` の列。`[[fields.columns]]` に列ごとの `key`・`type`・`label`（`options`）を書く。`list` は `[[table.key]]` 形式のテーブルの配列として保存する |
+
+値は文字列・数値・真偽値だけを扱う。変更した項目の行だけを書き換え、ほかの設定やコメントは保持する。
 
 ### 文言の上書き
 

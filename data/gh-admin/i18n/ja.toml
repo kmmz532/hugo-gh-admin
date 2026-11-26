@@ -247,6 +247,14 @@ conflict = "他で更新されています。再読み込みしてからもう�
 reading = "読み込み中（{read} / {total}）"
 
 [settings]
+description_label = "ブログの説明"
+author_label = "著者"
+pager_size_label = "1ページあたりの記事数"
+language_label = "言語コード（例: ja、en）"
+theme_heading = "テーマの設定"
+list_add = "追加"
+list_remove = "削除"
+number_invalid = "「{label}」には数値を入力してください。"
 token_required = "Personal access token を入力してください。"
 repo_write_denied = "GitHub API による書き込みが拒否されました。Fine-grained PAT の Repository access に「{repo}」を追加し、Repository permissions の Contents を Read and write に設定してください。Metadata は Read-only で構いません。トークンを変更した場合は、再接続してください。"
 repo_no_write = "このトークンには「{repo}」への書き込み権限がありません。Fine-grained PAT の Repository access に対象リポジトリを追加し、Contents を Read and write に設定してください。"
