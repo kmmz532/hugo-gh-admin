@@ -155,6 +155,52 @@ export function replaceModuleImport(lines, from, to) {
   return false;
 }
 
+export const IMPORT_HEADER = '[[module.imports]]';
+
+// [[module.imports]] の 1 つずつの範囲。直前のコメント行と、[[module.imports.mounts]] などの下位のテーブルを含める
+export function importBlocks(lines) {
+  const blocks = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() !== IMPORT_HEADER) continue;
+    let start = i;
+    while (start > 0 && lines[start - 1].trim().startsWith('#')) start--;
+    let end = i + 1;
+    while (end < lines.length && !(HEADER.test(lines[end]) && !lines[end].trim().startsWith('[[module.imports.'))) end++;
+    // 末尾の空行とコメント（次の項目の説明）は含めない
+    while (end > i + 1 && (!lines[end - 1].trim() || lines[end - 1].trim().startsWith('#'))) end--;
+    let path = '';
+    for (let j = i + 1; j < end && !HEADER.test(lines[j]); j++) {
+      const match = KEY_LINE.exec(lines[j]);
+      if (match && match[1] === 'path') path = parseValue(match[2]) ?? '';
+    }
+    blocks.push({ start, end, path, text: lines.slice(start, end) });
+    i = end - 1;
+  }
+  return blocks;
+}
+
+// blocks の並びで [[module.imports]] を書き直す。最初の項目があった位置に、空行で区切って並べる
+export function writeImportBlocks(lines, blocks) {
+  const current = importBlocks(lines);
+  const at = current.length ? current[0].start : -1;
+  for (const block of [...current].reverse()) {
+    let end = block.end;
+    // 項目の後ろの空行もまとめて消す（並べ直すときに付け直す）
+    while (end < lines.length && !lines[end].trim()) end++;
+    lines.splice(block.start, end - block.start);
+  }
+  const body = blocks.flatMap((block, index) => (index ? ['', ...block.text] : block.text));
+  if (!body.length) return lines;
+  if (at < 0) {
+    while (lines.length && !lines.at(-1).trim()) lines.pop();
+    lines.push('', ...body, '');
+  } else {
+    const next = lines[at] !== undefined && lines[at].trim() ? [''] : [];
+    lines.splice(at, 0, ...body, ...next);
+  }
+  return lines;
+}
+
 // go.mod の require（パス → バージョン）。require ( ... ) と require <path> <version> の両方を読む
 export function readGoRequires(text) {
   const requires = new Map();
@@ -192,21 +238,51 @@ export function writeGoRequires(text, prefix, entries) {
   return `${out.join('\n')}\n`;
 }
 
-// versions（パス → バージョン）の require を書き換える。go.mod に無いモジュール（テーマ経由の間接的な依存など）は
+// versions（パス → バージョン）の require を書き換える。バージョンが空なら require を消す。go.mod に無いモジュール（テーマ経由の間接的な依存など）は
 // require を追加する。Go は依存のうち最も高いバージョンを選ぶため、サイトの go.mod に書けばテーマの指定より優先される
 export function setGoRequires(text, versions) {
   const rest = new Map(versions);
-  const lines = text.split(/\r?\n/).map((line) => {
+  const lines = text.split(/\r?\n/).flatMap((line) => {
     const match = /^(\s*(?:require\s+)?)(\S+)(\s+)(\S+)(.*)$/.exec(line);
     // replace（「=>」を含む行）は書き換えない
-    if (!match || !rest.has(match[2]) || line.includes('=>')) return line;
+    if (!match || !rest.has(match[2]) || line.includes('=>')) return [line];
     const version = rest.get(match[2]);
     rest.delete(match[2]);
+    if (!version) return [];
     return `${match[1]}${match[2]}${match[3]}${version}${match[5].replace(/\s*\/\/\s*indirect\s*$/, '')}`;
   });
   while (lines.length && !lines.at(-1).trim()) lines.pop();
+  for (const [path, version] of rest) if (!version) rest.delete(path);
+  // 中身が空になった require ( ) は消す
+  for (let i = lines.length - 2; i >= 0; i--) {
+    if (/^require\s*\($/.test(lines[i].trim()) && lines[i + 1].trim() === ')') lines.splice(i, 2);
+  }
+  while (lines.length && !lines.at(-1).trim()) lines.pop();
   if (rest.size) lines.push('', 'require (', ...[...rest].map(([path, version]) => `\t${path} ${version}`), ')');
   return `${lines.join('\n')}\n`;
+}
+
+// GitHub にあるモジュール（github.com/<owner>/<repo>/...）の最新バージョン。{ label, same } を返し、取得できなければ null。
+// タグのバージョンならタグ、疑似バージョン（v0.0.0-日時-SHA）か空なら既定のブランチの最新コミットと比べる
+export async function latestModuleVersion(path, version) {
+  const match = /^github\.com\/([^/]+)\/([^/]+)/.exec(path);
+  if (!match) return null;
+  const repo = `${match[1]}/${match[2]}`;
+  const pseudo = /^v0\.0\.0-\d{14}-([0-9a-f]{12})$/.exec(version ?? '');
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (pseudo || !version) {
+    const res = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const time = new Date(data.commit.committer.date).toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    return { label: `v0.0.0-${time}-${data.sha.slice(0, 12)}`, same: pseudo ? data.sha.startsWith(pseudo[1]) : null };
+  }
+  const res = await fetch(`https://api.github.com/repos/${repo}/tags?per_page=100`, { headers });
+  if (!res.ok) return null;
+  const parse = (v) => (/^v(\d+)\.(\d+)\.(\d+)$/.exec(v) ?? []).slice(1).map(Number);
+  const tags = (await res.json()).map((tag) => tag.name).filter((name) => parse(name).length === 3)
+    .sort((a, b) => { const x = parse(a); const y = parse(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; });
+  return tags[0] ? { label: tags[0], same: tags[0] === version } : null;
 }
 
 // GitHub のリポジトリの最新コミットから Go modules の疑似バージョンを作る（例: v0.0.0-20261126012345-0123456789ab）

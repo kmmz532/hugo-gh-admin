@@ -2,7 +2,7 @@
 // 古いモジュールをサイトの go.mod で最新バージョンに上げてから再ビルドする
 import { getToken, siteFiles, startBuild } from './backend.js';
 import { t } from './i18n.js';
-import { decodeBase64, encodeBase64, latestPseudoVersion, readGoRequires, readModuleImports, setGoRequires, writeGoRequires } from './site-config.js';
+import { decodeBase64, encodeBase64, latestModuleVersion, latestPseudoVersion, readGoRequires, readModuleImports, setGoRequires, writeGoRequires } from './site-config.js';
 
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-update-config').textContent);
@@ -13,27 +13,6 @@ function status(id, message, error = false) {
   const el = $(id);
   el.textContent = message;
   el.classList.toggle('error', error);
-}
-
-// GitHub にあるモジュール（github.com/<owner>/<repo>/...）の最新バージョン。タグのバージョンならタグ、疑似バージョン（v0.0.0-日時-SHA）なら既定のブランチの最新コミットと比べる
-async function latestVersion(path, version) {
-  const match = /^github\.com\/([^/]+)\/([^/]+)/.exec(path);
-  if (!match) return null;
-  const repo = `${match[1]}/${match[2]}`;
-  const pseudo = /^v0\.0\.0-\d{14}-([0-9a-f]{12})$/.exec(version ?? '');
-  if (pseudo || !version) {
-    const res = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, { headers: { Accept: 'application/vnd.github+json' } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const time = new Date(data.commit.committer.date).toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    return { label: `v0.0.0-${time}-${data.sha.slice(0, 12)}`, same: pseudo ? data.sha.startsWith(pseudo[1]) : null };
-  }
-  const res = await fetch(`https://api.github.com/repos/${repo}/tags?per_page=100`, { headers: { Accept: 'application/vnd.github+json' } });
-  if (!res.ok) return null;
-  const parse = (v) => (/^v(\d+)\.(\d+)\.(\d+)$/.exec(v) ?? []).slice(1).map(Number);
-  const tags = (await res.json()).map((tag) => tag.name).filter((name) => parse(name).length === 3)
-    .sort((a, b) => { const x = parse(a); const y = parse(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; });
-  return tags[0] ? { label: tags[0], same: tags[0] === version } : null;
 }
 
 // モジュールのパス → 最新バージョンの取得（再ビルドのときに、古いものを go.mod で上げるために使う）
@@ -51,7 +30,7 @@ function loadVersions() {
       return cell;
     });
     rows.append(row);
-    const pending = latestVersion(module.path, module.version);
+    const pending = latestModuleVersion(module.path, module.version);
     if (module.version) latestVersions.set(module.path, pending.catch(() => null));
     pending.then((latest) => {
       cells[2].textContent = !latest ? '-' : latest.same ? t('settings.version_up_to_date') : latest.label;

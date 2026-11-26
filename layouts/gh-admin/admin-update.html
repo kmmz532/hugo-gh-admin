@@ -22,6 +22,24 @@
   {{- end }}
   <p id="admin-update-status" class="bulk-status" role="status"></p>
 </section>
+<section id="admin-modules" class="settings-card admin-settings-card" hidden>
+  <h2>{{ $i18n.settings.modules_heading }}</h2>
+  <p class="admin-note">{{ $i18n.settings.modules_note }}</p>
+  <div id="admin-modules-form" hidden>
+    <table class="admin-settings-versions admin-modules-table">
+      <thead><tr><th>{{ $i18n.settings.version_module }}</th><th>{{ $i18n.settings.modules_version }}</th><th></th></tr></thead>
+      <tbody id="admin-modules-rows"></tbody>
+    </table>
+    <p id="admin-modules-gomod" class="admin-note" hidden>{{ $i18n.settings.modules_no_gomod }}</p>
+    <div class="admin-modules-add">
+      <input id="admin-modules-add-input" type="text" list="admin-modules-themes" placeholder="https://github.com/owner/hugo-module" aria-label="{{ $i18n.settings.modules_add_label }}">
+      <datalist id="admin-modules-themes"></datalist>
+      <button type="button" id="admin-modules-add" class="btn">{{ $i18n.settings.modules_add }}</button>
+    </div>
+    <button type="button" id="admin-modules-save" class="btn primary">{{ $i18n.settings.pin_save }}</button>
+  </div>
+  <p id="admin-modules-status" class="bulk-status" role="status"></p>
+</section>
 <section id="admin-update-pin" class="settings-card admin-settings-card" hidden>
   <h2>{{ $i18n.settings.pin_heading }}</h2>
   <div id="admin-update-pin-fields" class="admin-settings-fields"></div>
@@ -35,4 +53,5 @@
 
 {{ define "scripts" }}
 <script type="module" src="{{ "gh-admin/js/admin-update.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
+<script type="module" src="{{ "gh-admin/js/admin-modules.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
 {{ end }}
