@@ -11,7 +11,9 @@
     <option value="all">{{ $i18n.admin.kind_all }}</option>
     <option value="article">{{ $i18n.admin.kind_article }}</option>
     <option value="external">{{ $i18n.admin.kind_external }}</option>
+    <option value="page">{{ $i18n.admin.kind_page }}</option>
   </select>
+  <a class="btn" href="{{ $gh.editURL }}?new=page">{{ $i18n.admin.new_page }}</a>
   <span id="admin-count" class="admin-count" aria-live="polite"></span>
 </div>
 

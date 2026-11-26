@@ -4,10 +4,30 @@ import { dateToJstInput } from './time.js';
 import { t } from './i18n.js';
 
 // 画面で扱うキー。それ以外は raw 行のまま保持して書き戻す。build は読み込みで捨てて保存で作り直す
-const KNOWN_KEYS = ['title', 'date', 'lastmod', 'author', 'categories', 'tags', 'summary', 'image', 'aliases', 'external', 'source', 'build', 'sitemap'];
+const KNOWN_KEYS = ['title', 'date', 'lastmod', 'author', 'categories', 'tags', 'summary', 'image', 'aliases', 'external', 'source', 'build', 'sitemap', 'robots', 'menu'];
 const LIST_KEYS = ['categories', 'tags', 'aliases'];
 // 外部記事はページを作らない。never だとカテゴリ・タグの集計からも外れるので link にする（link もページは作らない）
 const EXTERNAL_BUILD = '{"render": "link", "list": "always"}';
+const NO_SITEMAP = 'sitemap: {"disable": true}';
+
+// メニュー（固定ページ）。menu: {"main": {"weight": 10}} の 1 行の JSON と menu: main だけを画面で扱う。
+// それ以外の書き方（複数行の YAML など）は undefined を返し、元の行のまま残す
+function parseMenu(lines) {
+  if (lines.length !== 1) return undefined;
+  const head = lines[0].slice('menu:'.length).trim();
+  if (head === 'main' || head === '"main"') return { weight: null };
+  try {
+    const value = JSON.parse(head);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const keys = Object.keys(value);
+    if (keys.length !== 1 || keys[0] !== 'main') return undefined;
+    const main = value.main ?? {};
+    if (Object.keys(main).some((key) => key !== 'weight')) return undefined;
+    return { weight: Number.isInteger(main.weight) ? main.weight : null };
+  } catch {
+    return undefined;
+  }
+}
 
 function unquote(raw) {
   if (raw.startsWith('"')) {
@@ -56,7 +76,20 @@ export function parseArticle(text) {
 
   const values = {};
   const extra = [];
+  // メニューが画面で扱えない書き方なら true（メニューの項目を変更できなくする）
+  let menuLocked = false;
+  let menu = null;
   for (const { key, lines } of blocks) {
+    if (key === 'menu') {
+      const parsed = parseMenu(lines);
+      if (parsed === undefined) {
+        extra.push(...lines);
+        menuLocked = true;
+      } else {
+        menu = parsed;
+      }
+      continue;
+    }
     // build と sitemap は外部記事のときに保存で作り直す
     if (key === 'build' || key === 'sitemap') continue;
     if (!KNOWN_KEYS.includes(key)) {
@@ -89,10 +122,16 @@ export function parseArticle(text) {
       // 更新日。画面では扱わず、更新のたびに保存時の値で上書きする
       lastmod: String(values.lastmod ?? ''),
       author: String(values.author ?? ''),
+      // 検索エンジンに表示しない（robots: noindex）
+      noindex: /\bnoindex\b/.test(String(values.robots ?? '')),
+      // メニューに表示するか（固定ページ）と並び順
+      menu: menu !== null,
+      weight: menu?.weight ?? null,
       body,
     },
     aliases: values.aliases ?? [],
     extra,
+    menuLocked,
   };
 }
 
@@ -109,17 +148,48 @@ function frontFields(fields) {
   ];
 }
 
+// 検索エンジンに表示しない設定。外部記事はもともとサイトマップに載せないので robots だけ
+function noindexFields(fields, { sitemap = true } = {}) {
+  if (!fields.noindex) return [];
+  return ['robots: noindex', ...(sitemap ? [NO_SITEMAP] : [])];
+}
+
+function withBody(lines, text) {
+  const body = text.replace(/^\n+/, '').replace(/\s+$/, '');
+  return `---\n${lines.join('\n')}\n---\n\n${body}\n`;
+}
+
+function menuField(fields) {
+  if (!fields.menu) return [];
+  const main = Number.isInteger(fields.weight) ? { weight: fields.weight } : {};
+  return [`menu: ${JSON.stringify({ main })}`];
+}
+
 export function buildArticle(fields, aliases, extra) {
   const lines = [
     ...frontFields(fields),
     // 作者（GitHub のユーザー名）は設定したときだけ書く
     ...(fields.author ? [`author: ${JSON.stringify(fields.author)}`] : []),
+    ...noindexFields(fields),
     ...(fields.lastmod ? [`lastmod: ${fields.lastmod}`] : []),
     ...(aliases.length ? [`aliases: ${JSON.stringify(aliases)}`] : []),
     ...extra,
   ];
-  const body = fields.body.replace(/^\n+/, '').replace(/\s+$/, '');
-  return `---\n${lines.join('\n')}\n---\n\n${body}\n`;
+  return withBody(lines, fields.body);
+}
+
+// 固定ページ（content/<slug>.md）。日時・カテゴリ・タグは持たない。
+// menuLocked のときは、元のメニューの行が extra に残っているので書かない
+export function buildPage(fields, aliases, extra, { menuLocked = false } = {}) {
+  const lines = [
+    `title: ${JSON.stringify(fields.title)}`,
+    ...(menuLocked ? [] : menuField(fields)),
+    ...noindexFields(fields),
+    ...(fields.lastmod ? [`lastmod: ${fields.lastmod}`] : []),
+    ...(aliases.length ? [`aliases: ${JSON.stringify(aliases)}`] : []),
+    ...extra,
+  ];
+  return withBody(lines, fields.body);
 }
 
 // 外部記事は本文を持たず、詳細ページも作らない
@@ -130,7 +200,8 @@ export function buildExternal(fields, extra) {
     `source: ${JSON.stringify(fields.source)}`,
     `build: ${EXTERNAL_BUILD}`,
     // ページが無いので、サイトマップにも載せない
-    'sitemap: {"disable": true}',
+    NO_SITEMAP,
+    ...noindexFields(fields, { sitemap: false }),
     ...extra,
   ];
   return `---\n${lines.join('\n')}\n---\n`;

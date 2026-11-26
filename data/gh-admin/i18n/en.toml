@@ -15,6 +15,7 @@ new_post = "New post"
 edit_post = "Edit this post"
 top = "Top"
 breadcrumb = "Breadcrumb"
+edit_page = "Edit this page"
 
 [pending]
 band = "Pending"
@@ -102,6 +103,13 @@ slug_format_invalid = "The slug is not in the right format."
 not_found = "The post \"{slug}\" was not found."
 external_no_template = "An external link cannot be used as a template."
 discard_confirm = "This discards the draft of this post and reloads the saved content."
+menu_label = "Show in the sidebar menu"
+weight_label = "Order (ascending)"
+weight_placeholder = "e.g. 10"
+menu_locked = "The menu of this page is written by hand and cannot be changed here."
+noindex_label = "Hide from search engines"
+slug_reserved = "This slug is used by an existing page URL."
+weight_invalid = "Enter the order as an integer."
 
 [toolbar]
 bold = "Bold"
@@ -127,6 +135,7 @@ old_delete_failed = "Could not delete the old file ({slug}). Delete it by hand. 
 slug_retry_failed = "Could not find a free automatic slug after {tries} tries. Enter the slug by hand."
 delete_prompt = "This deletes the post. To confirm, enter the slug \"{slug}\"."
 slug_mismatch = "The slug did not match, so the post was not deleted."
+delete_prompt_page = "This deletes the page. To confirm, enter the slug \"{slug}\"."
 
 [drafts]
 summary = "Drafts (this device only)"
@@ -248,6 +257,10 @@ commit_message = "Bulk edit: {action} {count} posts"
 saved = "Saved {count} posts. They will appear in 1 to 2 minutes."
 conflict = "This was updated elsewhere. Reload and try again (nothing was changed)."
 reading = "Loading ({read} / {total})"
+kind_page = "Page"
+new_page = "New page"
+page_in_menu = "In menu"
+noindex = "Hidden from search engines"
 
 [settings]
 pin_heading = "Theme version"

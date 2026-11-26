@@ -15,6 +15,7 @@ new_post = "新規記事"
 edit_post = "この記事を編集"
 top = "トップ"
 breadcrumb = "パンくず"
+edit_page = "このページを編集"
 
 [pending]
 band = "反映待ち"
@@ -102,6 +103,13 @@ slug_format_invalid = "slug の形式が正しくありません。"
 not_found = "記事「{slug}」が見つかりません。"
 external_no_template = "外部記事はテンプレートにできません。"
 discard_confirm = "この記事の下書きを破棄して、保存済みの内容を読み直します。"
+menu_label = "サイドバーのメニューに表示する"
+weight_label = "並び順（小さい順）"
+weight_placeholder = "例: 10"
+menu_locked = "このページのメニューは手書きの設定のため、ここでは変更できません。"
+noindex_label = "検索エンジンに表示しない"
+slug_reserved = "この slug は既存のページの URL と重なるため利用できません。"
+weight_invalid = "並び順は整数で入力してください。"
 
 [toolbar]
 bold = "太字"
@@ -127,6 +135,7 @@ old_delete_failed = "旧ファイル（{slug}）を削除できませんでし�
 slug_retry_failed = "自動の slug が {tries} 回続けて既存と重なったため決められませんでした。slug を手で入力してください。"
 delete_prompt = "この記事を削除します。確認のため slug「{slug}」を入力してください。"
 slug_mismatch = "slug が一致しないため削除しませんでした。"
+delete_prompt_page = "このページを削除します。確認のため slug「{slug}」を入力してください。"
 
 [drafts]
 summary = "下書き（この端末のみ）"
@@ -248,6 +257,10 @@ commit_message = "一括操作: {action} {count} 件"
 saved = "{count} 件を保存しました。1〜2 分後に反映されます。"
 conflict = "他で更新されています。再読み込みしてからもう一度行ってください（何も変えていません）。"
 reading = "読み込み中（{read} / {total}）"
+kind_page = "固定ページ"
+new_page = "新規固定ページ"
+page_in_menu = "メニューに表示"
+noindex = "検索エンジンに非表示"
 
 [settings]
 pin_heading = "テーマのバージョン"

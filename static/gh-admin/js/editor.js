@@ -1,6 +1,6 @@
 import { loadIndex } from './index-loader.js';
 import { config } from './config.js';
-import { getPost, getToken, ensureDevSession, isValidSlug, AUTHOR_RE } from './backend.js';
+import { getPost, getToken, ensureDevSession, isValidSlug, isValidPageSlug, pageId, AUTHOR_RE } from './backend.js';
 import { uploadImage } from './image.js';
 import { parseArticle } from './frontmatter.js';
 import { draftKey, hasDraft, readDraft, removeDraft, renderDrafts } from './drafts.js';
@@ -28,8 +28,14 @@ const AUTHOR_KEY = 'gh_admin_author';
 
 // 画面の状態はこの 1 つにまとめる。記事の状態（kind・originalSlug・sha・aliases・extra）と、編集中の値・タイマー
 const state = {
-  // originalSlug: 保存済み記事の slug。新規は null。kind: 'article' | 'external'
+  // originalSlug: 保存済み記事の slug。新規は null。kind: 'article' | 'external' | 'page'（固定ページ）
   kind: 'article',
+  // 保存先の識別子。固定ページは page:<slug>（core.js の postPath が保存先を振り分ける）
+  idOf(slug) {
+    return this.kind === 'page' ? pageId(slug) : slug;
+  },
+  // 固定ページのメニューが画面で扱えない書き方なら true
+  menuLocked: false,
   originalSlug: null,
   sha: null,
   aliases: [],
@@ -103,16 +109,28 @@ function readForm() {
     source: $('f-source').value.trim(),
     image: state.thumbImage,
     author: $('f-author').value.trim(),
+    noindex: $('f-noindex').checked,
+    menu: $('f-menu').checked,
+    weight: readWeight(),
   };
+}
+
+// 並び順。空なら null（整数でなければ validate で弾く）
+function readWeight() {
+  const text = $('f-weight').value.trim();
+  return text === '' ? null : Number(text);
 }
 
 function writeForm(fields) {
   setKind(fields.kind ?? 'article');
   $('f-slug').value = fields.slug;
+  $('f-noindex').checked = Boolean(fields.noindex);
+  $('f-menu').checked = Boolean(fields.menu);
+  $('f-weight').value = fields.weight ?? '';
   $('f-title').value = fields.title;
   $('f-date').value = fields.date;
-  // 新規は、空か自動の形のままなら自動のまま。保存済みの記事は触らない
-  if (state.originalSlug === null) {
+  // 新規は、空か自動の形のままなら自動のまま。保存済みの記事は触らない。固定ページの slug は手入力のみ
+  if (state.originalSlug === null && state.kind !== 'page') {
     // 自動の形の slug（下書きの復元を含む）は、その番号を引き継いで自動のままにする
     const match = slugs.AUTO_SLUG_RE.exec(fields.slug);
     state.slugAuto = !fields.slug || Boolean(match);
@@ -141,6 +159,13 @@ function writeForm(fields) {
 // 最初の誤りを { field（入力欄の id）, message } で返す。問題が無ければ null
 function validate(fields) {
   const fail = (field, message) => ({ field, message });
+  if (fields.kind === 'page') {
+    if (!isValidSlug(fields.slug)) return fail('f-slug', t('editor.slug_invalid'));
+    if (!isValidPageSlug(fields.slug)) return fail('f-slug', t('editor.slug_reserved'));
+    if (!fields.title) return fail('f-title', t('editor.title_required'));
+    if (fields.weight !== null && !Number.isInteger(fields.weight)) return fail('f-weight', t('editor.weight_invalid'));
+    return null;
+  }
   if (!isValidSlug(fields.slug)) {
     return fail('f-slug', t('editor.slug_invalid'));
   }
@@ -166,7 +191,15 @@ function isWide() {
 function setKind(kind) {
   state.kind = kind;
   const external = kind === 'external';
+  const page = kind === 'page';
   $('editor-main').dataset.kind = external ? 'external' : 'article';
+  // 固定ページは日時・カテゴリ・タグ・概要・サムネイル・作者・テンプレートを持たない
+  for (const id of ['category-field', 'tags-field', 'date-field', 'summary-details', 'thumb-details']) $(id).hidden = page;
+  $('author-field').hidden = page || !config.authorField;
+  $('page-fields').hidden = !page;
+  $('f-menu').disabled = state.menuLocked;
+  $('f-weight').disabled = state.menuLocked;
+  $('menu-locked').hidden = !state.menuLocked;
   $('external-fields').hidden = !external;
   $('toolbar').hidden = external;
   $('f-body').hidden = external;
@@ -323,10 +356,12 @@ function updateChrome() {
   const saved = state.originalSlug !== null;
   $('save').textContent = saved ? t('editor.update') : t('editor.publish');
   slugs.updateSlugAuto();
-  $('kind-tabs').hidden = saved;
+  $('kind-tabs').hidden = saved || state.kind === 'page';
+  $('template-details').hidden = saved || state.kind === 'page';
   $('danger-details').hidden = !saved;
   const back = $('back-link');
-  back.href = saved && state.kind === 'article' ? postUrl(state.originalSlug, { date: $('f-date').value }) : config.rootURL;
+  if (saved && state.kind === 'page') back.href = `${config.rootURL.replace(/\/$/, '')}/${state.originalSlug}/`;
+  else back.href = saved && state.kind === 'article' ? postUrl(state.originalSlug, { date: $('f-date').value }) : config.rootURL;
 }
 
 function failStart(message) {
@@ -377,19 +412,23 @@ function attachTemplate() {
 
 async function load() {
   const params = new URLSearchParams(location.search);
-  const slug = params.get('slug');
-  const fromSlug = params.get('from');
+  // 固定ページは ?page=<slug>（新規は ?new=page）
+  const pageSlug = params.get('page');
+  const isPage = pageSlug !== null || params.get('new') === 'page';
+  if (isPage) state.kind = 'page';
+  const slug = pageSlug ?? params.get('slug');
+  const fromSlug = isPage ? null : params.get('from');
   let server;
   let templateTitle = null;
 
   if (slug !== null) {
-    if (!isValidSlug(slug)) {
+    if (!(isPage ? isValidPageSlug(slug) : isValidSlug(slug))) {
       failStart(t('editor.slug_format_invalid'));
       return;
     }
     let post;
     try {
-      post = await getPost(slug);
+      post = await getPost(state.idOf(slug));
     } catch (error) {
       failStart(error.message);
       return;
@@ -405,12 +444,14 @@ async function load() {
       failStart(error.message);
       return;
     }
-    state.kind = parsed.kind;
+    const kind = isPage ? 'page' : parsed.kind;
+    state.kind = kind;
     state.originalSlug = slug;
     state.sha = post.sha;
     state.aliases = parsed.aliases;
     state.extra = parsed.extra;
-    server = { ...parsed.fields, kind: parsed.kind, slug };
+    state.menuLocked = parsed.menuLocked;
+    server = { ...parsed.fields, kind, slug };
   } else if (fromSlug !== null) {
     // 既存記事をテンプレートにする。投稿日・slug・保存先の情報は引き継がず、新規記事として開く
     if (!isValidSlug(fromSlug)) {
@@ -437,6 +478,8 @@ async function load() {
     templateTitle = parsed.fields.title || t('common.untitled');
     server = { ...parsed.fields, image: '', kind: 'article', slug: '', date: nowJst() };
     server.slug = slugs.autoSlugFor(server);
+  } else if (isPage) {
+    server = { kind: 'page', slug: '', title: '', date: nowJst(), categories: [config.defaultCategory], tags: [], summary: '', body: '', url: '', source: '', author: '', menu: false, weight: null, noindex: false };
   } else {
     server = {
       kind: 'article',
@@ -454,11 +497,9 @@ async function load() {
     server.slug = slugs.autoSlugFor(server);
   }
 
-  $('author-field').hidden = !config.authorField;
   writeForm(server);
-  $('template-details').hidden = state.originalSlug !== null;
 
-  const key = draftKey(state.originalSlug);
+  const key = draftKey(state.originalSlug, state.kind);
   // テンプレートで開いたときは、新規記事の下書きの案内は出さない（選んだ記事の内容で始めるため）
   if (templateTitle !== null) {
     showNotice('info', t('editor.template_loaded', { title: templateTitle }));
@@ -556,7 +597,7 @@ function start() {
   $('delete').addEventListener('click', save.removePost);
   $('discard').addEventListener('click', () => {
     if (!confirm(t('editor.discard_confirm'))) return;
-    removeDraft(draftKey(state.originalSlug));
+    removeDraft(draftKey(state.originalSlug, state.kind));
     state.dirty = false;
     location.reload();
   });

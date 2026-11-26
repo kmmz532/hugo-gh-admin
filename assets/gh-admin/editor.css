@@ -1115,6 +1115,19 @@ body:has(.editor) .footer {
   max-width: 100%;
 }
 
+/* 編集画面のチェック項目（メニュー・検索エンジン） */
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.check-field input {
+  width: auto;
+}
+
 .admin-settings-checkbox {
   display: flex;
   align-items: center;

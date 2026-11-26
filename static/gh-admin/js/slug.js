@@ -1,5 +1,5 @@
 // slug の自動生成・検証・表示。画面の状態（state）は引数で受け取る。editor.js は import しない
-import { isValidSlug } from './backend.js';
+import { isValidSlug, isValidPageSlug } from './backend.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -30,7 +30,7 @@ export function createSlug({ state }) {
 
   // 自動のままなら、投稿日時か記事の種類が変わったときに slug を作り直す（保存はしない）
   function syncAutoSlug() {
-    if (state.originalSlug !== null || !state.slugAuto) return;
+    if (state.originalSlug !== null || !state.slugAuto || state.kind === 'page') return;
     const date = $('f-date').value;
     if (!/^\d{4}-\d{2}-\d{2}T/.test(date)) return;
     $('f-slug').value = autoSlugFor({ kind: state.kind, date });
@@ -40,7 +40,8 @@ export function createSlug({ state }) {
   // 手で書き換えたら自動を止める。空にしたら自動に戻し、すぐ作り直す
   function attach() {
     $('f-slug').addEventListener('input', () => {
-      if (state.originalSlug === null) {
+      // 固定ページの slug は手入力のみ（自動にしない）
+      if (state.originalSlug === null && state.kind !== 'page') {
         state.slugAuto = $('f-slug').value === '';
         // 空に戻したら番号も振り直す
         if (state.slugAuto) state.autoNumber = null;
@@ -48,8 +49,9 @@ export function createSlug({ state }) {
       syncAutoSlug();
       updateSlugAuto();
       const slug = $('f-slug').value;
-      const invalid = Boolean(slug) && !isValidSlug(slug);
-      setSlugError(invalid ? t('slug.format_invalid') : '');
+      if (slug && !isValidSlug(slug)) setSlugError(t('slug.format_invalid'));
+      else if (slug && state.kind === 'page' && !isValidPageSlug(slug)) setSlugError(t('editor.slug_reserved'));
+      else setSlugError('');
     });
   }
 

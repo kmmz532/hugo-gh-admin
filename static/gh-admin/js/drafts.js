@@ -8,7 +8,9 @@ const PREFIX = 'blog_draft:';
 // slug は英小文字・数字・ハイフンのみなので、'_' で始めれば記事の slug と衝突しない
 const NEW_SLUG = '_new';
 
-export const draftKey = (slug) => `${PREFIX}${slug ?? NEW_SLUG}`;
+// 固定ページは「page:」を付けて、同じ slug の記事と分ける
+const PAGE = 'page:';
+export const draftKey = (slug, kind = 'article') => `${PREFIX}${kind === 'page' ? PAGE : ''}${slug ?? NEW_SLUG}`;
 
 export const hasDraft = (key) => getItem(key) !== null;
 
@@ -41,11 +43,14 @@ export function renderDrafts(list) {
     list.append(empty);
     return;
   }
-  for (const { slug, draft } of items) {
+  for (const { slug: key, draft } of items) {
+    const isPage = key.startsWith(PAGE);
+    const slug = isPage ? key.slice(PAGE.length) : key;
     const isNew = slug === NEW_SLUG;
     const item = document.createElement('li');
     const link = document.createElement('a');
-    link.href = isNew ? config.editURL : `${config.editURL}?slug=${encodeURIComponent(slug)}`;
+    if (isPage) link.href = isNew ? `${config.editURL}?new=page` : `${config.editURL}?page=${encodeURIComponent(slug)}`;
+    else link.href = isNew ? config.editURL : `${config.editURL}?slug=${encodeURIComponent(slug)}`;
     link.textContent = draft.title || t('common.untitled');
     const meta = document.createElement('span');
     meta.className = 'card-meta';
@@ -71,7 +76,7 @@ export function createDrafts({ state, readForm, writeForm, refreshPreview, updat
       extra: state.extra,
       savedAt: new Date().toISOString(),
     };
-    if (!writeDraft(draftKey(state.originalSlug), payload)) {
+    if (!writeDraft(draftKey(state.originalSlug, state.kind), payload)) {
       showNotice('error', t('drafts.save_error'));
     } else {
       const time = new Date().toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });

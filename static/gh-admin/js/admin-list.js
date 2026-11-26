@@ -15,6 +15,8 @@ const ACTION_LABELS = {
 };
 
 let articles = [];
+// 固定ページ。一括操作の対象にはしない
+let pages = [];
 // 選んでいる記事の slug。絞り込みで隠れても選択は残す
 const selected = new Set();
 
@@ -24,9 +26,15 @@ const splitTags = (text) =>
     .map((tag) => tag.trim().replace(/^#/, ''))
     .filter(Boolean);
 
+const matches = (item) => {
+  const needle = $('admin-search').value.trim().toLowerCase();
+  return !needle || (item.title || item.slug).toLowerCase().includes(needle);
+};
+
 function visibleArticles() {
   const needle = $('admin-search').value.trim().toLowerCase();
   const kind = $('admin-kind').value;
+  if (kind === 'page') return [];
   return articles.filter((item) => {
     if (kind === 'article' && item.external) return false;
     if (kind === 'external' && !item.external) return false;
@@ -82,10 +90,29 @@ function row(item) {
   return tr;
 }
 
+// 固定ページの行。選択欄は出さない
+function pageRow(item) {
+  const tr = document.createElement('tr');
+  const title = document.createElement('a');
+  title.href = `${config.editURL}?page=${encodeURIComponent(item.slug)}`;
+  title.textContent = item.title || item.slug;
+  const titleCell = document.createElement('td');
+  titleCell.append(title);
+  const notes = [item.menu ? t('admin.page_in_menu') : '', item.noindex ? t('admin.noindex') : ''].filter(Boolean).join(' / ');
+  tr.append(cell(''), cell(''), titleCell, cell(t('admin.kind_page')), cell(notes), cell(''), cell(''));
+  return tr;
+}
+
+function visiblePages() {
+  const kind = $('admin-kind').value;
+  return kind === 'all' || kind === 'page' ? pages.filter(matches) : [];
+}
+
 function renderRows() {
   const visible = visibleArticles();
-  $('admin-rows').replaceChildren(...visible.map(row));
-  $('admin-count').textContent = t('admin.count', { visible: visible.length, total: articles.length });
+  const visiblePageItems = visiblePages();
+  $('admin-rows').replaceChildren(...visiblePageItems.map(pageRow), ...visible.map(row));
+  $('admin-count').textContent = t('admin.count', { visible: visible.length + visiblePageItems.length, total: articles.length + pages.length });
   $('admin-all').checked = visible.length > 0 && visible.every((item) => selected.has(item.slug));
   updateBar();
 }
@@ -236,6 +263,14 @@ const byNewest = (items) => items.sort((a, b) => b.date.localeCompare(a.date));
 
 async function load() {
   const indexUrl = document.querySelector('script[data-index-url]').dataset.indexUrl;
+  // 固定ページは索引の 1 つ目のファイルにある
+  fetch(indexUrl, { cache: 'no-store' })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((page) => {
+      pages = (page?.pages ?? []).sort((a, b) => (a.title || a.slug).localeCompare(b.title || b.slug));
+      renderRows();
+    })
+    .catch(() => {});
   try {
     const items = await loadIndex(indexUrl, {
       onPage: (read, total) => {

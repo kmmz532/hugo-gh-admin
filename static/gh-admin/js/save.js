@@ -1,7 +1,7 @@
 // 公開・slug 変更・削除。画面の状態と部品は引数で受け取る。editor.js は import しない
 import { config } from './config.js';
 import { savePost, deletePost, ConflictError } from './backend.js';
-import { buildArticle, buildExternal } from './frontmatter.js';
+import { buildArticle, buildExternal, buildPage } from './frontmatter.js';
 import { draftKey, removeDraft, renderDrafts } from './drafts.js';
 import { setSaveState, showNotice } from './notice.js';
 import { recordSave, recordDelete, postPath } from './pending.js';
@@ -25,25 +25,31 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
   // ---- 保存・削除 ----
 
   function serialize(fields, aliases) {
+    if (fields.kind === 'page') return buildPage(fields, aliases, state.extra, { menuLocked: state.menuLocked });
     return fields.kind === 'external'
       ? buildExternal(fields, state.extra)
       : buildArticle(fields, aliases, state.extra);
   }
+
+  // 固定ページの URL（rootURL を除く）。別名（aliases）にも使う
+  const pagePath = (slug) => `/${slug}/`;
+  const oldPath = (slug, fields) => (fields.kind === 'page' ? pagePath(slug) : postPath(slug, fields.date));
+  const editLink = (fields) => `${config.editURL}?${fields.kind === 'page' ? 'page' : 'slug'}=${encodeURIComponent(fields.slug)}`;
 
   // slug 変更: 新 slug を作ってから旧ファイルを消す。旧ファイルの削除に失敗したら警告を返す
   async function renameSlug(fields) {
     const oldSlug = state.originalSlug;
     const oldSha = state.sha;
     // 外部記事は本文がないので aliases も付けない
-    const aliases = fields.kind === 'external' ? [] : [...new Set([...state.aliases, postPath(oldSlug, fields.date)])];
+    const aliases = fields.kind === 'external' ? [] : [...new Set([...state.aliases, oldPath(oldSlug, fields)])];
 
     // sha を付けない。同名があれば ConflictError で中止される
-    const sha = await savePost(fields.slug, serialize(fields, aliases));
+    const sha = await savePost(state.idOf(fields.slug), serialize(fields, aliases));
     state.aliases = aliases;
     state.sha = sha;
 
     try {
-      await deletePost(oldSlug, oldSha);
+      await deletePost(state.idOf(oldSlug), oldSha);
       return null;
     } catch (error) {
       return t('save.old_delete_failed', { slug: oldSlug, message: error.message });
@@ -59,7 +65,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
         fields.slug = slugs.autoSlugFor(fields);
       }
       try {
-        return { slug: fields.slug, sha: await savePost(fields.slug, serialize(fields, state.aliases)) };
+        return { slug: fields.slug, sha: await savePost(state.idOf(fields.slug), serialize(fields, state.aliases)) };
       } catch (error) {
         if (!auto || !(error instanceof ConflictError)) throw error;
       }
@@ -83,7 +89,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
     if (!creating) fields.lastmod = `${nowJst()}:00+09:00`;
     const auto = creating && state.slugAuto;
     const slugChanged = !creating && fields.slug !== state.originalSlug;
-    const oldKey = draftKey(state.originalSlug);
+    const oldKey = draftKey(state.originalSlug, state.kind);
     const oldSlug = state.originalSlug;
 
     $('save').disabled = true;
@@ -98,22 +104,25 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
         state.sha = saved.sha;
         $('f-slug').value = saved.slug;
       } else {
-        state.sha = await savePost(fields.slug, serialize(fields, state.aliases), state.sha);
+        state.sha = await savePost(state.idOf(fields.slug), serialize(fields, state.aliases), state.sha);
       }
 
       state.originalSlug = fields.slug;
       removeDraft(oldKey);
       drafts.closeDraftNotice();
       // 反映待ちの控え。slug を変えた場合は旧 slug を削除の控えにする（旧ファイルの削除に失敗していなければ）
-      if (config.authorField && fields.kind !== 'external') setItem('gh_admin_author', fields.author);
-      recordSave(fields.slug, {
-        fields,
-        isNew: creating || slugChanged,
-        oldSlug: slugChanged ? oldSlug : null,
-      });
-      if (slugChanged && !warning) recordDelete(oldSlug);
+      if (config.authorField && fields.kind === 'article') setItem('gh_admin_author', fields.author);
+      // 固定ページは記事の一覧に出ないので、反映待ちの控えを作らない
+      if (fields.kind !== 'page') {
+        recordSave(fields.slug, {
+          fields,
+          isNew: creating || slugChanged,
+          oldSlug: slugChanged ? oldSlug : null,
+        });
+        if (slugChanged && !warning) recordDelete(oldSlug);
+      }
       state.dirty = false;
-      history.replaceState(null, '', `${config.editURL}?slug=${encodeURIComponent(fields.slug)}`);
+      history.replaceState(null, '', editLink(fields));
       updateChrome();
       renderDrafts($('drafts'));
 
@@ -131,7 +140,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
   async function removePost() {
     const slug = state.originalSlug;
     if (slug === null) return;
-    const typed = prompt(t('save.delete_prompt', { slug }));
+    const typed = prompt(t(state.kind === 'page' ? 'save.delete_prompt_page' : 'save.delete_prompt', { slug }));
     if (typed === null) return;
     if (typed !== slug) {
       showNotice('error', t('save.slug_mismatch'));
@@ -141,9 +150,9 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
     $('delete').disabled = true;
     cancelDraft();
     try {
-      await deletePost(slug, state.sha);
-      recordDelete(slug);
-      removeDraft(draftKey(slug));
+      await deletePost(state.idOf(slug), state.sha);
+      if (state.kind !== 'page') recordDelete(slug);
+      removeDraft(draftKey(slug, state.kind));
       state.dirty = false;
       location.assign(config.rootURL);
     } catch (error) {

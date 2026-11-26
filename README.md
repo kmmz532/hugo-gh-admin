@@ -37,6 +37,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `repo` | なし | 記事のリポジトリ。GitHubは `owner/name`、GitLabはフルパス（`group/subgroup/project`） |
 | `branch` | `main` | 記事を保存するブランチ |
 | `postsDir` | `content/posts` | 記事を置くフォルダ |
+| `pagesDir` | `content` | 固定ページを置くフォルダ |
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
 | `imagesURL` | `/images/` | 記事に書く画像のURLの前置き（`relURL` を通す） |
 | `defaultCategory` | `tech` | 新規記事の既定のカテゴリ |
@@ -66,7 +67,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 管理画面は記事・画像・サイト設定を共通のナビゲーションで切り替える。
 
-- `/admin/`：記事の一括管理
+- `/admin/`：記事の一括管理と固定ページの一覧。固定ページは `/edit/?page=<slug>` で編集し、`/edit/?new=page` で作成する
 - `/admin/images/`：画像の管理
 - `/admin/update/`：ビルドに使ったモジュールのバージョンと最新バージョンの確認、テーマのバージョンの固定（`moduleversion` の項目）、再ビルド
 - `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
@@ -179,7 +180,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 ### 索引
 
-- 管理画面は `/gh-admin/index.json` を読む。1ファイル50件まで、`next` をたどる。項目は `slug`・`title`・`url`・`date`・`external`・`images`・`tags`・`categories`。
+- 管理画面は `/gh-admin/index.json` を読む。1ファイル50件まで、`next` をたどる。項目は `slug`・`title`・`url`・`date`・`external`・`images`・`tags`・`categories`。1つ目のファイルの `pages` には、固定ページ（`slug`・`title`・`url`・`menu`・`noindex`）が入る。`layout` または `type` を持つページ（検索・管理画面など）は含めない。
 - 検索用の `/index.json` は本体の担当。
 
 索引は次の 2 つの partial を読むため、テーマはこれを用意する。
@@ -191,7 +192,11 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 管理画面が読み書きするのは次の項目だけ。ほかの項目は消さずに残す。
 
-`title`・`date`・`lastmod`・`author`・`categories`・`tags`・`summary`・`image`・`aliases`・`external`・`source`・`build`・`sitemap`
+`title`・`date`・`lastmod`・`author`・`categories`・`tags`・`summary`・`image`・`aliases`・`external`・`source`・`build`・`sitemap`・`robots`・`menu`
+
+- 「検索エンジンに表示しない」は `robots: noindex` と `sitemap: {"disable": true}` を書き込む。
+- 固定ページのメニューは `menu: {"main": {"weight": 10}}` の形で書き込む。これ以外の書き方の `menu` はそのまま残し、編集画面では変更できない。
+- 固定ページの slug には、既存のURLと重なる `admin`・`edit`・`login`・`search`・`archives`・`tags`・`categories`・`posts`・`page`・`images`・`lib`・`gh-admin`・`oauth`・`index` を利用できない。
 
 ## 編集履歴
 

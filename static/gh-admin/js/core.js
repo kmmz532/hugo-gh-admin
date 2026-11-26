@@ -60,11 +60,25 @@ export async function ensureSessionToken() {
 
 export const isValidSlug = (slug) => SLUG_RE.test(slug);
 
-export function postPath(slug) {
-  if (!isValidSlug(slug)) {
+// 固定ページは「page:<slug>」の識別子で扱う。
+// 記事の slug は英小文字・数字・ハイフンだけなので、記事と衝突しない
+const PAGE_PREFIX = 'page:';
+export const pageId = (slug) => PAGE_PREFIX + slug;
+export const isPageId = (id) => id.startsWith(PAGE_PREFIX);
+// 既存の URL（管理画面・検索・一覧など）と重なるため、固定ページに使えない slug
+export const RESERVED_PAGE_SLUGS = ['admin', 'edit', 'login', 'search', 'archives', 'tags', 'categories', 'posts', 'page', 'images', 'lib', 'gh-admin', 'oauth', 'index'];
+export const isValidPageSlug = (slug) => isValidSlug(slug) && !RESERVED_PAGE_SLUGS.includes(slug);
+
+export function postPath(id) {
+  if (isPageId(id)) {
+    const slug = id.slice(PAGE_PREFIX.length);
+    if (!isValidPageSlug(slug)) throw new Error(t('error.invalid_slug'));
+    return `${config.pagesDir}/${slug}.md`;
+  }
+  if (!isValidSlug(id)) {
     throw new Error(t('error.invalid_slug'));
   }
-  return `${config.postsDir}/${slug}.md`;
+  return `${config.postsDir}/${id}.md`;
 }
 
 // btoa / atob 単体は日本語で壊れるので UTF-8 バイト列を経由する

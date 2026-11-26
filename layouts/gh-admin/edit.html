@@ -54,19 +54,19 @@
   <aside class="settings">
     <div class="settings-card">
       <h2>{{ $i18n.editor.settings_heading }}</h2>
-      <div class="field">
+      <div id="category-field" class="field">
         <label for="f-category">{{ $i18n.editor.category_label }}</label>
         <input id="f-category" list="category-list" placeholder="{{ $i18n.editor.category_example }}" autocomplete="off">
         <datalist id="category-list"></datalist>
         <div id="category-chips" class="choices" role="group" aria-label="{{ $i18n.editor.category_choices_label }}"></div>
       </div>
-      <div class="field">
+      <div id="tags-field" class="field">
         <span>{{ $i18n.editor.tags_label }}</span>
         <div id="tag-selected" class="tag-selected" aria-label="{{ $i18n.editor.tags_selected_label }}"></div>
         <input id="f-tag-entry" placeholder="{{ $i18n.editor.tag_placeholder }}" aria-label="{{ $i18n.editor.tag_label }}" maxlength="40">
         <div id="tag-suggest" class="choices" aria-label="{{ $i18n.editor.tags_choices_label }}"></div>
       </div>
-      <label class="field">{{ $i18n.editor.date_label }}
+      <label id="date-field" class="field">{{ $i18n.editor.date_label }}
         <input id="f-date" type="datetime-local" required></label>
       <label id="author-field" class="field" hidden>{{ $i18n.editor.author_label }}
         <input id="f-author" maxlength="39" autocomplete="off" placeholder="{{ $i18n.editor.author_example }}"></label>
@@ -76,6 +76,13 @@
           <span id="slug-auto" class="slug-auto" hidden>{{ $i18n.editor.slug_auto }}</span>
         </span></label>
       <p id="f-slug-error" class="field-error" hidden></p>
+      <div id="page-fields" hidden>
+        <label class="check-field"><input id="f-menu" type="checkbox"> {{ $i18n.editor.menu_label }}</label>
+        <label class="field">{{ $i18n.editor.weight_label }}
+          <input id="f-weight" type="number" step="1" inputmode="numeric" placeholder="{{ $i18n.editor.weight_placeholder }}"></label>
+        <p id="menu-locked" class="admin-note" hidden>{{ $i18n.editor.menu_locked }}</p>
+      </div>
+      <label class="check-field"><input id="f-noindex" type="checkbox"> {{ $i18n.editor.noindex_label }}</label>
     </div>
 
     <details id="template-details" class="details-card" hidden>

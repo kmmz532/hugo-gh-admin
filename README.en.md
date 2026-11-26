@@ -39,6 +39,7 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `repo` | none | The posts repository: `owner/name` on GitHub, or the full path (`group/subgroup/project`) on GitLab |
 | `branch` | `main` | The branch where posts are saved |
 | `postsDir` | `content/posts` | The folder for posts |
+| `pagesDir` | `content` | The folder for pages |
 | `imagesDir` | `static/images` | The folder for images |
 | `imagesURL` | `/images/` | The URL prefix for images in posts (passed through `relURL`) |
 | `defaultCategory` | `tech` | The default category for new posts |
@@ -74,7 +75,7 @@ To change the URLs of the admin screens, put a `content/*.md` with the same path
 
 The admin screens switch between posts, images and site settings with a shared navigation.
 
-- `/admin/`: bulk management of posts
+- `/admin/`: bulk management of posts and the list of pages. Pages are edited at `/edit/?page=<slug>` and created at `/edit/?new=page`
 - `/admin/images/`: image management
 - `/admin/update/`: module versions in use and the latest versions, pinning the theme version (`moduleversion` fields) and rebuilding the site
 - `/admin/settings/`: the blog name, description, author, posts per page, language, favicon, default thumbnail for post cards, and settings defined by the theme
@@ -140,7 +141,7 @@ On pages without the templates, only the pending band is shown.
 
 ### Index
 
-- The admin screens read `/gh-admin/index.json`. It holds up to 50 items per file and follows `next`. Items have `slug`, `title`, `url`, `date`, `external`, `images`, `tags` and `categories`.
+- The admin screens read `/gh-admin/index.json`. It holds up to 50 items per file and follows `next`. Items have `slug`, `title`, `url`, `date`, `external`, `images`, `tags` and `categories`. `pages` in the first file lists the pages (`slug`, `title`, `url`, `menu`, `noindex`). Pages with `layout` or `type` (search, admin screens and so on) are left out.
 - The search index `/index.json` is handled by the site.
 
 The theme must provide these two partials, which the index uses.
@@ -152,7 +153,11 @@ The theme must provide these two partials, which the index uses.
 
 The admin screens read and write only these items. Other items are kept as they are.
 
-`title`, `date`, `lastmod`, `author`, `categories`, `tags`, `summary`, `image`, `aliases`, `external`, `source`, `build`, `sitemap`
+`title`, `date`, `lastmod`, `author`, `categories`, `tags`, `summary`, `image`, `aliases`, `external`, `source`, `build`, `sitemap`, `robots`, `menu`
+
+- "Hide from search engines" writes `robots: noindex` and `sitemap: {"disable": true}`.
+- The menu of a page is written as `menu: {"main": {"weight": 10}}`. A `menu` written in another form is kept as it is and cannot be changed in the editor.
+- A page cannot use the slugs `admin`, `edit`, `login`, `search`, `archives`, `tags`, `categories`, `posts`, `page`, `images`, `lib`, `gh-admin`, `oauth` and `index`, which overlap existing URLs.
 
 ## Edit history
 

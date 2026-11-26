@@ -73,12 +73,12 @@ export function createHistory({ state }) {
     more.disabled = true;
     setStatus(t('common.loading'));
     try {
-      let commits = await listPostCommits(state.originalSlug, { page: n });
+      let commits = await listPostCommits(state.idOf(state.originalSlug), { page: n });
       // 保存の直後は GitHub の一覧に反映されるまで遅れることがあるため、先頭のページが空なら少し待って取り直す
       for (let retry = 0; n === 1 && commits.length === 0 && retry < EMPTY_RETRIES; retry++) {
         await new Promise((resolve) => setTimeout(resolve, EMPTY_RETRY_MS));
         if (id !== request) return;
-        commits = await listPostCommits(state.originalSlug, { page: n });
+        commits = await listPostCommits(state.idOf(state.originalSlug), { page: n });
       }
       if (id !== request) return;
       list.append(...commits.map(commitRow));

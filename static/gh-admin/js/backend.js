@@ -7,6 +7,7 @@ import { getToken, saveSession, isLocalHost, ensureSessionToken } from './core.j
 
 export {
   repo, branch, ConflictError, getToken, getLogin, saveSession, clearSession, isLocalHost, isValidSlug,
+  pageId, isPageId, isValidPageSlug,
 } from './core.js';
 
 const provider = config.provider === 'gitlab' ? gitlab : github;

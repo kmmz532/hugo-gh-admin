@@ -7,6 +7,13 @@
 {{- $meta := partialCached "external-meta.html" . .File.Path -}}
 {{- $items = $items | append (dict "slug" .File.ContentBaseName "title" $meta.title "url" (partial "post-url.html" .) "external" (.Params.external | default "") "date" (.Date.Format "2006-01-02") "images" $meta.images "tags" .Params.tags "categories" .Params.categories) -}}
 {{- end -}}
+{{- /* 固定ページ（content/<slug>.md）。検索・一覧など layout や type を持つテーマ側のページは除く。1 つ目のファイルにだけ入れる */ -}}
+{{- $pageItems := slice -}}
+{{- range where site.RegularPages "Section" "" -}}
+  {{- if and (not .Params.layout) (not .Params.type) .File -}}
+    {{- $pageItems = $pageItems | append (dict "slug" .File.ContentBaseName "title" .Title "url" .RelPermalink "menu" (isset .Params "menu") "noindex" (eq (.Params.robots | default "") "noindex")) -}}
+  {{- end -}}
+{{- end -}}
 {{- $total := len $items -}}
 {{- $pages := div (add $total (sub $size 1)) $size -}}
 {{- range $p := seq $pages -}}
@@ -19,4 +26,4 @@
 {{- end -}}
 {{- $next1 := index (dict) "none" -}}
 {{- if gt $pages 1 -}}{{- $next1 = printf "%s?v=%d" (relURL "gh-admin/index/2.json") $v -}}{{- end -}}
-{{- dict "items" (first $size $items) "next" $next1 "total" $total | jsonify -}}
+{{- dict "items" (first $size $items) "next" $next1 "total" $total "pages" $pageItems | jsonify -}}
