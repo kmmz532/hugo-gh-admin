@@ -38,6 +38,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `branch` | `main` | 記事を保存するブランチ |
 | `postsDir` | `content/posts` | 記事を置くフォルダ |
 | `pagesDir` | `content` | 固定ページを置くフォルダ |
+| `float` | `true` | 浮かせる管理ボタン（`gh-admin/js/float.js`）を表示するか。`false` にすると、差し込んだページでも表示しない |
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
 | `imagesURL` | `/images/` | 記事に書く画像のURLの前置き（`relURL` を通す） |
 | `defaultCategory` | `tech` | 新規記事の既定のカテゴリ |
@@ -156,6 +157,21 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `gh-admin/article-scripts.html` | 記事詳細の `scripts` ブロック | `.` | コードのコピーボタンの読み込み |
 
 `csp.html` は `script-src` に足す値を返します。前に空白を付け、末尾に改行を出しません。
+
+## 組み込んでいないテーマで使う
+
+管理画面の部品を呼ばないテーマ（Hugoの一般的なテーマ）でも、次のとおり利用できる。
+
+- `/admin/`・`/edit/`・`/login/` などの管理画面は、hugo-gh-admin の `layouts/gh-admin/baseof.html` で表示する。テーマの `baseof.html` には依存しない。テーマの見た目に合わせる場合は、テーマ側に `layouts/gh-admin/baseof.html` を置いて上書きする。
+- 索引は、テーマに `partials/external-meta.html` と `partials/post-url.html` が無い場合、記事のタイトルと `.RelPermalink` を利用する。
+- 編集画面のプレビューが読む `lib/marked.min.js` は、hugo-gh-admin の `static/lib/` にある。
+- 公開ページへの管理ボタンは、ビルド後のHTMLの `</head>` の前に次の1行を差し込んで表示する。`<meta name="gh-admin">` があるページ（部品を組み込んだテーマ）には差し込まない。
+
+```html
+<script type="module" src="/<サイトのパス>/gh-admin/js/float.js"></script>
+```
+
+`float.js` はログインしている端末だけ、画面の左下にボタンを表示する。設定は索引（`gh-admin/index.json`）の `config` から読み、開いているページが記事か固定ページなら「この記事を編集」も表示する。
 
 ## テーマが用意するもの（契約）
 

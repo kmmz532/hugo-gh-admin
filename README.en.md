@@ -40,6 +40,7 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `branch` | `main` | The branch where posts are saved |
 | `postsDir` | `content/posts` | The folder for posts |
 | `pagesDir` | `content` | The folder for pages |
+| `float` | `true` | Whether to show the floating admin button (`gh-admin/js/float.js`). With `false`, it is not shown even on pages where it was injected |
 | `imagesDir` | `static/images` | The folder for images |
 | `imagesURL` | `/images/` | The URL prefix for images in posts (passed through `relURL`) |
 | `defaultCategory` | `tech` | The default category for new posts |
@@ -117,6 +118,21 @@ The site calls only these partials.
 | `gh-admin/article-scripts.html` | The `scripts` block of a post | `.` | Loads the copy button for code blocks |
 
 `csp.html` returns the values to add to `script-src`. It puts a leading space and outputs no trailing newline.
+
+## Using it with themes that do not include the parts
+
+Themes that do not call the admin parts (common Hugo themes) can use it as follows.
+
+- The admin screens such as `/admin/`, `/edit/` and `/login/` use `layouts/gh-admin/baseof.html` of hugo-gh-admin and do not depend on the theme's `baseof.html`. To match the theme's look, put `layouts/gh-admin/baseof.html` in the theme to override it.
+- When the theme has no `partials/external-meta.html` or `partials/post-url.html`, the index uses the post title and `.RelPermalink`.
+- `lib/marked.min.js`, which the editor preview loads, is in `static/lib/` of hugo-gh-admin.
+- The admin button on public pages appears when the following line is injected before `</head>` in the built HTML. Do not inject it into pages with `<meta name="gh-admin">` (themes that include the parts).
+
+```html
+<script type="module" src="/<site path>/gh-admin/js/float.js"></script>
+```
+
+`float.js` shows a button at the bottom left only on devices that are logged in. It reads the settings from `config` in the index (`gh-admin/index.json`), and also shows "Edit this post" when the open page is a post or a page.
 
 ## What the theme provides (contract)
 

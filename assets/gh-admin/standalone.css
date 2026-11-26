@@ -1,0 +1,195 @@
+/* 管理画面を単独で表示するとき（layouts/gh-admin/baseof.html）の土台。
+   テーマが用意する CSS 変数と共通のクラス（.btn・.icon-button など）の既定値を持つ。editor.css より前に読む */
+:root {
+  --background: #ffffff;
+  --foreground: #1f2328;
+  --link: #0969da;
+  --link-hover: #0550ae;
+  --border: #d0d7de;
+  --text-primary: #1f2328;
+  --text-secondary: #59636e;
+  --button-primary-hover: #32383f;
+  --button-secondary-hover: #f3f4f6;
+  --button-secondary-border: #d0d7de;
+  --danger: #cf222e;
+  --background-rgb: 255, 255, 255;
+  --foreground-rgb: 31, 35, 40;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d1117;
+    --foreground: #e6edf3;
+    --link: #4493f8;
+    --link-hover: #79b8ff;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #9198a1;
+    --button-primary-hover: #d1d7e0;
+    --button-secondary-hover: #161b22;
+    --button-secondary-border: #30363d;
+    --danger: #f85149;
+    --background-rgb: 13, 17, 23;
+    --foreground-rgb: 230, 237, 243;
+    color-scheme: dark;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body.gh-admin-standalone {
+  margin: 0;
+  color: var(--foreground);
+  background: var(--background);
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.gh-admin-header {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gh-admin-site {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.gh-admin-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.card-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.card-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: rgba(var(--foreground-rgb), 0.1);
+  text-decoration: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--button-secondary-border);
+  border-radius: 128px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--button-secondary-hover);
+  text-decoration: none;
+}
+
+.btn.primary {
+  color: var(--background);
+  background: var(--text-primary);
+  border-color: transparent;
+}
+
+.btn.primary:hover {
+  background: var(--button-primary-hover);
+}
+
+.btn.danger {
+  color: var(--danger);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 編集画面のプレビュー（本文の見た目の最低限） */
+.post-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.post-body pre {
+  overflow-x: auto;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: rgba(var(--foreground-rgb), 0.06);
+}
+
+.post-body code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.post-body blockquote {
+  margin: 1em 0;
+  padding: 0 1em;
+  color: var(--text-secondary);
+  border-left: 4px solid var(--border);
+}
+
+.post-body table {
+  border-collapse: collapse;
+}
+
+.post-body th,
+.post-body td {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+}
