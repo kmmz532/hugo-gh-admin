@@ -419,6 +419,11 @@
   border-color: transparent;
 }
 
+.more-choice {
+  color: var(--text-secondary);
+  border-style: dashed;
+}
+
 .new-choice {
   margin-top: 0.5rem;
 }

@@ -334,6 +334,8 @@ no_push = "このトークンでは {repo} に書き込めません。権限の�
 comma_category = "カテゴリ名に , は使えません。"
 comma_tag = "タグ名に , は使えません。"
 remove_tag = "{tag} を外す"
+show_more = "他 {count} 件を表示"
+show_less = "閉じる"
 
 [external]
 default_source = "はてなブログ"

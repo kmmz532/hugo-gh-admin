@@ -18,7 +18,22 @@ function choice(text, pressed, onClick) {
   return button;
 }
 
+// 「他 N 件を表示」「閉じる」を切り替えるボタン
+function moreToggle(hidden, expanded, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'choice more-choice';
+  button.textContent = expanded ? t('taxonomy.show_less') : t('taxonomy.show_more', { count: hidden });
+  button.setAttribute('aria-expanded', String(expanded));
+  button.addEventListener('click', onClick);
+  return button;
+}
+
 export function createTaxonomy({ state, markDirty }) {
+  // 候補チップを全件表示しているか
+  let categoriesExpanded = false;
+  let tagsExpanded = false;
+
   // ---- カテゴリ（階層は「>」で区切った 1 本の流れ） ----
 
   const SEPARATOR = ' > ';
@@ -56,14 +71,22 @@ export function createTaxonomy({ state, markDirty }) {
         return option;
       }),
     );
-    // チップはよく使う上位だけにする（多すぎると選びにくい）。残りは入力欄の補完で選ぶ。選択中は必ず出す
-    const CHIP_LIMIT = 8;
-    const chips = paths.slice(0, CHIP_LIMIT);
+    // チップはよく使う上位だけにし、残りは「他 N 件を表示」で開く。選択中は必ず出す
+    const CHIP_LIMIT = 6;
+    let chips = categoriesExpanded ? paths : paths.slice(0, CHIP_LIMIT);
     const selected = paths.find(({ text }) => text === current);
-    if (selected && !chips.includes(selected)) chips.push(selected);
-    $('category-chips').replaceChildren(
-      ...chips.map(({ path, text }) => choice(text, text === current, () => setCategories(path))),
-    );
+    if (selected && !chips.includes(selected)) chips = [...chips, selected];
+    const hidden = paths.length - chips.length;
+    const buttons = chips.map(({ path, text }) => choice(text, text === current, () => setCategories(path)));
+    if (paths.length > CHIP_LIMIT) {
+      buttons.push(
+        moreToggle(hidden, categoriesExpanded, () => {
+          categoriesExpanded = !categoriesExpanded;
+          renderCategories();
+        }),
+      );
+    }
+    $('category-chips').replaceChildren(...buttons);
   }
 
   function setCategories(path) {
@@ -117,7 +140,8 @@ export function createTaxonomy({ state, markDirty }) {
     );
   }
 
-  // 入力が空なら件数の多い 20 件、文字を打ったら全件から入力文字を含むものを出す。押すと選択・解除
+  // 入力が空なら件数の多い上位だけ（「他 N 件を表示」で全件）、文字を打ったら全件から入力文字を含むものを出す
+  const TAG_LIMIT = 10;
   function renderTagSuggestions(filter) {
     const needle = filter.trim().toLowerCase();
     const box = $('tag-suggest');
@@ -125,22 +149,31 @@ export function createTaxonomy({ state, markDirty }) {
     const unselected = state.knownTags.filter((item) => !state.tags.includes(item.name));
     const matches = needle
       ? unselected.filter((item) => item.name.toLowerCase().includes(needle))
-      : unselected.slice(0, 20);
-    box.replaceChildren(
-      ...matches.map((item) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'choice';
-        button.textContent = `#${item.name} (${item.count})`;
-        button.addEventListener('click', () => {
-          state.tags.push(item.name);
-          renderSelectedTags();
+      : tagsExpanded
+        ? unselected
+        : unselected.slice(0, TAG_LIMIT);
+    const buttons = matches.map((item) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'choice';
+      button.textContent = `#${item.name} (${item.count})`;
+      button.addEventListener('click', () => {
+        state.tags.push(item.name);
+        renderSelectedTags();
+        renderTagSuggestions($('f-tag-entry').value);
+        markDirty();
+      });
+      return button;
+    });
+    if (!needle && unselected.length > TAG_LIMIT) {
+      buttons.push(
+        moreToggle(unselected.length - matches.length, tagsExpanded, () => {
+          tagsExpanded = !tagsExpanded;
           renderTagSuggestions($('f-tag-entry').value);
-          markDirty();
-        });
-        return button;
-      }),
-    );
+        }),
+      );
+    }
+    box.replaceChildren(...buttons);
   }
 
   function addTagFromEntry() {

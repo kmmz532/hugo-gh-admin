@@ -334,6 +334,8 @@ no_push = "This token cannot write to {repo}. Check the permission settings."
 comma_category = "A category name cannot contain a comma."
 comma_tag = "A tag name cannot contain a comma."
 remove_tag = "Remove {tag}"
+show_more = "Show {count} more"
+show_less = "Show less"
 
 [external]
 default_source = "Hatena Blog"

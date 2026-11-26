@@ -480,6 +480,8 @@ async function load() {
     }
     state.extra = parsed.extra;
     templateTitle = parsed.fields.title || t('common.untitled');
+    // テンプレートのカテゴリ（階層を含む）を、索引を読んだあとに件数の多いカテゴリで上書きしない
+    state.categoryPicked = true;
     server = { ...parsed.fields, image: '', kind: 'article', slug: '', date: nowJst() };
     server.slug = slugs.autoSlugFor(server);
   } else if (isPage) {
