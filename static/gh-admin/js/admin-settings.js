@@ -3,7 +3,11 @@ import { getToken, siteFiles } from './backend.js';
 import { t } from './i18n.js';
 import {
   HEADER, KEY_LINE, decodeBase64, encodeBase64, latestPseudoVersion, literal, parseValue, readGoRequires, readList, readModuleImports, readString, readValue, replaceModuleImport, scope, sectionRange, sectionTail, writeGoRequires, writeList, writeString, writeValue,
+  HUGO_THEMES_LIST_URL, currentTheme, ensureAdminImport, normalizeThemeModule, parseThemesList,
 } from './site-config.js';
+
+// 外部テーマのページに管理ボタンを差し込むスクリプト（Blogit が作成する）。無ければ、外部テーマでは管理ボタンが出ない
+const FLOAT_SCRIPT = 'scripts/gh-admin-float.sh';
 
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-settings-config').textContent);
@@ -206,9 +210,100 @@ function renderModule(field, parent) {
   });
 }
 
+// テーマの切り替え。[[module.imports]] のうち管理画面以外の先頭のモジュールを置き換える。
+// テーマが type = "module" の項目を定義していれば、その選択肢を候補の先頭に出す（その項目は別に表示しない）。
+// 候補にないテーマ（外部テーマ）に切り替えるときは、管理画面のモジュールの取り込みを追加する
+function renderTheme(parent) {
+  const presets = (settings.fields ?? [])
+    .filter((field) => field?.type === 'module')
+    .flatMap((field) => field.options ?? [])
+    .map((option) => ({ value: String(option.value), label: fieldLabel({ key: option.value, label: option.label }) }));
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  const label = document.createElement('label');
+  label.htmlFor = 'admin-settings-theme';
+  label.textContent = t('settings.theme_label');
+  const input = createInput({ type: 'text', placeholder: 'https://github.com/owner/hugo-theme' }, 'admin-settings-theme');
+  input.setAttribute('list', 'admin-settings-theme-list');
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  const list = document.createElement('datalist');
+  list.id = 'admin-settings-theme-list';
+  const addOption = (value, text) => {
+    const option = document.createElement('option');
+    option.value = value;
+    if (text) option.label = text;
+    list.append(option);
+  };
+  for (const preset of presets) addOption(preset.value, preset.label);
+  const hint = document.createElement('p');
+  hint.className = 'admin-note';
+  hint.textContent = t('settings.theme_hint');
+  const resolved = document.createElement('p');
+  resolved.className = 'admin-note';
+  resolved.hidden = true;
+  const missing = document.createElement('p');
+  missing.className = 'admin-note';
+  missing.textContent = t('settings.theme_no_float', { path: FLOAT_SCRIPT });
+  missing.hidden = true;
+  wrap.append(label, input, list, resolved, hint, missing);
+  parent.prepend(wrap);
+
+  // themes.gohugo.io の一覧は、入力欄を初めて使うときに読む。読めなくても入力はできる
+  let themes = [];
+  let loaded = false;
+  input.addEventListener('focus', () => {
+    if (loaded) return;
+    loaded = true;
+    fetch(HUGO_THEMES_LIST_URL)
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((text) => {
+        themes = parseThemesList(text);
+        for (const path of themes) addOption(path);
+      })
+      .catch(() => {});
+  });
+  input.addEventListener('input', () => {
+    const path = normalizeThemeModule(input.value, themes);
+    resolved.hidden = !path || path === input.value.trim();
+    resolved.textContent = path ? t('settings.theme_resolved', { path }) : '';
+  });
+
+  controls.push({
+    async connect() {
+      try {
+        missing.hidden = Boolean(await files.getFile(FLOAT_SCRIPT));
+      } catch {
+        missing.hidden = true;
+      }
+    },
+    load(lines) {
+      const path = currentTheme(lines);
+      wrap.hidden = !path;
+      input.value = path ?? '';
+      resolved.hidden = true;
+    },
+    save(lines) {
+      const from = currentTheme(lines);
+      if (!from) return false;
+      const to = normalizeThemeModule(input.value, themes);
+      if (!to) throw new Error(t('settings.theme_invalid'));
+      if (to === from) return false;
+      // 候補（テーマが定義した選択肢）のテーマは、管理画面の部品を組み込んでいる
+      const integrated = presets.some((preset) => preset.value === to);
+      if (!integrated && !confirm(t('settings.theme_confirm', { path: to }))) throw new Error(t('settings.theme_cancelled'));
+      replaceModuleImport(lines, from, to);
+      if (!integrated) ensureAdminImport(lines);
+      return true;
+    },
+  });
+}
+
 function renderFields() {
   CORE_FIELDS.forEach((field) => renderField(field, $('admin-settings-core-fields')));
-  const themeFields = (settings.fields ?? []).filter((field) => field?.key && (field.type !== 'list' || Array.isArray(field.columns)));
+  renderTheme($('admin-settings-core-fields'));
+  // テーマの切り替え（type = "module"）は renderTheme が扱う
+  const themeFields = (settings.fields ?? []).filter((field) => field?.key && field.type !== 'module' && (field.type !== 'list' || Array.isArray(field.columns)));
   themeFields.forEach((field) => renderField(field, $('admin-settings-theme-fields')));
   $('admin-settings-theme-section').hidden = themeFields.length === 0;
 }

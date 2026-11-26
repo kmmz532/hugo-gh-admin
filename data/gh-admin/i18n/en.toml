@@ -308,6 +308,13 @@ saving = "Saving…"
 title_required = "Enter a blog title."
 saved = "Saved. Commit: {commit}. Changes will appear after the site is rebuilt."
 saved_token_invalid = "The saved credentials could not connect. Enter a PAT for the site repository. Details: {message}"
+theme_label = "Theme"
+theme_hint = "Enter the repository URL of a theme, a Hugo Modules path, or the URL of a theme page on themes.gohugo.io. The change takes effect on the next build."
+theme_resolved = "It will be imported as {path}."
+theme_invalid = "The theme URL or module path is not valid (e.g. https://github.com/owner/hugo-theme)."
+theme_confirm = "The theme will be switched to {path}. Add the settings the theme needs (menus, params and so on) to hugo.toml by hand. Without them, the build may fail or the pages may look broken. Switch the theme?"
+theme_cancelled = "Switching the theme was cancelled."
+theme_no_float = "The build steps do not include {path}. With themes other than Blogit themes, the admin button does not appear on public pages. Use /login/ to open the admin screens."
 
 [login]
 oauth_button = "Log in with GitHub"

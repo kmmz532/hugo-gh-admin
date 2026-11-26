@@ -308,6 +308,13 @@ saving = "保存しています…"
 title_required = "ブログ名を入力してください。"
 saved = "保存しました。コミット: {commit}。サイトの再ビルド後に反映されます。"
 saved_token_invalid = "保存済みの認証情報では接続できません。サイト本体リポジトリ用の PAT を入力してください。詳細: {message}"
+theme_label = "テーマ"
+theme_hint = "テーマのリポジトリのURL、Hugo Modulesのパス、themes.gohugo.ioのテーマのページのURLのいずれかを入力する。変更は次のビルドで反映される。"
+theme_resolved = "{path} として取り込む。"
+theme_invalid = "テーマのURLまたはモジュールのパスの形式が正しくありません（例: https://github.com/owner/hugo-theme）。"
+theme_confirm = "テーマを {path} に切り替えます。テーマが必要とする設定（メニューやparamsの項目など）は、hugo.tomlへ手動で追加する必要があります。設定が足りない場合、ビルドに失敗するか、表示が崩れることがあります。切り替えますか？"
+theme_cancelled = "テーマの切り替えを中止しました。"
+theme_no_float = "ビルドの手順に {path} がありません。Blogitのテーマ以外では、公開ページに管理ボタンが表示されません。/login/ から管理画面に入れます。"
 
 [login]
 oauth_button = "GitHubでログイン"

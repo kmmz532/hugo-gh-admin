@@ -72,7 +72,9 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - `/admin/`：記事の一括管理と固定ページの一覧。固定ページは `/edit/?page=<slug>` で編集し、`/edit/?new=page` で作成する
 - `/admin/images/`：画像の管理
 - `/admin/update/`：ビルドに使ったモジュールのバージョンと最新バージョンの確認、テーマのバージョンの固定（`moduleversion` の項目）、再ビルド
-- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
+- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・テーマ・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
+
+テーマは、`[[module.imports]]` のうち hugo-gh-admin 以外の先頭のモジュールを置き換えて切り替える。リポジトリのURL、Hugo Modulesのパス、themes.gohugo.ioのテーマのページのURLのいずれかを入力でき、themes.gohugo.ioに掲載されたテーマを候補に表示する。管理画面の部品を組み込んでいないテーマに切り替えるときは、hugo-gh-admin の取り込みを追加する。テーマが必要とする設定は、`hugo.toml` へ手動で追加する。
 
 サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は記事の保存先（GitHubまたはGitLab）にコミットされ、サイトの再ビルド後に反映される。
 
@@ -126,7 +128,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `options` | `select` の選択肢。`[[fields.options]]` に `value` と `label` を書く |
 | `columns` | `list` の列。`[[fields.columns]]` に列ごとの `key`・`type`・`label`（`options`）を書く。`list` は `[[table.key]]` 形式のテーブルの配列として保存する |
 
-`module` は、`[[module.imports]]` のうち `options` の `value` に一致する `path` を切り替える（テーマの切り替えなど）。`moduleversion` は、`go.mod` でモジュールのバージョンを固定するか、ビルドのたびに最新バージョンを利用するかを切り替える。
+`module` は、テーマの切り替えの候補を定義する。`options` のテーマは管理画面の部品を組み込んでいるものとして扱い、切り替えても hugo-gh-admin の取り込みを追加しない。項目は個別には表示せず、サイト設定の「テーマ」の候補の先頭に並べる。`moduleversion` は、`go.mod` でモジュールのバージョンを固定するか、ビルドのたびに最新バージョンを利用するかを切り替える。
 
 | キー（`moduleversion`） | 内容 |
 |---|---|

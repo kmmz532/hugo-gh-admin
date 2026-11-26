@@ -203,3 +203,49 @@ export async function latestPseudoVersion(source, branch = 'main') {
   return `v0.0.0-${time}-${data.sha.slice(0, 12)}`;
 }
 
+
+// ---- テーマ（[[module.imports]] の先頭の、管理画面以外のモジュール） ----
+
+export const ADMIN_MODULE = 'github.com/kmmz532/hugo-gh-admin';
+// themes.gohugo.io に載っているテーマの一覧（1 行に 1 つのモジュールのパス）
+export const HUGO_THEMES_LIST_URL = 'https://raw.githubusercontent.com/gohugoio/hugoThemesSiteBuilder/main/themes.txt';
+
+const MODULE_PATH_RE = /^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[A-Za-z0-9._~-]+)+$/;
+
+export function parseThemesList(text) {
+  return text.split('\n').map((line) => line.trim()).filter((line) => line && !line.startsWith('#') && MODULE_PATH_RE.test(line));
+}
+
+// テーマの入力（モジュールのパス・リポジトリの URL・themes.gohugo.io のテーマのページの URL）をモジュールのパスにする。
+// 受け付けない形なら null。themes は themes.gohugo.io の一覧（テーマのページの URL を変換するときに使う）
+export function normalizeThemeModule(input, themes = []) {
+  const page = /^(?:https?:\/\/)?themes\.gohugo\.io\/themes\/([^/?#]+)/i.exec(input.trim());
+  if (page) {
+    const name = page[1].toLowerCase();
+    const nameOf = (theme) => theme.replace(/\/v\d+$/, '').split('/').pop().toLowerCase();
+    return themes.find((theme) => nameOf(theme) === name) ?? null;
+  }
+  let path = input.trim()
+    .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/[?#].*$/, '')
+    .replace(/\/+$/, '')
+    .replace(/\.git$/i, '');
+  const [host = '', ...rest] = path.split('/');
+  path = [host.toLowerCase(), ...rest].join('/');
+  // GitHub はリポジトリまで（/tree/main などのページの URL を除く）。GitLab は /-/ 以降がページの URL
+  if (host.toLowerCase() === 'github.com') path = path.split('/').slice(0, 3).join('/');
+  path = path.replace(/\/-\/.*$/, '');
+  return path.length <= 200 && MODULE_PATH_RE.test(path) && path !== ADMIN_MODULE ? path : null;
+}
+
+// 今のテーマ。管理画面のモジュールを除いた、最初の [[module.imports]]。無ければ undefined
+export const currentTheme = (lines) => readModuleImports(lines).find((path) => path !== ADMIN_MODULE);
+
+// 管理画面のモジュールを取り込んでいなければ、末尾に追加する。テーマが取り込まない場合（外部テーマ）に必要。追加したら true
+export function ensureAdminImport(lines) {
+  if (readModuleImports(lines).includes(ADMIN_MODULE)) return false;
+  while (lines.length && !lines.at(-1).trim()) lines.pop();
+  lines.push('', '# 管理画面（hugo-gh-admin）', '[[module.imports]]', `  path = ${literal(ADMIN_MODULE)}`, '');
+  return true;
+}
