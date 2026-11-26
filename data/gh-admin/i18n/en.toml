@@ -2,6 +2,10 @@
 # common, pending and preview are also loaded on public pages (meta messages). The rest is for the admin screens only.
 
 [common]
+page_label = "Page {page}"
+page_next = "Next page"
+page_prev = "Previous page"
+pager_label = "Pages"
 loading = "Loading…"
 untitled = "(Untitled)"
 close = "Close"
@@ -218,6 +222,7 @@ name = "{name} ({size} KB)"
 pasted_image = "Pasted image"
 
 [admin]
+reading_all = "Loading all posts…"
 nav_label = "Admin"
 nav_articles = "Posts"
 nav_images = "Images"

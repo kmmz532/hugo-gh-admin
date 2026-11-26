@@ -1,9 +1,11 @@
 // /admin/ の一覧・絞り込み・選択・一括操作。
-// 一覧は索引（gh-admin/index.json。1 ファイルずつ読む）から作る。ユーザー由来の文字列は textContent で描画する。
+// 一覧は索引（gh-admin/index.json。1 ファイル 50 件）から作る。最初は 1 ファイルだけ読み、次のページを開いたときに次のファイルを読む。
+// 絞り込み・タグやカテゴリの候補は全件が必要なので、そのときだけ残りを読む。ユーザー由来の文字列は textContent で描画する。
 import { config } from './config.js';
 import { ensureDevSession, getToken, getPost, commitChanges, ConflictError } from './backend.js';
 import { applyBulk } from './frontmatter.js';
-import { loadIndex } from './index-loader.js';
+import { createIndexReader } from './index-loader.js';
+import { renderPager } from './pager.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -16,6 +18,10 @@ const ACTION_LABELS = {
 };
 
 let articles = [];
+// 1 ページの件数。索引の 1 ファイルと同じにして、ページを開くときに読むファイルを 1 つにする
+let pageSize = 50;
+let currentPage = 1;
+let reader = null;
 // 固定ページ。一括操作の対象にはしない
 let pages = [];
 // 選んでいる記事の slug。絞り込みで隠れても選択は残す
@@ -164,14 +170,77 @@ function visiblePages() {
   return kind === 'all' || kind === 'page' ? pages.filter(matches) : [];
 }
 
-function renderRows() {
-  const visible = visibleArticles();
-  const visiblePageItems = visiblePages();
+// 絞り込みを使っているか。使っているときは全件を読んでから絞り込む
+const filtering = () => Boolean($('admin-search').value.trim()) || $('admin-kind').value !== 'all' || filterTags().length > 0;
+
+// 残りの索引を読む。読み終えたら候補を作り直す
+async function loadAll() {
+  if (!reader || reader.done) return;
+  setStatus(t('admin.reading_all'));
+  try {
+    await reader.loadAll();
+    articles = byNewest([...reader.items]);
+    fillCategoryOptions();
+    fillTagOptions();
+    setStatus('');
+  } catch {
+    setStatus(t('error.list_load'));
+  }
+}
+
+// 今のページに出す記事。絞り込みが無ければ、そのページの分だけ索引を読む
+async function pageItems() {
+  if (filtering()) {
+    await loadAll();
+    const visible = visibleArticles();
+    return { items: visible.slice((currentPage - 1) * pageSize, currentPage * pageSize), count: visible.length };
+  }
+  if (reader) {
+    await reader.ensure(currentPage * pageSize);
+    articles = byNewest([...reader.items]);
+  }
+  const total = reader?.total ?? articles.length;
+  return { items: visibleArticles().slice((currentPage - 1) * pageSize, currentPage * pageSize), count: total };
+}
+
+let renderId = 0;
+async function renderRows() {
+  const id = ++renderId;
+  const { items: visible, count } = await pageItems();
+  // 読み込み中に次の描画が始まっていたら、古い結果は捨てる
+  if (id !== renderId) return;
+  const lastPage = Math.max(1, Math.ceil(count / pageSize));
+  if (currentPage > lastPage) {
+    currentPage = lastPage;
+    renderRows();
+    return;
+  }
+  // 固定ページは 1 ページ目にだけ出す
+  const visiblePageItems = currentPage === 1 ? visiblePages() : [];
+  shownArticles = visible;
   $('admin-rows').replaceChildren(...visiblePageItems.map(pageRow), ...visible.map(row));
-  $('admin-count').textContent = t('admin.count', { visible: visible.length + visiblePageItems.length, total: articles.length + pages.length });
+  $('admin-count').textContent = t('admin.count', { visible: count + visiblePages().length, total: (reader?.total ?? articles.length) + pages.length });
   $('admin-all').checked = visible.length > 0 && visible.every((item) => selected.has(item.slug));
+  renderPager($('admin-pager'), {
+    page: currentPage,
+    pages: lastPage,
+    onChange: (page) => {
+      currentPage = page;
+      renderRows();
+      $('admin-rows').closest('table')?.scrollIntoView({ block: 'start' });
+    },
+  });
   updateBar();
 }
+
+// 絞り込みを変えたら 1 ページ目に戻る
+function refilter() {
+  currentPage = 1;
+  renderRows();
+}
+
+// 表示中のページの記事（すべて選ぶの対象）
+let shownArticles = [];
 
 // 選んだ記事の数と、選んだ操作の入力欄
 function updateBar() {
@@ -276,6 +345,10 @@ async function apply() {
     // 一覧も変更後の内容に合わせる（index.json は次の反映で更新される）
     if (action === 'delete') {
       articles = articles.filter((item) => !slugs.includes(item.slug));
+      if (reader) {
+        reader.items = reader.items.filter((item) => !slugs.includes(item.slug));
+        reader.total -= slugs.length;
+      }
     } else {
       for (const item of articles) {
         if (!slugs.includes(item.slug)) continue;
@@ -305,8 +378,11 @@ async function apply() {
 }
 
 function attach() {
-  $('admin-search').addEventListener('input', renderRows);
-  $('admin-kind').addEventListener('change', renderRows);
+  $('admin-search').addEventListener('input', refilter);
+  $('admin-kind').addEventListener('change', refilter);
+  // タグの絞り込みとカテゴリの設定の候補は全件から作る
+  $('admin-tag').addEventListener('focus', loadAll);
+  $('bulk-category').addEventListener('focus', loadAll);
   $('admin-tag').addEventListener('change', () => {
     // 表記ゆれの候補を選んだら、置き換えの入力欄に候補を入れておく（置き換え後は件数の多いほう）
     const tags = filterTags();
@@ -315,10 +391,10 @@ function attach() {
       $('bulk-tags').value = tags.join(', ');
       $('bulk-tags-to').value = tags[0];
     }
-    renderRows();
+    refilter();
   });
   $('admin-all').addEventListener('change', () => {
-    for (const item of visibleArticles()) {
+    for (const item of shownArticles) {
       if ($('admin-all').checked) selected.add(item.slug);
       else selected.delete(item.slug);
     }
@@ -328,7 +404,7 @@ function attach() {
   $('bulk-apply').addEventListener('click', apply);
 }
 
-// 絞り込み・一覧の選択・一括操作は全件読み終わってから有効にする（途中の件数だけで一括操作しないため）
+// 一覧の選択・一括操作は、最初のページを読み終えてから有効にする
 let ready = false;
 function setReady(on) {
   ready = on;
@@ -340,27 +416,15 @@ const byNewest = (items) => items.sort((a, b) => b.date.localeCompare(a.date));
 
 async function load() {
   const indexUrl = document.querySelector('script[data-index-url]').dataset.indexUrl;
-  // 固定ページは索引の 1 つ目のファイルにある
-  fetch(indexUrl, { cache: 'no-store' })
-    .then((res) => (res.ok ? res.json() : null))
-    .then((page) => {
-      pages = (page?.pages ?? []).sort((a, b) => (a.title || a.slug).localeCompare(b.title || b.slug));
-      renderRows();
-    })
-    .catch(() => {});
+  reader = createIndexReader(indexUrl);
   try {
-    const items = await loadIndex(indexUrl, {
-      onPage: (read, total) => {
-        articles = byNewest([...read]);
-        fillCategoryOptions();
-        renderRows();
-        setStatus(t('admin.reading', { read: read.length, total }));
-      },
-    });
-    articles = byNewest(items);
+    // 最初のファイルだけ読む。固定ページの一覧も最初のファイルにある
+    await reader.ensure(1);
+    pageSize = Math.max(1, reader.first?.items?.length || pageSize);
+    pages = (reader.first?.pages ?? []).sort((a, b) => (a.title || a.slug).localeCompare(b.title || b.slug));
+    articles = byNewest([...reader.items]);
     fillCategoryOptions();
     fillTagOptions();
-    setStatus('');
     setReady(true);
   } catch {
     setStatus(t('error.list_load'));

@@ -2,7 +2,7 @@
   エントリの JS だけに ?v= を付けると、そこから読む JS はブラウザのキャッシュの古いものが使われ、export が合わずに止まることがある。
   static/gh-admin/js の .js を追加・削除したら、この一覧も更新する（scripts/check-i18n.mjs が確認する） */ -}}
 {{- $v := partial "gh-admin/version.html" . -}}
-{{- $files := slice "admin-hugo.js" "admin-images.js" "admin-list.js" "admin-modules.js" "admin-settings.js" "admin-update.js" "admin.js" "backend.js" "config.js" "copy.js" "core.js" "drafts.js" "editor.js" "external.js" "float.js" "frontmatter.js" "history.js" "i18n.js" "image.js" "images.js" "index-loader.js" "login.js" "notice.js" "pending.js" "post-url.js" "preview.js" "providers/github.js" "providers/gitlab.js" "save.js" "session.js" "site-config.js" "slug.js" "storage.js" "taxonomy.js" "thumb.js" "time.js" "toolbar.js" "upload-confirm.js" -}}
+{{- $files := slice "admin-hugo.js" "admin-images.js" "admin-list.js" "admin-modules.js" "admin-settings.js" "admin-update.js" "admin.js" "backend.js" "config.js" "copy.js" "core.js" "drafts.js" "editor.js" "external.js" "float.js" "frontmatter.js" "history.js" "i18n.js" "image.js" "images.js" "index-loader.js" "login.js" "notice.js" "pager.js" "pending.js" "post-url.js" "preview.js" "providers/github.js" "providers/gitlab.js" "save.js" "session.js" "site-config.js" "slug.js" "storage.js" "taxonomy.js" "thumb.js" "time.js" "toolbar.js" "upload-confirm.js" -}}
 {{- $entries := slice -}}
 {{- range $files }}{{ $url := printf "gh-admin/js/%s" . | relURL }}{{ $entries = $entries | append (printf "%s:%s" ($url | jsonify) (printf "%s?v=%s" $url $v | jsonify)) }}{{ end -}}
 {{- /* type="importmap" の中は JS として扱われずに引用符がエスケープされるため、タグごと出力する */ -}}

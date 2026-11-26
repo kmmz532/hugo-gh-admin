@@ -688,6 +688,35 @@ body:has(.editor) .footer {
   font: inherit;
 }
 
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 1rem 0;
+}
+
+.pager[hidden] {
+  display: none;
+}
+
+.pager-button {
+  min-width: 2.25rem;
+  justify-content: center;
+}
+
+.pager-button[aria-current="page"] {
+  font-weight: 700;
+  border-color: var(--foreground);
+  opacity: 1;
+}
+
+.pager-gap {
+  padding: 0 0.25rem;
+  color: var(--text-secondary);
+}
+
 .admin-count {
   color: var(--text-secondary);
   font-size: 0.85rem;

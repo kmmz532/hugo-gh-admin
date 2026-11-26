@@ -2,6 +2,7 @@
 // ユーザー由来の文字列は textContent で描画する。GitHub API は github.js 経由。
 import { config } from './config.js';
 import { listImages, deleteImage } from './backend.js';
+import { renderPager } from './pager.js';
 import { uploadImage, imageSrc } from './image.js';
 import { t } from './i18n.js';
 
@@ -43,6 +44,12 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
   const status = el('p', 'image-status');
   status.setAttribute('role', 'status');
   const grid = el('div', 'image-grid');
+  const pager = el('nav', 'pager');
+  pager.setAttribute('aria-label', t('common.pager_label'));
+  pager.hidden = true;
+  // 1 ページの枚数。サムネイルを一度に読みすぎないようにする
+  const PAGE_SIZE = 30;
+  let page = 1;
   let items = [];
   let loaded = false;
 
@@ -95,8 +102,19 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
   }
 
   function render() {
-    grid.replaceChildren(...items.map(tile));
+    const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(page, pages);
+    grid.replaceChildren(...items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(tile));
     if (loaded && !items.length) grid.textContent = t('images.empty');
+    renderPager(pager, {
+      page,
+      pages,
+      onChange: (next) => {
+        page = next;
+        render();
+        grid.scrollIntoView({ block: 'start' });
+      },
+    });
   }
 
   async function load() {
@@ -159,6 +177,6 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
     label.append(size);
     bar.append(label);
   }
-  container.append(bar, fileInput, status, grid);
+  container.append(bar, fileInput, status, grid, pager);
   return { load };
 }
