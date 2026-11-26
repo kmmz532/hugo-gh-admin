@@ -30,7 +30,7 @@ function loadVersions() {
       return cell;
     });
     rows.append(row);
-    const pending = latestModuleVersion(module.path, module.version);
+    const pending = latestModuleVersion(module.path, module.version, token);
     if (module.version) latestVersions.set(module.path, pending.catch(() => null));
     pending.then((latest) => {
       cells[2].textContent = !latest ? '-' : latest.same ? t('settings.version_up_to_date') : latest.label;
@@ -152,7 +152,7 @@ function renderModuleVersion(field, parent, files) {
       let entries = [];
       if (!autoInput.checked) {
         const version = updateInput.checked || current.length === 0
-          ? await latestPseudoVersion(field.source, field.branch)
+          ? await latestPseudoVersion(field.source, field.branch, token)
           : current[0][1];
         entries = modules.map((path) => [path, version]);
       }

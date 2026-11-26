@@ -21,6 +21,7 @@
 
 .login-form input,
 .field input,
+.admin-modules input,
 .field select,
 .field textarea,
 .details-card textarea {
@@ -257,6 +258,7 @@
 .title-input:hover,
 .body-input:hover,
 .field input:hover,
+.admin-modules input:hover,
 .field textarea:hover,
 .details-card textarea:hover {
   border-color: var(--text-secondary);
@@ -265,6 +267,7 @@
 .title-input:focus,
 .body-input:focus,
 .field input:focus,
+.admin-modules input:focus,
 .field select:focus,
 .field textarea:focus,
 .details-card textarea:focus {
@@ -1275,9 +1278,18 @@ body:has(.editor) .footer {
   overflow-wrap: anywhere;
 }
 
+/* 入力欄と「最新」ボタンを 1 行に並べる */
+.admin-modules-version {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .admin-modules-table input {
-  width: 14rem;
-  max-width: 100%;
+  box-sizing: border-box;
+  width: auto;
+  flex: 1 1 10rem;
+  min-width: 0;
 }
 
 .admin-modules-actions {
@@ -1300,6 +1312,7 @@ body:has(.editor) .footer {
 }
 
 .admin-modules-add input {
+  box-sizing: border-box;
   flex: 1;
   min-width: 0;
 }

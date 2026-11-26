@@ -90,7 +90,7 @@ async function main() {
         const latest = button(t('settings.modules_latest'), t('settings.modules_latest_label', { path: block.path }), async () => {
           latest.disabled = true;
           try {
-            const found = await latestModuleVersion(block.path, versions.get(block.path) || '');
+            const found = await latestModuleVersion(block.path, versions.get(block.path) || '', token);
             if (!found) throw new Error(t('settings.modules_latest_failed'));
             input.value = found.label;
             versions.set(block.path, found.label);
@@ -100,7 +100,10 @@ async function main() {
             latest.disabled = false;
           }
         }, input.disabled);
-        versionCell.append(input, ' ', latest);
+        const version = document.createElement('div');
+        version.className = 'admin-modules-version';
+        version.append(input, latest);
+        versionCell.append(version);
 
         const actions = document.createElement('td');
         actions.className = 'admin-modules-actions';

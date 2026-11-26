@@ -1,5 +1,6 @@
 // サイト本体の設定ファイル（hugo.toml・go.mod）の読み書き。サイト設定と更新の画面で使う
 import { t } from './i18n.js';
+import { config } from './config.js';
 
 export function decodeBase64(value) {
   const binary = atob(value.replace(/\s/g, ''));
@@ -262,14 +263,22 @@ export function setGoRequires(text, versions) {
   return `${lines.join('\n')}\n`;
 }
 
+// GitHub API の要求ヘッダー。GitHub でログインしているときはトークンを付ける。
+// 付けないと上限が IP アドレスごとに 1 時間 60 回で、画面を何度か開くと最新バージョンを取得できなくなる
+function githubHeaders(token) {
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (token && (config.provider ?? 'github') === 'github') headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
 // GitHub にあるモジュール（github.com/<owner>/<repo>/...）の最新バージョン。{ label, same } を返し、取得できなければ null。
 // タグのバージョンならタグ、疑似バージョン（v0.0.0-日時-SHA）か空なら既定のブランチの最新コミットと比べる
-export async function latestModuleVersion(path, version) {
+export async function latestModuleVersion(path, version, token = '') {
   const match = /^github\.com\/([^/]+)\/([^/]+)/.exec(path);
   if (!match) return null;
   const repo = `${match[1]}/${match[2]}`;
   const pseudo = /^v0\.0\.0-\d{14}-([0-9a-f]{12})$/.exec(version ?? '');
-  const headers = { Accept: 'application/vnd.github+json' };
+  const headers = githubHeaders(token);
   if (pseudo || !version) {
     const res = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, { headers });
     if (!res.ok) return null;
@@ -286,9 +295,9 @@ export async function latestModuleVersion(path, version) {
 }
 
 // GitHub のリポジトリの最新コミットから Go modules の疑似バージョンを作る（例: v0.0.0-20261126012345-0123456789ab）
-export async function latestPseudoVersion(source, branch = 'main') {
+export async function latestPseudoVersion(source, branch = 'main', token = '') {
   const res = await fetch(`https://api.github.com/repos/${source}/commits/${encodeURIComponent(branch)}`, {
-    headers: { Accept: 'application/vnd.github+json' },
+    headers: githubHeaders(token),
   });
   if (!res.ok) throw new Error(t('settings.module_version_failed', { message: `${res.status} ${res.statusText}` }));
   const data = await res.json();
