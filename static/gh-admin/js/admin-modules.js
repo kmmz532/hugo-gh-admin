@@ -1,4 +1,4 @@
-// /admin/update/ のモジュールの管理。hugo.toml の [[module.imports]] の追加・削除・並べ替えと、
+// /admin/modules/ のモジュールの管理。hugo.toml の [[module.imports]] の追加・削除・並べ替えと、
 // go.mod でのバージョンの固定（空欄なら固定せず、ビルドのたびに最新バージョンを利用する）を行う
 import { getToken, siteFiles } from './backend.js';
 import { t } from './i18n.js';

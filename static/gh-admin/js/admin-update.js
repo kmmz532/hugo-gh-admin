@@ -1,4 +1,4 @@
-// /admin/update/ の更新の画面。ビルドに使ったモジュールのバージョンと最新バージョンを表示し、
+// /admin/modules/ の更新の画面。ビルドに使ったモジュールのバージョンと最新バージョンを表示し、
 // 古いモジュールをサイトの go.mod で最新バージョンに上げてから再ビルドする
 import { getToken, siteFiles, startBuild } from './backend.js';
 import { t } from './i18n.js';

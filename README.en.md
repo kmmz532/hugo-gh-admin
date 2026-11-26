@@ -79,7 +79,7 @@ The admin screens switch between posts, images and site settings with a shared n
 
 - `/admin/`: bulk management of posts and the list of pages. Pages are edited at `/edit/?page=<slug>` and created at `/edit/?new=page`
 - `/admin/images/`: image management
-- `/admin/update/`: module versions in use and the latest versions, pinning the theme version (`moduleversion` fields) and rebuilding the site
+- `/admin/modules/`: adding, removing, reordering and pinning imported modules, module versions in use and the latest versions, pinning the theme version (`moduleversion` fields) and rebuilding the site
 - `/admin/settings/`: the blog name, description, author, posts per page, language, favicon, default thumbnail for post cards, and settings defined by the theme
 
 The site settings change the blog name (`title` and `params.headerTitle`), the favicon and the default thumbnail. Images are uploaded to `static/`, and the settings in `hugo.toml` are updated. Changes are committed to GitHub or GitLab and take effect after the site is rebuilt.
