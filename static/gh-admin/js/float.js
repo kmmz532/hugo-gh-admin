@@ -100,7 +100,7 @@ button:hover, a:hover { background: linear-gradient(var(--hover), var(--hover)),
 button:focus-visible, a:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
 .toggle { width: 44px; height: 44px; justify-content: center; border-radius: 50%; padding: 0; }
 /* ログインしていないときの入口。閲覧の邪魔にならないように小さく薄くする */
-.guest { width: 36px; height: 36px; justify-content: center; border-radius: 50%; padding: 0; opacity: 0.45; box-shadow: none; }
+.guest { width: 36px; height: 36px; justify-content: center; border-radius: 50%; padding: 0; opacity: 0.75; }
 .guest:hover, .guest:focus-visible { opacity: 1; }
 .menu { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .menu[hidden] { display: none; }
