@@ -1,15 +1,17 @@
 # hugo-gh-admin
 
-A Hugo Module that adds a browser-based editor for the Markdown posts on GitHub to a Hugo site. It includes login, creating and editing posts, and the admin screens. (Japanese version: [README.md](README.md))
+A Hugo Module that adds a browser-based editor for the Markdown posts on GitHub or GitLab to a Hugo site. It includes login, creating and editing posts, and the admin screens. (Japanese version: [README.md](README.md))
 
-- Posts are saved to a GitHub repository as `content/posts/<slug>.md`.
+- Posts are saved to a GitHub repository or a GitLab project (gitlab.com or a self-managed instance), chosen with `params.ghAdmin.provider`, as `content/posts/<slug>.md`.
 - The admin screens are available in Japanese and English. Choose the language with `params.ghAdmin.lang`.
 
 ## Requirements
 
 - Hugo 0.141.0 or later (extended edition)
 - Go (used by Hugo Modules to fetch the module)
-- A GitHub repository for the posts (called "the posts repository" below) and a GitHub PAT with read and write access to its Contents
+- A repository for the posts (called "the posts repository" below) and a token that can write to it
+  - GitHub: a fine-grained PAT with read and write access to its Contents
+  - GitLab: an access token with the `api` scope and a role that can push to its target branch
 
 ## Installation
 
@@ -32,7 +34,9 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 
 | Item | Default | Meaning |
 |---|---|---|
-| `repo` | none | The posts repository (`owner/name`) |
+| `provider` | `github` | Where posts are saved: `github` or `gitlab` |
+| `gitlabURL` | `https://gitlab.com` | The GitLab URL. Set the instance URL for a self-managed GitLab. Used only with `provider = "gitlab"` |
+| `repo` | none | The posts repository: `owner/name` on GitHub, or the full path (`group/subgroup/project`) on GitLab |
 | `branch` | `main` | The branch where posts are saved |
 | `postsDir` | `content/posts` | The folder for posts |
 | `imagesDir` | `static/images` | The folder for images |
@@ -46,7 +50,10 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `adminImagesURL` | `/admin/images/` | The URL of image management |
 | `postURL` | `/posts/{slug}/` | The URL pattern for posts. Replaces `{slug}` (file name), `{name}` (name without the leading date), `{yyyy}`, `{mm}` and `{dd}`. Used by the pending display |
 | `lang` | the first part of `languageCode` (`en-us` → `en`) | The language of the admin screens. Falls back to `en` when there is no dictionary. Dictionaries are in `data/gh-admin/i18n/<lang>.toml` |
-| `tokenProvider` | none | The URL of a module that provides the GitHub token (provided by the site). The module exports `async function getGitHubToken()` and returns a token string or null. The token is cleared when the tab closes (sessionStorage). Without it, you log in with a PAT |
+| `siteRepo` | none | The site repository (same format as `repo`) where `/admin/settings/` writes the site settings |
+| `siteBranch` | `main` | The branch of the site repository |
+| `siteConfigPath` | `hugo.toml` | The Hugo configuration file in the site repository |
+| `tokenProvider` | none | The URL of a module that provides the GitHub token (provided by the site). The module exports `async function getGitHubToken()` (`getGitLabToken()` on GitLab) and returns a token string or null. The token is cleared when the tab closes (sessionStorage). Without it, you log in with a PAT |
 
 To change the URLs of the admin screens, put a `content/*.md` with the same path in the site, override `url:`, and set the same URL in these items.
 
@@ -55,6 +62,24 @@ To change the URLs of the admin screens, put a `content/*.md` with the same path
   repo = "owner/articles"
   branch = "main"
 ```
+
+### Admin screens (`/admin/`)
+
+The admin screens switch between posts, images and site settings with a shared navigation.
+
+- `/admin/`: bulk management of posts
+- `/admin/images/`: image management
+- `/admin/settings/`: the blog name, favicon and default thumbnail for post cards
+
+The site settings change the blog name (`title` and `params.headerTitle`), the favicon and the default thumbnail. Images are uploaded to `static/`, and the settings in `hugo.toml` are updated. Changes are committed to GitHub or GitLab and take effect after the site is rebuilt.
+
+- The blog name is written to `title` and `params.headerTitle`.
+- The favicon accepts ICO, PNG and SVG. The default thumbnail accepts PNG, JPEG, WebP, GIF and SVG.
+- The default thumbnail applies only to post cards without their own image. It does not apply to OGP images.
+- When the default thumbnail is removed, post cards without an image are shown without one, as before.
+- If the existing credentials can write to the site repository, the token field is hidden. Only when they cannot, enter a PAT with Contents write access to the site repository.
+
+A token that can write to the site repository is required: on GitHub, a token with Contents read and write access; on GitLab, an access token with the `api` scope that can push to the target branch. The token is stored in this tab's `sessionStorage`.
 
 ### Overriding messages
 
@@ -131,9 +156,11 @@ The "History" section in the editor lists the commit history of the post file on
 ## Security
 
 - The Personal Access Token is stored in the browser's `localStorage`. Do not use it on shared devices.
-- Use a fine-grained token limited to the posts repository, with only Contents read and write. The expiry must be 90 days or less.
-- Showing the admin buttons is only for convenience. GitHub decides the permissions.
+- On GitHub, use a fine-grained token limited to the posts repository, with only Contents read and write. The expiry must be 90 days or less.
+- On GitLab, use a project access token for the posts repository with only the `api` scope. The expiry must be 90 days or less.
+- Showing the admin buttons is only for convenience. GitHub or GitLab decides the permissions.
 - The site's Content-Security-Policy must include the sources that `csp.html` returns.
+- On GitLab, include the GitLab URL (default `https://gitlab.com`) in `connect-src`. The editor shows unpublished images from `<gitlabURL>/<repo>/-/raw/...`, so the posts repository must be public.
 
 ## Changing the look
 

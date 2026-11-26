@@ -1,0 +1,23 @@
+# provider = "gitlab" のときに i18n/<lang>.toml へ重ねる文言。キーは i18n/<lang>.toml にあるものだけを書く
+[editor]
+author_label = "作者（GitLab ユーザー名）"
+author_invalid = "作者は GitLab のユーザー名（英数字・ハイフン・下線・ピリオド）で入力してください。"
+
+[settings]
+token_required = "アクセストークンを入力してください。"
+repo_write_denied = "GitLab API による書き込みが拒否されました。アクセストークンのスコープに api を付与し、「{repo}」の対象ブランチへプッシュできるロールを設定してください。トークンを変更した場合は、再接続してください。"
+repo_no_write = "このトークンでは「{repo}」の対象ブランチにプッシュできません。プロジェクトのロールと保護ブランチの設定を確認してください。"
+upload_failed = "画像を GitLab に保存できませんでした。時間をおいて再試行してください。"
+connecting = "GitLab に接続しています…"
+saved_token_invalid = "保存済みの認証情報では接続できません。サイト本体プロジェクト用のアクセストークンを入力してください。詳細: {message}"
+
+[login]
+step_create = "GitLab のプロジェクトの Settings → Access tokens でプロジェクトアクセストークンを作成する（User settings → Access tokens の個人用トークンも利用できる）。"
+step_repo = "ロールは {repo} の対象ブランチにプッシュできるもの（保護ブランチなら Maintainer）を選ぶ。"
+step_permissions = "スコープは {permission} のみ付与する。"
+token_label = "アクセストークン"
+permission = "api"
+
+[error]
+conflict = "GitLab がこの操作を受け付けませんでした（{status}）。"
+api = "GitLab API エラー（{status}）: {message}"

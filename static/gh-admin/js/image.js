@@ -1,5 +1,5 @@
 import { config, escapeRe } from './config.js';
-import { saveImage, rawImageUrl, ConflictError } from './github.js';
+import { saveImage, rawImageUrl, ConflictError } from './backend.js';
 import { jstYear } from './time.js';
 import { t } from './i18n.js';
 

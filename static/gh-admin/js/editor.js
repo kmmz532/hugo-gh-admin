@@ -1,6 +1,6 @@
 import { loadIndex } from './index-loader.js';
 import { config } from './config.js';
-import { getPost, getToken, ensureDevSession, isValidSlug } from './github.js';
+import { getPost, getToken, ensureDevSession, isValidSlug, AUTHOR_RE } from './backend.js';
 import { uploadImage } from './image.js';
 import { parseArticle } from './frontmatter.js';
 import { draftKey, hasDraft, readDraft, removeDraft, renderDrafts } from './drafts.js';
@@ -25,7 +25,6 @@ const $ = (id) => document.getElementById(id);
 const SUMMARY_TARGET = 120;
 // 最後に使った作者。新規記事の既定にする
 const AUTHOR_KEY = 'gh_admin_author';
-const AUTHOR_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 
 // 画面の状態はこの 1 つにまとめる。記事の状態（kind・originalSlug・sha・aliases・extra）と、編集中の値・タイマー
 const state = {

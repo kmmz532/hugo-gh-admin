@@ -1,7 +1,7 @@
 // 公開・削除の直後に、反映待ちの内容をこの端末だけで先に見せる。
 // 控えは localStorage に置き、ビルド時刻を過ぎたら、または 30 分経ったら消す。GitHub API は呼ばない。
 import { config } from './config.js';
-import { getToken } from './github.js';
+import { getToken } from './backend.js';
 import { t } from './i18n.js';
 import { getItem, setItem, removeItem, keys } from './storage.js';
 import { renderPreview } from './preview.js';

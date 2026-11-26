@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { checkRepoPush, fetchLogin, saveSession, repo } from './github.js';
+import { checkRepoPush, fetchLogin, saveSession, repo } from './backend.js';
 import { t } from './i18n.js';
 
 const form = document.getElementById('login-form');

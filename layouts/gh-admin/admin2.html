@@ -1,4 +1,0 @@
-{{ define "main" }}
-<p>管理画面の設定は <a href="{{ "admin/settings/" | relURL }}">こちら</a> に移動した。</p>
-<script>location.replace({{ "admin/settings/" | relURL | jsonify }});</script>
-{{ end }}

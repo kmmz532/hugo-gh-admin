@@ -1,5 +1,5 @@
 // slug の自動生成・検証・表示。画面の状態（state）は引数で受け取る。editor.js は import しない
-import { isValidSlug } from './github.js';
+import { isValidSlug } from './backend.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);

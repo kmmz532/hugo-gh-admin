@@ -265,6 +265,8 @@ step_create = "GitHub の Settings → Developer settings → Fine-grained token
 step_repo = "Repository access は「Only select repositories」で {repo} のみを選ぶ。"
 step_permissions = "Permissions は Repository permissions の {permission} のみ付与する。"
 step_expiry = "有効期限は 90 日以内にする。"
+token_label = "Personal access token"
+permission = "Contents: Read and write"
 checking = "確認しています…"
 no_push = "このトークンでは {repo} に書き込めません。権限の設定を確認してください。"
 

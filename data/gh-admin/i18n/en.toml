@@ -265,6 +265,8 @@ step_create = "Create a new token under GitHub Settings → Developer settings �
 step_repo = "For Repository access, choose \"Only select repositories\" and select only {repo}."
 step_permissions = "Under Repository permissions, grant only {permission}."
 step_expiry = "Set the expiry to 90 days or less."
+token_label = "Personal access token"
+permission = "Contents: Read and write"
 checking = "Checking…"
 no_push = "This token cannot write to {repo}. Check the permission settings."
 

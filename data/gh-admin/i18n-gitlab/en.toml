@@ -1,0 +1,23 @@
+# Messages merged over i18n/<lang>.toml when provider = "gitlab". Use only keys that exist in i18n/<lang>.toml
+[editor]
+author_label = "Author (GitLab username)"
+author_invalid = "The author must be a GitLab username (letters, digits, hyphens, underscores and periods)."
+
+[settings]
+token_required = "Enter an access token."
+repo_write_denied = "GitLab rejected the write request. Give the access token the api scope and a role that can push to the target branch of \"{repo}\". Reconnect after changing the token."
+repo_no_write = "This token cannot push to the target branch of \"{repo}\". Check the project role and the protected branch settings."
+upload_failed = "The image could not be saved to GitLab. Please try again later."
+connecting = "Connecting to GitLab…"
+saved_token_invalid = "The saved credentials could not connect. Enter an access token for the site project. Details: {message}"
+
+[login]
+step_create = "Create a project access token under the project's Settings → Access tokens in GitLab (a personal access token under User settings → Access tokens also works)."
+step_repo = "Choose a role that can push to the target branch of {repo} (Maintainer for a protected branch)."
+step_permissions = "Grant only the {permission} scope."
+token_label = "Access token"
+permission = "api"
+
+[error]
+conflict = "GitLab did not accept this operation ({status})."
+api = "GitLab API error ({status}): {message}"

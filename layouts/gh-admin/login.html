@@ -5,11 +5,11 @@
 <ol class="steps">
   <li>{{ $i18n.login.step_create }}</li>
   <li>{{ replace $i18n.login.step_repo "{repo}" (printf "<code>%s</code>" (path.Base $gh.repo)) | safeHTML }}</li>
-  <li>{{ replace $i18n.login.step_permissions "{permission}" "<strong>Contents: Read and write</strong>" | safeHTML }}</li>
+  <li>{{ replace $i18n.login.step_permissions "{permission}" (printf "<strong>%s</strong>" $i18n.login.permission) | safeHTML }}</li>
   <li>{{ $i18n.login.step_expiry }}</li>
 </ol>
 <form id="login-form" class="login-form">
-  <label class="field">Personal access token
+  <label class="field">{{ $i18n.login.token_label }}
     <input id="token" type="password" autocomplete="off" required></label>
   <button type="submit" class="btn primary">{{ $i18n.common.login }}</button>
   <p id="login-status" role="alert"></p>

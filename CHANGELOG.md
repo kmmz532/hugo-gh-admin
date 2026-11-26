@@ -1,6 +1,12 @@
 # Changelog
 
-## 未リリース
+## v0.9.0
+
+- 保存先に GitLab（gitlab.com とセルフホスト）を追加した。`params.ghAdmin.provider = "gitlab"` と `gitlabURL` で選ぶ。既定値は従来どおり GitHub。
+- GitLab 用の文言は `data/gh-admin/i18n-gitlab/<lang>.toml` に置き、`provider = "gitlab"` のときだけ重ねる。
+- 保存先の API を `backend.js` と `providers/` に分けた。`static/gh-admin/js/github.js` は削除した。
+- ログイン画面のトークン欄の名前と権限の表示を辞書（`login.token_label`・`login.permission`）に移した。
+- `layouts/gh-admin/admin2.html` を削除した。
 
 - サイト設定の保存時、値が変わった項目だけを TOML に書き込み、変更がない場合は設定ファイル自体を更新しないようにした。
 

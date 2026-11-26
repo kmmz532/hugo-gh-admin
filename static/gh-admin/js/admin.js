@@ -1,7 +1,7 @@
 // ログイン状態に応じて管理者向けの表示を切り替える。
 // 表示制御は UX のためだけ。実際の権限は GitHub 側が判定する。
 import { config } from './config.js';
-import { getToken, clearSession, ensureDevSession, isLocalHost } from './github.js';
+import { getToken, clearSession, ensureDevSession, isLocalHost } from './backend.js';
 import { applyPending } from './pending.js';
 import { t } from './i18n.js';
 

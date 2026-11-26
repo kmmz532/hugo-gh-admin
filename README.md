@@ -1,13 +1,15 @@
 # hugo-gh-admin
-Hugoで作成したサイトにGitHub上のMarkdown記事をブラウザから編集する機能を追加するHugo Modulesのモジュールです。ログイン、記事の新規作成と編集、管理画面などを含みます。
+Hugoで作成したサイトにGitHubまたはGitLab上のMarkdown記事をブラウザから編集する機能を追加するHugo Modulesのモジュールです。ログイン、記事の新規作成と編集、管理画面などを含みます。
 
-- 保存先はGitHubリポジトリ。記事は `content/posts/<slug>.md` の形で保存します。
+- 保存先はGitHubのリポジトリ、またはGitLabのプロジェクト（gitlab.comとセルフホストのGitLab）。`params.ghAdmin.provider` で選ぶ。記事は `content/posts/<slug>.md` の形で保存します。
 - 画面の文言は日本語と英語に対応しています（`params.ghAdmin.lang` で選びます）。英語版の説明は [README.en.md](README.en.md) を参照してください。
 
 ## 必要なもの
 - Hugo 0.141.0以上のextended版
 - Go（Hugo Modulesの取り込みに利用する）
-- 記事を置くGitHubリポジトリ（以下「記事のリポジトリ」）と、そのContentsへの読み書き権限を持つGitHub PAT
+- 記事を置くリポジトリ（以下「記事のリポジトリ」）と、書き込み用のトークン
+  - GitHub: Contentsへの読み書き権限を持つFine-grained PAT
+  - GitLab: 対象ブランチへプッシュできるロールと `api` スコープを持つアクセストークン
 
 ## 取り込み方
 
@@ -30,7 +32,9 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 | 項目 | 既定値 | 意味 |
 |---|---|---|
-| `repo` | なし | 記事のリポジトリ（`owner/name`） |
+| `provider` | `github` | 保存先。`github` または `gitlab` |
+| `gitlabURL` | `https://gitlab.com` | GitLabのURL。セルフホストのときはインスタンスのURLを書く。`provider = "gitlab"` のときだけ利用する |
+| `repo` | なし | 記事のリポジトリ。GitHubは `owner/name`、GitLabはフルパス（`group/subgroup/project`） |
 | `branch` | `main` | 記事を保存するブランチ |
 | `postsDir` | `content/posts` | 記事を置くフォルダ |
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
@@ -44,10 +48,10 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `adminImagesURL` | `/admin/images/` | 画像の管理のURL |
 | `postURL` | `/posts/{slug}/` | 記事のURLの形。`{slug}`（ファイル名）・`{name}`（先頭の日付を除いた名前）・`{yyyy}`・`{mm}`・`{dd}` を置き換える。反映待ちの表示で利用する |
 | `lang` | `languageCode` の先頭（`ja-jp` → `ja`） | 管理画面の文言の言語。辞書が無ければ `en`。辞書は `data/gh-admin/i18n/<lang>.toml` |
-| `siteRepo` | なし | `/admin/settings/` がサイト設定を書き込むサイト本体リポジトリ（`owner/name`） |
+| `siteRepo` | なし | `/admin/settings/` がサイト設定を書き込むサイト本体リポジトリ（書式は `repo` と同じ） |
 | `siteBranch` | `main` | サイト本体リポジトリのブランチ |
 | `siteConfigPath` | `hugo.toml` | サイト本体リポジトリ内の Hugo 設定ファイル |
-| `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()` を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
+| `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()`（GitLabでは `getGitLabToken()`）を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
 
 画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。
 
@@ -59,7 +63,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - `/admin/images/`：画像の管理
 - `/admin/settings/`：ブログ名・ファビコン・記事カード用デフォルトサムネイルの設定
 
-サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は GitHub にコミットされ、サイトの再ビルド後に反映される。
+サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は記事の保存先（GitHubまたはGitLab）にコミットされ、サイトの再ビルド後に反映される。
 
 - ブログ名は `title` と `params.headerTitle` に反映する。
 - ファビコンは ICO・PNG・SVG、デフォルトサムネイルは PNG・JPEG・WebP・GIF・SVG に対応する。
@@ -67,7 +71,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - デフォルトサムネイルを解除すると、画像がない記事カードは従来どおり画像なしになる。
 - 既存の認証情報でサイト本体リポジトリへの書き込み権限を確認できた場合、トークン入力欄は表示しない。接続できない場合のみ、サイト本体リポジトリの Contents に書き込み可能な PAT を入力する。
 
-サイト本体リポジトリの Contents に Read and write 権限を持つ GitHub トークンが必要で、トークンはこのタブの `sessionStorage` に保存する。
+サイト本体リポジトリへの書き込み権限を持つトークンが必要で、トークンはこのタブの `sessionStorage` に保存する。GitHubでは Contents に Read and write 権限を持つトークン、GitLabでは対象ブランチへプッシュできる `api` スコープのアクセストークンを利用する。
 
 ### 文言の上書き
 
@@ -145,9 +149,11 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 ## セキュリティ
 
 - Personal Access Tokenはブラウザの `localStorage` に保存される。共有の端末では利用しない。
-- トークンはFine-grainedにし、記事のリポジトリだけに絞ってContentsの読み書きだけを付ける。期限は90日以内にする。
-- 管理ボタンの表示などは利便性のためだけ。権限はGitHubが判定する。
+- GitHubでは、トークンはFine-grainedにし、記事のリポジトリだけに絞ってContentsの読み書きだけを付ける。期限は90日以内にする。
+- GitLabでは、トークンは記事のリポジトリのプロジェクトアクセストークンにし、スコープは `api` だけを付ける。期限は90日以内にする。
+- 管理ボタンの表示などは利便性のためだけ。権限はGitHubまたはGitLabが判定する。
 - 本体のContent-Security-Policyに、`csp.html` が返す送り先を含める。
+- GitLabでは、`connect-src` にGitLabのURL（既定値は `https://gitlab.com`）を含める。また、画像の公開前の表示は `<gitlabURL>/<repo>/-/raw/...` を読み込むため、記事のリポジトリは公開（public）にする。
 
 ## 見た目を変える
 

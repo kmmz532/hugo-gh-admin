@@ -9,10 +9,10 @@
 </nav>
 
 <section class="settings-card admin-settings-card">
-  <h2>GitHub認証</h2>
+  <h2>{{ if eq $gh.provider "gitlab" }}GitLab{{ else }}GitHub{{ end }}認証</h2>
   <form id="admin-settings-auth-form" class="login-form" hidden>
-    <label class="field">Personal access token
-      <input id="admin-settings-token" type="password" autocomplete="off" placeholder="Personal access token">
+    <label class="field">{{ $i18n.login.token_label }}
+      <input id="admin-settings-token" type="password" autocomplete="off" placeholder="{{ $i18n.login.token_label }}">
     </label>
     <button class="btn" type="submit">接続</button>
   </form>

@@ -1,7 +1,7 @@
 // /admin/ の一覧・絞り込み・選択・一括操作。
 // 一覧は索引（gh-admin/index.json。1 ファイルずつ読む）から作る。ユーザー由来の文字列は textContent で描画する。
 import { config } from './config.js';
-import { ensureDevSession, getToken, getPost, commitChanges, ConflictError } from './github.js';
+import { ensureDevSession, getToken, getPost, commitChanges, ConflictError } from './backend.js';
 import { applyBulk } from './frontmatter.js';
 import { loadIndex } from './index-loader.js';
 import { t } from './i18n.js';
@@ -170,6 +170,8 @@ async function apply() {
   setStatus(t('admin.saving'));
   try {
     const changes = {};
+    // GitLab は読み込んだときの版（sha）と比べて、他で更新された記事を ConflictError にする
+    const bases = {};
     if (action === 'delete') {
       for (const slug of slugs) changes[slug] = null;
     } else {
@@ -177,9 +179,10 @@ async function apply() {
       slugs.forEach((slug, index) => {
         if (!posts[index]) throw new Error(t('admin.post_missing', { slug }));
         changes[slug] = applyBulk(posts[index].text, options);
+        bases[slug] = posts[index].sha;
       });
     }
-    await commitChanges(changes, t('admin.commit_message', { action: ACTION_LABELS[action], count }));
+    await commitChanges(changes, t('admin.commit_message', { action: ACTION_LABELS[action], count }), bases);
 
     // 一覧も変更後の内容に合わせる（index.json は次の反映で更新される）
     if (action === 'delete') {

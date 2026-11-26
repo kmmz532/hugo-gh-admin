@@ -67,6 +67,26 @@ for (const [code, map] of Object.entries(flat)) {
   }
 }
 
+// GitLab 用の上書き（data/gh-admin/i18n-gitlab/*.toml）は、同じ言語の辞書にあるキーだけを持ち、差し込みも揃える
+const overrideDir = join(root, 'data', 'gh-admin', 'i18n-gitlab');
+const overrides = Object.fromEntries(
+  readdirSync(overrideDir)
+    .filter((name) => name.endsWith('.toml'))
+    .map((name) => [name.replace(/\.toml$/, ''), flatten(parseDict(join(overrideDir, name)))]),
+);
+for (const [code, map] of Object.entries(overrides)) {
+  const base = flat[code];
+  if (!base) {
+    errors.push(`i18n-gitlab/${code}.toml: i18n/${code}.toml がありません`);
+    continue;
+  }
+  for (const [key, value] of map) {
+    if (!base.has(key)) errors.push(`i18n-gitlab/${code}.toml: i18n/${code}.toml にないキーです: ${key}`);
+    else if (placeholders(base.get(key)) !== placeholders(value)) errors.push(`i18n-gitlab/${code}.toml: 差し込みの {name} が i18n/${code}.toml と違います: ${key}`);
+  }
+  for (const key of overrides.ja?.keys() ?? []) if (!map.has(key)) errors.push(`i18n-gitlab/${code}.toml: キーがありません: ${key}`);
+}
+
 // テンプレート・JS が使っているキーを集める
 const used = new Map();
 const addUsed = (key, file) => {

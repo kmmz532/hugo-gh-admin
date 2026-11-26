@@ -1,5 +1,5 @@
 // 編集画面の「履歴」。記事ファイルのコミット履歴を新しい順に出す。初めて開いたときに読み込み、保存のあとは開いていれば読み直す。
-import { listPostCommits, COMMITS_PER_PAGE } from './github.js';
+import { listPostCommits, COMMITS_PER_PAGE } from './backend.js';
 import { t, lang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);

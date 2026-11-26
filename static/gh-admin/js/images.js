@@ -1,7 +1,7 @@
 // 画像の一覧・アップロード・削除。編集画面の「画像」と /admin/images/ で使う。
 // ユーザー由来の文字列は textContent で描画する。GitHub API は github.js 経由。
 import { config } from './config.js';
-import { listImages, deleteImage } from './github.js';
+import { listImages, deleteImage } from './backend.js';
 import { uploadImage, imageSrc } from './image.js';
 import { t } from './i18n.js';
 
@@ -58,7 +58,7 @@ export function mountImageManager(container, { onPick, onUploaded, onThumb } = {
     img.loading = 'lazy';
     img.width = 120;
     img.height = 120;
-    const name = el('figcaption', 'image-name', t('images.name_size', { name: item.publicPath.slice(config.imagesURL.length), size: formatSize(item.size) }));
+    const name = el('figcaption', 'image-name', item.size == null ? item.publicPath.slice(config.imagesURL.length) : t('images.name_size', { name: item.publicPath.slice(config.imagesURL.length), size: formatSize(item.size) }));
 
     const actions = el('div', 'image-actions');
     if (onPick) actions.append(button(t('images.insert'), 'fa-plus', () => onPick(item.publicPath, size.value)));

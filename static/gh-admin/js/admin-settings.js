@@ -1,46 +1,20 @@
-// /admin-settings/ 専用のサイト設定画面。既存の /admin/ の認証・画面には手を加えない。
-import { getToken } from './github.js';
+// /admin/settings/ のサイト設定画面。サイト本体リポジトリの読み書きは backend.js の siteFiles() を使う。
+import { getToken, siteFiles } from './backend.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-settings-config').textContent);
-const API = 'https://api.github.com';
 const TOKEN_KEY = 'gh_admin_settings_token';
 let token = sessionStorage.getItem(TOKEN_KEY) || getToken() || '';
+// 読み込んだ設定ファイル（{ base64, version }）と、サイト本体リポジトリの読み書き
 let configFile = null;
+let files = null;
 
 function status(id, message, error = false) {
   const el = $(id);
   el.textContent = message;
   el.classList.toggle('error', error);
 }
-
-function headers() {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-}
-
-async function api(path, options = {}) {
-  const response = await fetch(`${API}${path}`, {
-    ...options,
-    headers: { ...headers(), ...(options.headers || {}) },
-    cache: 'no-store',
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = body.message || `GitHub API error: ${response.status}`;
-    if (response.status === 403 && /Resource not accessible by personal access token/i.test(message)) {
-      throw new Error(t('settings.repo_write_denied', { repo: settings.repo }));
-    }
-    throw new Error(message);
-  }
-  return body;
-}
-
-const apiPath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
 function decodeBase64(value) {
   const binary = atob(value.replace(/\s/g, ''));
@@ -55,29 +29,18 @@ function encodeBase64(value) {
   return btoa(binary);
 }
 
-async function getFile(path) {
-  return api(`/repos/${settings.repo}/contents/${apiPath(path)}?ref=${encodeURIComponent(settings.branch)}`);
-}
-
-async function putFile(path, content, message, sha) {
-  return api(`/repos/${settings.repo}/contents/${apiPath(path)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, content, branch: settings.branch, ...(sha ? { sha } : {}) }),
-  });
-}
-
 async function connect(candidate) {
   if (!candidate) throw new Error(t('settings.token_required'));
   token = candidate;
-  const repository = await api(`/repos/${settings.repo}`);
-  if (repository.permissions?.push !== true) {
+  files = siteFiles({ repo: settings.repo, branch: settings.branch }, token);
+  if (!(await files.canPush())) {
     throw new Error(t('settings.repo_no_write', { repo: settings.repo }));
   }
-  const file = await getFile(settings.path);
+  const file = await files.getFile(settings.path);
+  if (!file) throw new Error(`${settings.path}: Not Found`);
   sessionStorage.setItem(TOKEN_KEY, token);
   configFile = file;
-  loadForm(decodeBase64(file.content));
+  loadForm(decodeBase64(file.base64));
   $('admin-settings-settings-form').hidden = false;
   $('admin-settings-auth-form').hidden = true;
   status('admin-settings-auth-status', t('settings.connected', { repo: settings.repo }));
@@ -164,19 +127,15 @@ async function uploadAsset(file, prefix, allowedExtensions, maxSize) {
   if (file.size > maxSize) throw new Error(t('settings.file_too_large', { size: Math.floor(maxSize / 1024 / 1024) }));
 
   const path = `static/${prefix}.${extension}`;
-  let existing = null;
-  try {
-    existing = await getFile(path);
-  } catch (error) {
-    if (!String(error.message).includes('Not Found')) throw error;
-  }
+  const existing = await files.getFile(path);
   const bytes = new Uint8Array(await file.arrayBuffer());
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   try {
-    await putFile(path, btoa(binary), `Update site ${prefix}`, existing?.sha);
+    await files.putFile(path, btoa(binary), `Update site ${prefix}`, existing?.version);
   } catch (error) {
-    throw new Error(`${t('settings.upload_failed')} (GitHub API: ${error.message})`);
+    if (error.writeDenied) throw error;
+    throw new Error(`${t('settings.upload_failed')} (${error.message})`);
   }
   return `/${path.slice('static/'.length)}`;
 }
@@ -197,7 +156,7 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
   button.disabled = true;
   status('admin-settings-status', t('settings.saving'));
   try {
-    const lines = decodeBase64(configFile.content).split(/\r?\n/);
+    const lines = decodeBase64(configFile.base64).split(/\r?\n/);
     let configChanged = false;
     const title = $('admin-settings-title').value.trim();
     if (!title) throw new Error(t('settings.title_required'));
@@ -233,9 +192,9 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
 
     let commit = '変更なし';
     if (configChanged) {
-      const result = await putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.sha);
-      configFile = await getFile(settings.path);
-      commit = result.commit?.sha?.slice(0, 7) || '完了';
+      const result = await files.putFile(settings.path, encodeBase64(lines.join('\n')), 'Update blog appearance settings', configFile.version);
+      configFile = await files.getFile(settings.path);
+      commit = result || '完了';
     }
     showPreview('icon', readString(lines, 'icon', 'params'));
     showPreview('thumbnail', readString(lines, 'defaultThumbnail', 'params'));
@@ -244,8 +203,8 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
     $('admin-settings-clear-thumbnail').checked = false;
     status('admin-settings-status', t('settings.saved', { commit }));
   } catch (error) {
-    if (/Fine-grained PAT/.test(error.message)) {
-      // サイト設定用の権限が足りない場合、別の PAT を入力し直せるようにする。
+    if (error.writeDenied) {
+      // サイト設定用の権限が足りない場合、別のトークンを入力し直せるようにする。
       sessionStorage.removeItem(TOKEN_KEY);
       $('admin-settings-settings-form').hidden = true;
       $('admin-settings-auth-form').hidden = false;

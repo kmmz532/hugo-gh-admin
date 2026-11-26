@@ -1,0 +1,4 @@
+{{- /* 文言の辞書を返す。引数は dict "lang" "provider"。provider が gitlab のときは data/gh-admin/i18n-gitlab/<lang>.toml を重ねる */ -}}
+{{- $dict := index site.Data "gh-admin" "i18n" .lang | default dict -}}
+{{- if eq .provider "gitlab" }}{{ with index site.Data "gh-admin" "i18n-gitlab" .lang }}{{ $dict = merge $dict . }}{{ end }}{{ end -}}
+{{- return $dict -}}
