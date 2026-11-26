@@ -274,6 +274,10 @@ saved = "Saved. Commit: {commit}. Changes will appear after the site is rebuilt.
 saved_token_invalid = "The saved credentials could not connect. Enter a PAT for the site repository. Details: {message}"
 
 [login]
+oauth_button = "Log in with GitHub"
+token_instead = "Log in with a token instead"
+oauth_state = "Could not verify the login. Press \"Log in with GitHub\" again."
+oauth_failed = "GitHub login failed. ({message})"
 step_create = "Create a new token under GitHub Settings → Developer settings → Fine-grained tokens."
 step_repo = "For Repository access, choose \"Only select repositories\" and select only {repo}."
 step_permissions = "Under Repository permissions, grant only {permission}."

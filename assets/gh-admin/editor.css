@@ -1177,3 +1177,12 @@ body:has(.editor) .footer {
   white-space: nowrap;
   text-decoration: none;
 }
+
+/* ログイン画面: 「GitHub でログイン」を設定したときの、トークン入力の折りたたみ */
+.login-token {
+  margin-top: 1.5rem;
+}
+
+.login-token > summary {
+  cursor: pointer;
+}

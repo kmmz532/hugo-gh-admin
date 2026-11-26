@@ -2,6 +2,16 @@
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
 {{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
 <h1 class="page-title">{{ $i18n.title.login }}</h1>
+{{- /* GitHub の OAuth（oauthClientID と oauthTokenURL）を設定したときは「GitHub でログイン」を出し、トークンの入力は折りたたむ */}}
+{{- $oauth := and (eq $gh.provider "github") $gh.oauthClientID $gh.oauthTokenURL }}
+{{- if $oauth }}
+<div class="login-form">
+  <button id="oauth-login" type="button" class="btn primary"><i class="fa-brands fa-github" aria-hidden="true"></i> {{ $i18n.login.oauth_button }}</button>
+  <p id="oauth-status" role="alert"></p>
+</div>
+<details class="login-token">
+<summary>{{ $i18n.login.token_instead }}</summary>
+{{- end }}
 <ol class="steps">
   <li>{{ $i18n.login.step_create }}</li>
   <li>{{ replace $i18n.login.step_repo "{repo}" (printf "<code>%s</code>" (path.Base $gh.repo)) | safeHTML }}</li>
@@ -14,6 +24,9 @@
   <button type="submit" class="btn primary">{{ $i18n.common.login }}</button>
   <p id="login-status" role="alert"></p>
 </form>
+{{- if $oauth }}
+</details>
+{{- end }}
 <script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
 {{ end }}
 

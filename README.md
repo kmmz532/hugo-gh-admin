@@ -51,6 +51,9 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `siteRepo` | なし | `/admin/settings/` がサイト設定を書き込むサイト本体リポジトリ（書式は `repo` と同じ） |
 | `siteBranch` | `main` | サイト本体リポジトリのブランチ |
 | `siteConfigPath` | `hugo.toml` | サイト本体リポジトリ内の Hugo 設定ファイル |
+| `oauthClientID` | なし | 「GitHubでログイン」に使うGitHub OAuth AppのClient ID。`oauthTokenURL` とあわせて設定すると、ログイン画面にボタンを表示し、トークンの入力は折りたたむ。未設定ならトークンを入力してログインする |
+| `oauthTokenURL` | なし | OAuthのコードをトークンに交換するURL（Client Secretを持つサーバーが用意する）。`{"code": "..."}` をPOSTすると `{"access_token": "..."}` を返す |
+| `oauthRelayURL` | なし | OAuth Appに登録したコールバックURLが別のサイトにある場合の中継ページ。`state` に戻り先（`r`）と確認用の値（`s`）をJSONにしてBase64URLで渡し、中継ページは戻り先に `code` と `state`（`s` の値）を付けて戻す。未設定ならログイン画面自体をコールバックURLにする |
 | `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()`（GitLabでは `getGitLabToken()`）を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
 
 画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。

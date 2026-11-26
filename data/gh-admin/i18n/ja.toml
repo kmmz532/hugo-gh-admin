@@ -274,6 +274,10 @@ saved = "保存しました。コミット: {commit}。サイトの再ビルド�
 saved_token_invalid = "保存済みの認証情報では接続できません。サイト本体リポジトリ用の PAT を入力してください。詳細: {message}"
 
 [login]
+oauth_button = "GitHubでログイン"
+token_instead = "トークンを入力してログインする"
+oauth_state = "ログインの確認に失敗しました。もう一度「GitHubでログイン」を押してください。"
+oauth_failed = "GitHubのログインに失敗しました。（{message}）"
 step_create = "GitHub の Settings → Developer settings → Fine-grained tokens で新しいトークンを作成する。"
 step_repo = "Repository access は「Only select repositories」で {repo} のみを選ぶ。"
 step_permissions = "Permissions は Repository permissions の {permission} のみ付与する。"
