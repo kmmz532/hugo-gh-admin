@@ -419,6 +419,20 @@
   border-color: transparent;
 }
 
+.sub-choices {
+  padding-left: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 2px solid var(--border);
+}
+
+.sub-choices[hidden] {
+  display: none;
+}
+
+.up-choice {
+  color: var(--text-secondary);
+}
+
 .more-choice {
   color: var(--text-secondary);
   border-style: dashed;

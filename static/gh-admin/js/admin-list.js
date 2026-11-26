@@ -12,6 +12,7 @@ const ACTION_LABELS = {
   category: t('admin.action_category'),
   addTags: t('admin.action_add_tags'),
   removeTags: t('admin.action_remove_tags'),
+  replaceTags: t('admin.action_replace_tags'),
 };
 
 let articles = [];
@@ -26,6 +27,58 @@ const splitTags = (text) =>
     .map((tag) => tag.trim().replace(/^#/, ''))
     .filter(Boolean);
 
+// 表記ゆれを比べるための形。全角半角・大文字小文字・空白と一部の記号の違いを無視する
+const tagKey = (tag) => tag.normalize('NFKC').toLowerCase().replace(/[\s._\-・/]/g, '');
+
+// 記事のタグを件数の多い順に数え、表記ゆれの候補（tagKey が同じもの）をまとめる
+function tagStats() {
+  const counts = new Map();
+  for (const item of articles) {
+    for (const tag of item.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+  const tags = [...counts]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  const groups = new Map();
+  for (const tag of tags) {
+    const key = tagKey(tag.name);
+    groups.set(key, [...(groups.get(key) ?? []), tag]);
+  }
+  return { tags, variants: [...groups.values()].filter((group) => group.length > 1) };
+}
+
+// タグの絞り込みの選択肢。表記ゆれの候補は先頭のグループにまとめる。値はタグ名の配列（JSON）
+function fillTagOptions() {
+  const box = $('admin-tag');
+  const current = box.value;
+  const { tags, variants } = tagStats();
+  const option = (value, text) => {
+    const element = document.createElement('option');
+    element.value = value;
+    element.textContent = text;
+    return element;
+  };
+  const label = ({ name, count }) => `#${name} (${count})`;
+  const children = [option('', t('admin.tag_all'))];
+  if (variants.length) {
+    const group = document.createElement('optgroup');
+    group.label = t('admin.tag_variants', { count: variants.length });
+    for (const variant of variants) {
+      group.append(option(JSON.stringify(variant.map(({ name }) => name)), variant.map(label).join(' / ')));
+    }
+    children.push(group);
+  }
+  const all = document.createElement('optgroup');
+  all.label = t('admin.tag_list');
+  all.append(...tags.map((tag) => option(JSON.stringify([tag.name]), label(tag))));
+  children.push(all);
+  box.replaceChildren(...children);
+  box.value = [...box.options].some((item) => item.value === current) ? current : '';
+}
+
+// 絞り込み中のタグ（表記ゆれの候補を選んだときは複数）
+const filterTags = () => ($('admin-tag').value ? JSON.parse($('admin-tag').value) : []);
+
 const matches = (item) => {
   const needle = $('admin-search').value.trim().toLowerCase();
   return !needle || (item.title || item.slug).toLowerCase().includes(needle);
@@ -35,7 +88,9 @@ function visibleArticles() {
   const needle = $('admin-search').value.trim().toLowerCase();
   const kind = $('admin-kind').value;
   if (kind === 'page') return [];
+  const tags = filterTags();
   return articles.filter((item) => {
+    if (tags.length && !(item.tags ?? []).some((tag) => tags.includes(tag))) return false;
     if (kind === 'article' && item.external) return false;
     if (kind === 'external' && !item.external) return false;
     return !needle || item.title.toLowerCase().includes(needle);
@@ -105,6 +160,7 @@ function pageRow(item) {
 
 function visiblePages() {
   const kind = $('admin-kind').value;
+  if (filterTags().length) return [];
   return kind === 'all' || kind === 'page' ? pages.filter(matches) : [];
 }
 
@@ -121,7 +177,8 @@ function renderRows() {
 function updateBar() {
   const action = $('bulk-action').value;
   $('bulk-category').hidden = action !== 'category';
-  $('bulk-tags').hidden = action !== 'addTags' && action !== 'removeTags';
+  $('bulk-tags').hidden = !['addTags', 'removeTags', 'replaceTags'].includes(action);
+  $('bulk-tags-to').hidden = action !== 'replaceTags';
   $('bulk-count').textContent = t('admin.selected', { count: selected.size });
   $('bulk-apply').disabled = selected.size === 0;
   $('bulk-bar').hidden = selected.size === 0;
@@ -157,9 +214,14 @@ function bulkOptions(action) {
     if (!value) return t('admin.category_required');
     return { categories: JSON.parse(value) };
   }
-  if (action === 'addTags' || action === 'removeTags') {
+  if (action === 'addTags' || action === 'removeTags' || action === 'replaceTags') {
     const tags = splitTags($('bulk-tags').value);
     if (!tags.length) return t('admin.tags_required');
+    if (action === 'replaceTags') {
+      const [to] = splitTags($('bulk-tags-to').value);
+      if (!to) return t('admin.tags_to_required');
+      return { replaceTags: { from: tags, to } };
+    }
     return action === 'addTags' ? { addTags: tags } : { removeTags: tags };
   }
   return {};
@@ -220,10 +282,15 @@ async function apply() {
         if (options.categories) item.categories = options.categories;
         if (options.addTags) item.tags = [...new Set([...(item.tags ?? []), ...options.addTags])];
         if (options.removeTags) item.tags = (item.tags ?? []).filter((tag) => !options.removeTags.includes(tag));
+        const replace = options.replaceTags;
+        if (replace && (item.tags ?? []).some((tag) => replace.from.includes(tag))) {
+          item.tags = [...new Set(item.tags.map((tag) => (replace.from.includes(tag) ? replace.to : tag)))];
+        }
       }
     }
     selected.clear();
     fillCategoryOptions();
+    fillTagOptions();
     renderRows();
     setStatus(t('admin.saved', { count }));
   } catch (error) {
@@ -240,6 +307,16 @@ async function apply() {
 function attach() {
   $('admin-search').addEventListener('input', renderRows);
   $('admin-kind').addEventListener('change', renderRows);
+  $('admin-tag').addEventListener('change', () => {
+    // 表記ゆれの候補を選んだら、置き換えの入力欄に候補を入れておく（置き換え後は件数の多いほう）
+    const tags = filterTags();
+    if (tags.length > 1) {
+      $('bulk-action').value = 'replaceTags';
+      $('bulk-tags').value = tags.join(', ');
+      $('bulk-tags-to').value = tags[0];
+    }
+    renderRows();
+  });
   $('admin-all').addEventListener('change', () => {
     for (const item of visibleArticles()) {
       if ($('admin-all').checked) selected.add(item.slug);
@@ -255,7 +332,7 @@ function attach() {
 let ready = false;
 function setReady(on) {
   ready = on;
-  for (const id of ['admin-search', 'admin-kind', 'admin-all']) $(id).disabled = !on;
+  for (const id of ['admin-search', 'admin-kind', 'admin-tag', 'admin-all']) $(id).disabled = !on;
   renderRows();
 }
 
@@ -282,6 +359,7 @@ async function load() {
     });
     articles = byNewest(items);
     fillCategoryOptions();
+    fillTagOptions();
     setStatus('');
     setReady(true);
   } catch {

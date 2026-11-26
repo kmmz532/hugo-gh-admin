@@ -1,4 +1,4 @@
-// カテゴリとタグ。カテゴリは「>」区切りの入力か既存のチップで選ぶ、タグは複数選ぶ。どちらも「新規」で作れる。
+// カテゴリとタグ。カテゴリは「>」区切りの入力か、階層ごとに並べた既存のチップで選ぶ、タグは複数選ぶ。どちらも「新規」で作れる。
 // 画面の状態（state）と、変更を知らせる関数（markDirty）は引数で受け取る。editor.js は import しない
 import { loadIndex as loadIndexPages } from './index-loader.js';
 import { config } from './config.js';
@@ -56,13 +56,15 @@ export function createTaxonomy({ state, markDirty }) {
     return path;
   }
 
-  // 入力欄に今のカテゴリを出し、既存のカテゴリ（途中の段も含む）を補完の候補とチップに並べる
+  // 入力欄に今のカテゴリを出す。候補は階層ごとに分けて、選択中のカテゴリ自身は出さない。
+  // ・下の階層: 選択中のカテゴリの子（親の段に戻るチップも先頭に出す）
+  // ・ほかのカテゴリ: 最上位の段だけ。よく使う上位を出し、残りは「他 N 件を表示」で開く
   function renderCategories() {
     const input = $('f-category');
     if (document.activeElement !== input) input.value = toText(state.categories);
-    const current = toText(state.categories);
+    const current = state.categories;
     const paths = state.categoryNodes
-      .map((node) => ({ path: node.path, text: toText(node.path), count: node.count }))
+      .map((node) => ({ text: toText(node.path), count: node.count }))
       .sort((a, b) => b.count - a.count || a.text.localeCompare(b.text));
     $('category-list').replaceChildren(
       ...paths.map(({ text }) => {
@@ -71,16 +73,27 @@ export function createTaxonomy({ state, markDirty }) {
         return option;
       }),
     );
-    // チップはよく使う上位だけにし、残りは「他 N 件を表示」で開く。選択中は必ず出す
+
+    const sub = [];
+    if (current.length > 1) {
+      const parent = current.slice(0, -1);
+      const up = choice(`↑ ${toText(parent)}`, false, () => setCategories(parent));
+      up.classList.add('up-choice');
+      sub.push(up);
+    }
+    for (const node of current.length ? childrenOf(current) : []) {
+      sub.push(choice(`› ${node.name}`, false, () => setCategories(node.path)));
+    }
+    $('category-children').replaceChildren(...sub);
+    $('category-children').hidden = sub.length === 0;
+
     const CHIP_LIMIT = 6;
-    let chips = categoriesExpanded ? paths : paths.slice(0, CHIP_LIMIT);
-    const selected = paths.find(({ text }) => text === current);
-    if (selected && !chips.includes(selected)) chips = [...chips, selected];
-    const hidden = paths.length - chips.length;
-    const buttons = chips.map(({ path, text }) => choice(text, text === current, () => setCategories(path)));
-    if (paths.length > CHIP_LIMIT) {
+    const roots = childrenOf([]).filter((node) => node.name !== current[0] || current.length === 0);
+    const shown = categoriesExpanded ? roots : roots.slice(0, CHIP_LIMIT);
+    const buttons = shown.map((node) => choice(node.name, false, () => setCategories(node.path)));
+    if (roots.length > CHIP_LIMIT) {
       buttons.push(
-        moreToggle(hidden, categoriesExpanded, () => {
+        moreToggle(roots.length - shown.length, categoriesExpanded, () => {
           categoriesExpanded = !categoriesExpanded;
           renderCategories();
         }),

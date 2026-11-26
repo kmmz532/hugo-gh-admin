@@ -230,9 +230,13 @@ export function buildExternal(fields, extra) {
 
 // 一括操作の変換。カテゴリを置き換え（null なら変えない）、タグを追加・削除する。
 // 本文・他の項目・lastmod は変えない。記事と外部記事のどちらも同じ形で扱う
-export function applyBulk(text, { categories = null, addTags = [], removeTags = [] }) {
+// replaceTags（{ from: [...], to }）は、from のどれかを持つ記事だけ、そのタグを to にする（位置は保つ）
+export function applyBulk(text, { categories = null, addTags = [], removeTags = [], replaceTags = null }) {
   const parsed = parseArticle(text);
-  const tags = parsed.fields.tags.filter((tag) => !removeTags.includes(tag));
+  let tags = parsed.fields.tags.filter((tag) => !removeTags.includes(tag));
+  if (replaceTags && tags.some((tag) => replaceTags.from.includes(tag))) {
+    tags = [...new Set(tags.map((tag) => (replaceTags.from.includes(tag) ? replaceTags.to : tag)))];
+  }
   for (const tag of addTags) {
     if (!tags.includes(tag)) tags.push(tag);
   }

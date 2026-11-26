@@ -58,6 +58,7 @@
         <label for="f-category">{{ $i18n.editor.category_label }}</label>
         <input id="f-category" list="category-list" placeholder="{{ $i18n.editor.category_example }}" autocomplete="off">
         <datalist id="category-list"></datalist>
+        <div id="category-children" class="choices sub-choices" role="group" aria-label="{{ $i18n.editor.category_children_label }}" hidden></div>
         <div id="category-chips" class="choices" role="group" aria-label="{{ $i18n.editor.category_choices_label }}"></div>
       </div>
       <div id="tags-field" class="field">

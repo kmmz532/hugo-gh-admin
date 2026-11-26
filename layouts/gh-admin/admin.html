@@ -13,6 +13,9 @@
     <option value="external">{{ $i18n.admin.kind_external }}</option>
     <option value="page">{{ $i18n.admin.kind_page }}</option>
   </select>
+  <select id="admin-tag" aria-label="{{ $i18n.admin.tag_filter_label }}">
+    <option value="">{{ $i18n.admin.tag_all }}</option>
+  </select>
   <a class="btn" href="{{ $gh.editURL }}?new=page">{{ $i18n.admin.new_page }}</a>
   <span id="admin-count" class="admin-count" aria-live="polite"></span>
 </div>
@@ -42,9 +45,11 @@
       <option value="category">{{ $i18n.admin.action_category }}</option>
       <option value="addTags">{{ $i18n.admin.action_add_tags }}</option>
       <option value="removeTags">{{ $i18n.admin.action_remove_tags }}</option>
+      <option value="replaceTags">{{ $i18n.admin.action_replace_tags }}</option>
     </select>
     <select id="bulk-category" aria-label="{{ $i18n.admin.category_label }}" hidden></select>
     <input id="bulk-tags" type="text" placeholder="{{ $i18n.admin.tags_placeholder }}" aria-label="{{ $i18n.admin.tags_placeholder }}" hidden>
+    <input id="bulk-tags-to" type="text" placeholder="{{ $i18n.admin.tags_to_placeholder }}" aria-label="{{ $i18n.admin.tags_to_placeholder }}" hidden>
     <button type="button" id="bulk-apply" class="btn primary">{{ $i18n.admin.apply }}</button>
   </div>
   <p id="bulk-status" class="bulk-status" role="status"></p>
