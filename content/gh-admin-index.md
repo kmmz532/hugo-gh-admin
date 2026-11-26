@@ -1,7 +1,7 @@
 ---
 title: "gh-admin index"
 type: "gh-admin"
-layout: "index"
+layout: "items"
 url: /gh-admin/
 outputs: ["JSON"]
 robots: noindex
