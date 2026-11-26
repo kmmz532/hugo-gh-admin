@@ -56,7 +56,7 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `oauthClientID` | none | The Client ID of a GitHub OAuth App for "Log in with GitHub". With `oauthTokenURL`, the login page shows the button and folds the token field. Without it, you log in with a token |
 | `oauthTokenURL` | none | A URL that exchanges the OAuth code for a token (provided by a server that holds the Client Secret). POST `{"code": "..."}` and it returns `{"access_token": "..."}` |
 | `oauthRelayURL` | none | A relay page when the callback URL registered in the OAuth App is on another site. `state` carries JSON with the return URL (`r`) and a check value (`s`) in Base64URL, and the relay page returns to `r` with `code` and `state` (the value of `s`). Without it, the login page itself is the callback URL |
-| `buildWorkflow` | none | The file name of the build workflow (for example `deploy.yml`) that "Rebuild with the latest versions" on the Versions tab of the site settings runs. On GitLab, a pipeline runs whatever the value is. Without it, the rebuild button is not shown |
+| `buildWorkflow` | none | The file name of the build workflow (for example `deploy.yml`) that "Rebuild with the latest versions" on the Updates page of the admin runs. On GitLab, a pipeline runs whatever the value is. Without it, the rebuild button is not shown |
 | `buildCommit` | `false` | When `true`, the rebuild pushes an empty commit (GitHub only), for setups that build on push such as the Cloudflare Pages Git integration. It takes priority over `buildWorkflow` |
 | `buildRepo` | `siteRepo` (or `repo`) | The repository to rebuild, for setups that build in another repository |
 | `buildBranch` | `siteBranch` | The branch to rebuild |
@@ -76,6 +76,7 @@ The admin screens switch between posts, images and site settings with a shared n
 
 - `/admin/`: bulk management of posts
 - `/admin/images/`: image management
+- `/admin/update/`: module versions in use and the latest versions, pinning the theme version (`moduleversion` fields) and rebuilding the site
 - `/admin/settings/`: the blog name, description, author, posts per page, language, favicon, default thumbnail for post cards, and settings defined by the theme
 
 The site settings change the blog name (`title` and `params.headerTitle`), the favicon and the default thumbnail. Images are uploaded to `static/`, and the settings in `hugo.toml` are updated. Changes are committed to GitHub or GitLab and take effect after the site is rebuilt.

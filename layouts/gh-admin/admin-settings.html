@@ -4,11 +4,7 @@
 {{- /* テーマなどが data/gh-admin/settings.toml の [[fields]] で定義した設定項目 */}}
 {{- $fields := slice }}{{ with index site.Data "gh-admin" }}{{ with .settings }}{{ $fields = .fields | default slice }}{{ end }}{{ end }}
 <h1 class="page-title">設定</h1>
-<nav class="admin-nav" aria-label="管理メニュー">
-  <a href="{{ $gh.adminURL }}"{{ if eq .Layout "admin" }} aria-current="page"{{ end }}>記事</a>
-  <a href="{{ $gh.adminImagesURL }}"{{ if eq .Layout "admin-images" }} aria-current="page"{{ end }}>画像</a>
-  <a href="{{ "admin/settings/" | relURL }}"{{ if eq .Layout "admin-settings" }} aria-current="page"{{ end }}>設定</a>
-</nav>
+{{ partial "gh-admin/admin-nav.html" . }}
 
 <section class="settings-card admin-settings-card">
   <h2>{{ if eq $gh.provider "gitlab" }}GitLab{{ else }}GitHub{{ end }}認証</h2>
@@ -22,31 +18,7 @@
   <script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
 </section>
 
-<div id="admin-settings-tabs" class="admin-settings-tabs" role="tablist" hidden>
-  <button type="button" role="tab" id="admin-settings-tab-site" aria-controls="admin-settings-settings-form" aria-selected="true">{{ $i18n.settings.tab_site }}</button>
-  <button type="button" role="tab" id="admin-settings-tab-version" aria-controls="admin-settings-version" aria-selected="false">{{ $i18n.settings.tab_version }}</button>
-</div>
-
-{{- /* ビルドに使ったモジュールの版（hugo.Deps）。replace した手元のモジュールは版が空になる */}}
-{{- $modules := slice }}
-{{- range hugo.Deps }}{{ if .Owner }}{{ $modules = $modules | append (dict "path" .Path "version" .Version) }}{{ end }}{{ end }}
-<section id="admin-settings-version" class="settings-card admin-settings-card" role="tabpanel" hidden>
-  <h2>{{ $i18n.settings.tab_version }}</h2>
-  <p class="admin-note">{{ replace $i18n.settings.version_built "{time}" (now.Format "2006-01-02 15:04") }}</p>
-  <table class="admin-settings-versions">
-    <thead><tr><th>{{ $i18n.settings.version_module }}</th><th>{{ $i18n.settings.version_current }}</th><th>{{ $i18n.settings.version_latest }}</th></tr></thead>
-    <tbody id="admin-settings-version-rows"></tbody>
-  </table>
-  <p class="admin-note">{{ $i18n.settings.version_note }}</p>
-  {{- if or $gh.buildWorkflow $gh.buildCommit }}
-  <button type="button" id="admin-settings-rebuild" class="btn primary">{{ $i18n.settings.rebuild }}</button>
-  {{- else }}
-  <p class="admin-note">{{ $i18n.settings.rebuild_unset }}</p>
-  {{- end }}
-  <p id="admin-settings-version-status" class="bulk-status" role="status"></p>
-</section>
-
-<form id="admin-settings-settings-form" class="settings-card admin-settings-card" role="tabpanel" hidden>
+<form id="admin-settings-settings-form" class="settings-card admin-settings-card" hidden>
   <h2>サイト設定</h2>
   <label class="field">ブログ名
     <input id="admin-settings-title" type="text" maxlength="100" required>
@@ -82,7 +54,7 @@
 </form>
 <p id="admin-settings-status" class="bulk-status" role="status"></p>
 
-<script type="application/json" id="admin-settings-config">{{ dict "repo" $gh.siteRepo "branch" $gh.siteBranch "path" $gh.siteConfigPath "lang" $gh.lang "fields" $fields "modules" $modules "adminVersion" (partial "gh-admin/version.html" .) "buildRepo" $gh.buildRepo "buildBranch" $gh.buildBranch "buildWorkflow" $gh.buildWorkflow "buildCommit" $gh.buildCommit | jsonify | safeJS }}</script>
+<script type="application/json" id="admin-settings-config">{{ dict "repo" $gh.siteRepo "branch" $gh.siteBranch "path" $gh.siteConfigPath "lang" $gh.lang "fields" $fields | jsonify | safeJS }}</script>
 {{ end }}
 
 {{ define "scripts" }}

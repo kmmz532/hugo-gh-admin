@@ -1,13 +1,20 @@
 # Changelog
 
+## v0.14.0
+
+- 管理画面のメニューに「更新」（`/admin/update/`）を追加した。モジュールのバージョンの一覧と再ビルドを、サイト設定のタブからこのページに移した。
+- テーマのバージョンの固定（`moduleversion` の項目）を、サイト設定から「更新」のページに移した。
+- 管理画面のメニューを `layouts/partials/gh-admin/admin-nav.html` にまとめた。
+- 画面の文言で、バージョンの意味の「版」を「バージョン」に統一した。
+
 ## v0.13.1
 
 - 再ビルドの方法に、中身が空のコミットを積む `params.ghAdmin.buildCommit = true` を追加した（GitHubのみ）。Cloudflare PagesのGit連携など、pushでビルドする構成で使う。
 
 ## v0.13.0
 
-- サイト設定に「バージョン」タブを追加した。ビルドに使ったモジュール（テーマ・hugo-gh-admin など）の版と、GitHub上の最新の版を表示する。
-- 「最新の版で再ビルド」で、確認のあとビルドを起動できるようにした（GitHubはワークフローの手動実行、GitLabはパイプライン）。`params.ghAdmin.buildWorkflow`・`buildRepo`・`buildBranch` で指定する。
+- サイト設定に「バージョン」タブを追加した。ビルドに使ったモジュール（テーマ・hugo-gh-admin など）のバージョンと、GitHub上の最新バージョンを表示する。
+- 「最新バージョンで再ビルド」で、確認のあとビルドを起動できるようにした（GitHubはワークフローの手動実行、GitLabはパイプライン）。`params.ghAdmin.buildWorkflow`・`buildRepo`・`buildBranch` で指定する。
 
 ## v0.12.0
 
@@ -16,7 +23,7 @@
 
 ## v0.11.1
 
-- 管理画面の JS の読み込みに版（`?v=`）を付けた。更新後もブラウザのキャッシュに古い JS が残り、「GitHubでログイン」が反応しないなどの不具合が起きていた。版は `layouts/partials/gh-admin/version.html` にあり、リリースのたびに更新する。
+- 管理画面の JS の読み込みにバージョン（`?v=`）を付けた。更新後もブラウザのキャッシュに古い JS が残り、「GitHubでログイン」が反応しないなどの不具合が起きていた。バージョンは `layouts/partials/gh-admin/version.html` にあり、リリースのたびに更新する。
 
 ## v0.11.0
 
@@ -25,7 +32,7 @@
 ## v0.10.0
 
 - サイト設定で、ブログの説明・著者・1ページあたりの記事数・言語コードを変更できるようにした。
-- テーマ（またはサイト）が `data/gh-admin/settings.toml` の `[[fields]]` で、サイト設定に項目を追加できるようにした。種類は `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list`（テーブルの配列）・`module`（`[[module.imports]]` の切り替え）・`moduleversion`（`go.mod` での版の固定）。
+- テーマ（またはサイト）が `data/gh-admin/settings.toml` の `[[fields]]` で、サイト設定に項目を追加できるようにした。種類は `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list`（テーブルの配列）・`module`（`[[module.imports]]` の切り替え）・`moduleversion`（`go.mod` でのバージョンの固定）。
 - `[[params.links]]` などのテーブルの配列をセクションの区切りとして扱っておらず、`params.icon` が未設定のときにリンクの `icon` を読んでいた不具合を修正した。
 
 ## v0.9.0

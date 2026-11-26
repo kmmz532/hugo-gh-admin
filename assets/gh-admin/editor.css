@@ -1226,37 +1226,7 @@ body:has(.editor) .footer {
   cursor: pointer;
 }
 
-/* サイト設定のタブ（サイト設定・バージョン） */
-.admin-settings-tabs {
-  display: flex;
-  gap: 0.25rem;
-  margin-top: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.admin-settings-tabs[hidden] {
-  display: none;
-}
-
-.admin-settings-tabs button {
-  padding: 0.5rem 1rem;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.admin-settings-tabs button[aria-selected="true"] {
-  border-bottom-color: currentColor;
-  font-weight: 600;
-}
-
-#admin-settings-version[hidden] {
-  display: none;
-}
-
+/* 更新の画面: モジュールのバージョンの一覧 */
 .admin-settings-versions {
   width: 100%;
   border-collapse: collapse;

@@ -5,7 +5,7 @@ Hugoで作成したサイトにGitHubまたはGitLab上のMarkdown記事をブ�
 - 画面の文言は日本語と英語に対応しています（`params.ghAdmin.lang` で選びます）。英語版の説明は [README.en.md](README.en.md) を参照してください。
 
 ## 必要なもの
-- Hugo 0.141.0以上のextended版
+- Hugo 0.141.0以上（extended）
 - Go（Hugo Modulesの取り込みに利用する）
 - 記事を置くリポジトリ（以下「記事のリポジトリ」）と、書き込み用のトークン
   - GitHub: Contentsへの読み書き権限を持つFine-grained PAT
@@ -24,7 +24,7 @@ Hugoで作成したサイトにGitHubまたはGitLab上のMarkdown記事をブ�
 hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 ```
 
-版はタグで固定する。`hugo mod get -u` で更新する前に、差分を確認する。
+バージョンはタグで固定する。`hugo mod get -u` で更新する前に、差分を確認する。
 
 ## 設定（`params.ghAdmin`）
 
@@ -54,7 +54,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `oauthClientID` | なし | 「GitHubでログイン」に使うGitHub OAuth AppのClient ID。`oauthTokenURL` とあわせて設定すると、ログイン画面にボタンを表示し、トークンの入力は折りたたむ。未設定ならトークンを入力してログインする |
 | `oauthTokenURL` | なし | OAuthのコードをトークンに交換するURL（Client Secretを持つサーバーが用意する）。`{"code": "..."}` をPOSTすると `{"access_token": "..."}` を返す |
 | `oauthRelayURL` | なし | OAuth Appに登録したコールバックURLが別のサイトにある場合の中継ページ。`state` に戻り先（`r`）と確認用の値（`s`）をJSONにしてBase64URLで渡し、中継ページは戻り先に `code` と `state`（`s` の値）を付けて戻す。未設定ならログイン画面自体をコールバックURLにする |
-| `buildWorkflow` | なし | サイト設定の「バージョン」タブの「最新の版で再ビルド」で実行する、ビルドのワークフローのファイル名（例: `deploy.yml`）。GitLabでは値によらずパイプラインを実行する。未設定なら再ビルドのボタンを出さない |
+| `buildWorkflow` | なし | 管理画面の「更新」の「最新バージョンで再ビルド」で実行する、ビルドのワークフローのファイル名（例: `deploy.yml`）。GitLabでは値によらずパイプラインを実行する。未設定なら再ビルドのボタンを出さない |
 | `buildCommit` | `false` | `true` にすると、再ビルドで中身が空のコミットを積む（GitHubのみ）。Cloudflare PagesのGit連携など、pushでビルドする構成で使う。`buildWorkflow` より優先する |
 | `buildRepo` | `siteRepo`（未設定なら `repo`） | 再ビルドするリポジトリ。記事のリポジトリでビルドする構成などで指定する |
 | `buildBranch` | `siteBranch` | 再ビルドするブランチ |
@@ -68,7 +68,8 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 - `/admin/`：記事の一括管理
 - `/admin/images/`：画像の管理
-- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定。「バージョン」タブでは、ビルドに使ったモジュールの版と最新の版を確認し、再ビルドできる
+- `/admin/update/`：ビルドに使ったモジュールのバージョンと最新バージョンの確認、テーマのバージョンの固定（`moduleversion` の項目）、再ビルド
+- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
 
 サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は記事の保存先（GitHubまたはGitLab）にコミットされ、サイトの再ビルド後に反映される。
 
@@ -122,13 +123,13 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `options` | `select` の選択肢。`[[fields.options]]` に `value` と `label` を書く |
 | `columns` | `list` の列。`[[fields.columns]]` に列ごとの `key`・`type`・`label`（`options`）を書く。`list` は `[[table.key]]` 形式のテーブルの配列として保存する |
 
-`module` は、`[[module.imports]]` のうち `options` の `value` に一致する `path` を切り替える（テーマの切り替えなど）。`moduleversion` は、`go.mod` でモジュールの版を固定するか、ビルドのたびに最新の版を利用するかを切り替える。
+`module` は、`[[module.imports]]` のうち `options` の `value` に一致する `path` を切り替える（テーマの切り替えなど）。`moduleversion` は、`go.mod` でモジュールのバージョンを固定するか、ビルドのたびに最新バージョンを利用するかを切り替える。
 
 | キー（`moduleversion`） | 内容 |
 |---|---|
 | `prefix` | 対象のモジュールのパスの先頭（例: `github.com/kmmz532/blogit/themes/`）。`[[module.imports]]` のうち一致するものを固定する |
 | `modules` | ほかに固定するモジュール（例: テーマが取り込む共通部分） |
-| `source` | 版を取得するGitHubのリポジトリ（`owner/repo`）。固定するときは、このリポジトリの最新コミットから疑似バージョンを作る |
+| `source` | バージョンを取得するGitHubのリポジトリ（`owner/repo`）。固定するときは、このリポジトリの最新コミットから疑似バージョンを作る |
 | `branch` | `source` のブランチ。省略時は `main` |
 | `file` | `go.mod` のパス。省略時は `go.mod` |
 
@@ -201,13 +202,13 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 - 新規記事はまだファイルが無いため、「まだ保存されていません」と出る。
 - 保存の直後はGitHubの一覧への反映が遅れることがあるため、先頭のページが空のときは2秒おきに最大3回取り直す。
 
-## 版の約束
+## バージョンの約束
 
-- 版は [Semantic Versioning](https://semver.org/lang/ja/) に従い、タグで示す（`v0.1.0` など）。
-- 次を変えるときはメジャー版を上げ、`CHANGELOG.md` に書く: `params.ghAdmin` の項目、partialの名前と引数、雛形の `id` と `data-field`、CSS変数とクラス名、索引のJSONの形。
-- 契約に触れない修正は、マイナー版かパッチ版にする。
-- リリースのたびに `layouts/partials/gh-admin/version.html` の版を更新する。JSの読み込みに `?v=` として付け、ブラウザのキャッシュに古いJSが残らないようにする。
-- タグを付けた直後は、Goのモジュールのプロキシ（proxy.golang.org）が新しい版を認識するまで数分から30分ほどかかる。版を固定していないサイトは、その間にビルドすると古い版のままになる。
+- バージョンは [Semantic Versioning](https://semver.org/lang/ja/) に従い、タグで示す（`v0.1.0` など）。
+- 次を変えるときはメジャーバージョンを上げ、`CHANGELOG.md` に書く: `params.ghAdmin` の項目、partialの名前と引数、雛形の `id` と `data-field`、CSS変数とクラス名、索引のJSONの形。
+- 契約に触れない修正は、マイナーバージョンかパッチバージョンにする。
+- リリースのたびに `layouts/partials/gh-admin/version.html` のバージョンを更新する。JSの読み込みに `?v=` として付け、ブラウザのキャッシュに古いJSが残らないようにする。
+- タグを付けた直後は、Goのモジュールのプロキシ（proxy.golang.org）が新しいバージョンを認識するまで数分から30分ほどかかる。バージョンを固定していないサイトは、その間にビルドすると古いバージョンのままになる。
 
 ## セキュリティ
 
