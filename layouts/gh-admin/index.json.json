@@ -17,7 +17,7 @@
 {{- $pageItems := slice -}}
 {{- range where site.RegularPages "Section" "" -}}
   {{- if and (not .Params.layout) (not .Params.type) .File -}}
-    {{- $pageItems = $pageItems | append (dict "slug" .File.ContentBaseName "title" .Title "url" .RelPermalink "menu" (isset .Params "menu") "noindex" (eq (.Params.robots | default "") "noindex")) -}}
+    {{- $pageItems = $pageItems | append (dict "slug" .File.ContentBaseName "title" .Title "url" .RelPermalink "menu" (isset .Params "menu") "noindex" (in (lower (string (.Params.robots | default ""))) "noindex")) -}}
   {{- end -}}
 {{- end -}}
 {{- $total := len $items -}}

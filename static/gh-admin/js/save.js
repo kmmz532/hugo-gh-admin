@@ -4,7 +4,7 @@ import { savePost, deletePost, ConflictError } from './backend.js';
 import { buildArticle, buildExternal, buildPage } from './frontmatter.js';
 import { draftKey, removeDraft, renderDrafts } from './drafts.js';
 import { setSaveState, showNotice } from './notice.js';
-import { recordSave, recordDelete, postPath } from './pending.js';
+import { recordSave, recordDelete, postPath, pagePath } from './pending.js';
 import { nowJst } from './time.js';
 import { setItem } from './storage.js';
 import { t, lang } from './i18n.js';
@@ -31,8 +31,7 @@ export function createSave({ state, readForm, validate, slugs, drafts, cancelDra
       : buildArticle(fields, aliases, state.extra);
   }
 
-  // 固定ページの URL（rootURL を除く）。別名（aliases）にも使う
-  const pagePath = (slug) => `/${slug}/`;
+  // 変更前の URL（rootURL を除く）。別名（aliases）に使う
   const oldPath = (slug, fields) => (fields.kind === 'page' ? pagePath(slug) : postPath(slug, fields.date));
   const editLink = (fields) => `${config.editURL}?${fields.kind === 'page' ? 'page' : 'slug'}=${encodeURIComponent(fields.slug)}`;
 

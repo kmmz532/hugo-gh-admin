@@ -11,7 +11,7 @@ import { getItem, setItem } from './storage.js';
 import { confirmImageUpload, attachUploadConfirm } from './upload-confirm.js';
 import { createExternalForm, isWebUrl } from './external.js';
 import { nowJst } from './time.js';
-import { postUrl } from './pending.js';
+import { postUrl, pageUrl } from './pending.js';
 import { setSaveState, showNotice } from './notice.js';
 import { createTaxonomy } from './taxonomy.js';
 import { createSlug } from './slug.js';
@@ -36,6 +36,8 @@ const state = {
   },
   // 固定ページのメニューが画面で扱えない書き方なら true
   menuLocked: false,
+  // 元の robots の値。noindex 以外の指定（nofollow など）を保存で残すために持つ
+  robots: '',
   originalSlug: null,
   sha: null,
   aliases: [],
@@ -110,6 +112,7 @@ function readForm() {
     image: state.thumbImage,
     author: $('f-author').value.trim(),
     noindex: $('f-noindex').checked,
+    robots: state.robots,
     menu: $('f-menu').checked,
     weight: readWeight(),
   };
@@ -125,6 +128,7 @@ function writeForm(fields) {
   setKind(fields.kind ?? 'article');
   $('f-slug').value = fields.slug;
   $('f-noindex').checked = Boolean(fields.noindex);
+  state.robots = fields.robots ?? '';
   $('f-menu').checked = Boolean(fields.menu);
   $('f-weight').value = fields.weight ?? '';
   $('f-title').value = fields.title;
@@ -360,8 +364,8 @@ function updateChrome() {
   $('template-details').hidden = saved || state.kind === 'page';
   $('danger-details').hidden = !saved;
   const back = $('back-link');
-  if (saved && state.kind === 'page') back.href = `${config.rootURL.replace(/\/$/, '')}/${state.originalSlug}/`;
-  else back.href = saved && state.kind === 'article' ? postUrl(state.originalSlug, { date: $('f-date').value }) : config.rootURL;
+  if (!saved || state.kind === 'external') back.href = config.rootURL;
+  else back.href = state.kind === 'page' ? pageUrl(state.originalSlug) : postUrl(state.originalSlug, { date: $('f-date').value });
 }
 
 function failStart(message) {

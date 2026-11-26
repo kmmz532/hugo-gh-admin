@@ -79,6 +79,8 @@ export function parseArticle(text) {
   // メニューが画面で扱えない書き方なら true（メニューの項目を変更できなくする）
   let menuLocked = false;
   let menu = null;
+  // sitemap の行。外部記事と「検索エンジンに表示しない」の記事は保存で作り直し、それ以外は元の行のまま残す
+  let sitemapLines = [];
   for (const { key, lines } of blocks) {
     if (key === 'menu') {
       const parsed = parseMenu(lines);
@@ -90,8 +92,12 @@ export function parseArticle(text) {
       }
       continue;
     }
-    // build と sitemap は外部記事のときに保存で作り直す
-    if (key === 'build' || key === 'sitemap') continue;
+    // build は外部記事のときに保存で作り直す
+    if (key === 'build') continue;
+    if (key === 'sitemap') {
+      sitemapLines = lines;
+      continue;
+    }
     if (!KNOWN_KEYS.includes(key)) {
       extra.push(...lines);
       continue;
@@ -106,6 +112,9 @@ export function parseArticle(text) {
 
   const date = String(values.date ?? '');
   const isExternal = values.external !== undefined;
+  const robots = String(values.robots ?? '');
+  const noindex = robotsDirectives(robots).includes('noindex');
+  if (!isExternal && !noindex) extra.push(...sitemapLines);
   return {
     kind: isExternal ? 'external' : 'article',
     fields: {
@@ -122,8 +131,9 @@ export function parseArticle(text) {
       // 更新日。画面では扱わず、更新のたびに保存時の値で上書きする
       lastmod: String(values.lastmod ?? ''),
       author: String(values.author ?? ''),
-      // 検索エンジンに表示しない（robots: noindex）
-      noindex: /\bnoindex\b/.test(String(values.robots ?? '')),
+      // 検索エンジンに表示しない（robots: noindex）。robots は noindex 以外の指定（nofollow など）を残すために持つ
+      noindex,
+      robots,
       // メニューに表示するか（固定ページ）と並び順
       menu: menu !== null,
       weight: menu?.weight ?? null,
@@ -148,10 +158,21 @@ function frontFields(fields) {
   ];
 }
 
-// 検索エンジンに表示しない設定。外部記事はもともとサイトマップに載せないので robots だけ
-function noindexFields(fields, { sitemap = true } = {}) {
-  if (!fields.noindex) return [];
-  return ['robots: noindex', ...(sitemap ? [NO_SITEMAP] : [])];
+function robotsDirectives(robots) {
+  return robots.split(',').map((item) => item.trim().toLowerCase()).filter(Boolean);
+}
+
+// robots と sitemap の行。robots の noindex 以外の指定（nofollow など）は残す。
+// 検索エンジンに表示しないときはサイトマップからも外す（外部記事はもともと載せない。手書きの sitemap が残っていればそれを使う）
+function noindexFields(fields, extra, { sitemap = true } = {}) {
+  const others = robotsDirectives(fields.robots ?? '').filter((item) => item !== 'noindex' && item !== 'index');
+  const directives = fields.noindex ? ['noindex', ...others] : others;
+  const lines = [];
+  if (directives.length === 1) lines.push(`robots: ${directives[0]}`);
+  else if (directives.length) lines.push(`robots: ${JSON.stringify(directives.join(', '))}`);
+  const hasSitemap = extra.some((line) => /^sitemap:/.test(line));
+  if (fields.noindex && sitemap && !hasSitemap) lines.push(NO_SITEMAP);
+  return lines;
 }
 
 function withBody(lines, text) {
@@ -170,7 +191,7 @@ export function buildArticle(fields, aliases, extra) {
     ...frontFields(fields),
     // 作者（GitHub のユーザー名）は設定したときだけ書く
     ...(fields.author ? [`author: ${JSON.stringify(fields.author)}`] : []),
-    ...noindexFields(fields),
+    ...noindexFields(fields, extra),
     ...(fields.lastmod ? [`lastmod: ${fields.lastmod}`] : []),
     ...(aliases.length ? [`aliases: ${JSON.stringify(aliases)}`] : []),
     ...extra,
@@ -184,7 +205,7 @@ export function buildPage(fields, aliases, extra, { menuLocked = false } = {}) {
   const lines = [
     `title: ${JSON.stringify(fields.title)}`,
     ...(menuLocked ? [] : menuField(fields)),
-    ...noindexFields(fields),
+    ...noindexFields(fields, extra),
     ...(fields.lastmod ? [`lastmod: ${fields.lastmod}`] : []),
     ...(aliases.length ? [`aliases: ${JSON.stringify(aliases)}`] : []),
     ...extra,
@@ -201,7 +222,7 @@ export function buildExternal(fields, extra) {
     `build: ${EXTERNAL_BUILD}`,
     // ページが無いので、サイトマップにも載せない
     NO_SITEMAP,
-    ...noindexFields(fields, { sitemap: false }),
+    ...noindexFields(fields, extra, { sitemap: false }),
     ...extra,
   ];
   return `---\n${lines.join('\n')}\n---\n`;

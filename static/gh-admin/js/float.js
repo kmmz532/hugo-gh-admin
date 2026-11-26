@@ -1,36 +1,18 @@
 // 浮かせる管理ボタン。管理画面の部品を組み込んでいないテーマ（外部テーマ）のページに、ビルド後に差し込んで読む。
 // 画面の左下にボタンを出す。ログインしていなければログイン画面への入口だけ、ログインしていれば管理画面へのメニュー。
-// 設定は gh-admin/config/index.json、記事の一覧（「この記事を編集」の判定）はログイン中だけ gh-admin/index.json から読む。
-// テーマの CSS と混ざらないように Shadow DOM の中に描画し、ほかのモジュールは読まない（設定の meta が無いページでも動くように）。
+// 設定は gh-admin/config/index.json、固定ページの一覧（「このページを編集」の判定）はログイン中だけ gh-admin/index.json から読む。
+// テーマの CSS と混ざらないように Shadow DOM の中に描画する。設定の meta が無いページでも動くように、config.js を読むモジュールは使わない。
 
 // このファイルは <サイトのルート>/gh-admin/js/float.js に置かれる
+import { hasStoredToken, clearStoredSession } from './session.js';
+import { slugFromPostPath } from './post-url.js';
+
 const ROOT = new URL('../../', import.meta.url);
 const CONFIG_URL = new URL('gh-admin/config/index.json', ROOT);
 const INDEX_URL = new URL('gh-admin/index.json', ROOT);
 
-function storageGet(storage, key) {
-  try {
-    return storage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function storageRemove(storage, key) {
-  try {
-    storage.removeItem(key);
-  } catch {
-    // 消せなくても致命的ではない
-  }
-}
-
-// core.js の getToken・clearSession と同じキー
-const loggedIn = () => Boolean(storageGet(sessionStorage, 'gh_session_token') || storageGet(localStorage, 'blog_token'));
-
 function logout() {
-  storageRemove(sessionStorage, 'gh_session_token');
-  storageRemove(localStorage, 'blog_token');
-  storageRemove(localStorage, 'blog_login');
+  clearStoredSession();
   location.reload();
 }
 
@@ -48,17 +30,16 @@ const samePath = (url) => {
   }
 };
 
-// 開いているページが記事か固定ページなら { kind, slug }。索引の next をたどり、見つかったら止める
-async function findCurrent(first) {
+// 開いているページが記事か固定ページなら { kind, slug }。first は索引の 1 つ目のファイル（固定ページの一覧を持つ）。
+// 記事は、URL を設定 postURL の形に照らして slug を取り出す（索引のすべてのファイルを読まないように）。
+// テーマが記事の URL を変えていて形が合わないときは、1 つ目のファイルの記事だけを URL で探す
+function findCurrent(first, config) {
   const page = (first.pages ?? []).find((item) => samePath(item.url));
   if (page) return { kind: 'page', slug: page.slug };
-  let index = first;
-  for (;;) {
-    const item = index.items.find((entry) => !entry.external && samePath(entry.url));
-    if (item) return { kind: 'post', slug: item.slug };
-    if (!index.next) return null;
-    index = await fetchJson(new URL(index.next, ROOT));
-  }
+  const slug = slugFromPostPath(decodeURI(location.pathname), config.rootURL ?? '/', config.postURL ?? '');
+  if (slug) return { kind: 'post', slug };
+  const item = first.items.find((entry) => !entry.external && samePath(entry.url));
+  return item ? { kind: 'post', slug: item.slug } : null;
 }
 
 const ICONS = {
@@ -203,13 +184,13 @@ async function start() {
   }
   // params.ghAdmin.float = false なら出さない。floatGuest = false ならログインしていないときは出さない
   if (config.float === false || !config.editURL) return;
-  if (!loggedIn()) {
+  if (!hasStoredToken()) {
     if (config.floatGuest !== false) renderGuest(config);
     return;
   }
   let current = null;
   try {
-    current = await findCurrent(await fetchJson(INDEX_URL));
+    current = findCurrent(await fetchJson(INDEX_URL), config);
   } catch {
     // 一覧が読めなくても、編集以外のボタンは出す
   }

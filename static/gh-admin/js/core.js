@@ -1,10 +1,9 @@
 // GitHub・GitLab のアダプタ（providers/*.js）が共通で使う部分。画面の JS は backend.js 経由で読む。
 import { config, escapeRe } from './config.js';
-import { getItem, setItem, removeItem } from './storage.js';
+import { getItem, setItem } from './storage.js';
+import { TOKEN_KEY, LOGIN_KEY, getSessionToken, setSessionToken, clearStoredSession } from './session.js';
 import { t } from './i18n.js';
 
-const TOKEN_KEY = 'blog_token';
-const LOGIN_KEY = 'blog_login';
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
 // 画像は記事のリポジトリの static/images/<yyyy>/<8文字>.<ext> に置く
 export const IMAGE_PATH_RE = new RegExp(`^${escapeRe(config.imagesDir)}/\\d{4}/[a-z0-9]{8}\\.(webp|png|jpg|gif|svg)$`);
@@ -28,8 +27,7 @@ export class ApiError extends Error {
 
 // tokenProvider（サイトが用意する受け取り口）を設定したときは、そこから受け取ったトークンを優先する。タブを閉じると消える（sessionStorage）
 const PROVIDER_PATH = config.tokenProvider ?? '';
-const SESSION_KEY = 'gh_session_token';
-export const getToken = () => (PROVIDER_PATH ? sessionStorage.getItem(SESSION_KEY) : null) || getItem(TOKEN_KEY);
+export const getToken = () => (PROVIDER_PATH ? getSessionToken() : null) || getItem(TOKEN_KEY);
 export const getLogin = () => getItem(LOGIN_KEY);
 
 export function saveSession(token, login) {
@@ -39,20 +37,18 @@ export function saveSession(token, login) {
 }
 
 export function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
-  removeItem(TOKEN_KEY);
-  removeItem(LOGIN_KEY);
+  clearStoredSession();
 }
 
 export const isLocalHost = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 
 // tokenProvider のモジュールは getGitHubToken()（GitLab では getGitLabToken()）を持つ
 export async function ensureSessionToken() {
-  if (!PROVIDER_PATH || sessionStorage.getItem(SESSION_KEY)) return;
+  if (!PROVIDER_PATH || getSessionToken()) return;
   try {
     const provider = await import(PROVIDER_PATH);
     const token = await (config.provider === 'gitlab' ? provider.getGitLabToken() : provider.getGitHubToken());
-    if (token) sessionStorage.setItem(SESSION_KEY, token);
+    if (token) setSessionToken(token);
   } catch (e) {
     console.warn(t('error.token_provider'), e);
   }

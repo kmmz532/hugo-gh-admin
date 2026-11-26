@@ -11,6 +11,8 @@
 - 公開ページに浮かせる管理ボタン（`gh-admin/js/float.js`）を追加した。ビルド後のHTMLに読み込みの1行を差し込んで使う。ログインしていないときはログイン画面への入口を表示する。`params.ghAdmin.float = false` で表示せず、`floatGuest = false` でログインしていないときは表示しない。設定は新しく出力する `gh-admin/config/index.json` から読む。
 - 索引（`gh-admin/index.json`）は、テーマに `external-meta.html`・`post-url.html` が無い場合は、記事のタイトルと `.RelPermalink` を使う。
 - 編集画面のプレビューが読む `lib/marked.min.js` を同梱した。
+- 記事を保存すると、手で書いた `sitemap` が消えていた不具合を直した。
+- `robots` に `noindex` 以外の指定（`nofollow` など）がある記事を保存すると、その指定が消えていた不具合を直した。一覧の「検索エンジンに非表示」も、`noindex, nofollow` のような値を判定する。
 - サイト設定に「テーマ」を追加した。リポジトリのURL、Hugo Modulesのパス、themes.gohugo.ioのテーマのページのURLで、任意のテーマに切り替えられる。管理画面の部品を組み込んでいないテーマに切り替えるときは、hugo-gh-admin の取り込みを追加する。テーマが定義する `type = "module"` の項目は、この欄の候補として表示する。
 
 ## v0.14.0

@@ -1,6 +1,7 @@
 // 公開・削除の直後に、反映待ちの内容をこの端末だけで先に見せる。
 // 控えは localStorage に置き、ビルド時刻を過ぎたら、または 30 分経ったら消す。GitHub API は呼ばない。
 import { config } from './config.js';
+import { slugFromPostPath } from './post-url.js';
 import { getToken } from './backend.js';
 import { t } from './i18n.js';
 import { getItem, setItem, removeItem, keys } from './storage.js';
@@ -129,28 +130,12 @@ export function postUrl(slug, fields) {
   return config.rootURL.replace(/\/$/, '') + postPath(slug, fields.date);
 }
 
+// 固定ページ（content/<slug>.md）のサイト内のパスと URL
+export const pagePath = (slug) => `/${slug}/`;
+export const pageUrl = (slug) => config.rootURL.replace(/\/$/, '') + pagePath(slug);
+
 // 404 ページの URL から、記事のファイル名を取り出す。postURL の形に合わなければ null
-function slugFromPath(pathname) {
-  const root = config.rootURL.replace(/\/$/, '');
-  if (!pathname.startsWith(root)) return null;
-  const keys = [];
-  const source = config.postURL
-    .split(/(\{(?:slug|name|yyyy|mm|dd)\})/)
-    .map((part) => {
-      const key = /^\{(\w+)\}$/.exec(part)?.[1];
-      if (!key) return part.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
-      keys.push(key);
-      return key === 'slug' || key === 'name' ? '([a-z0-9-]+)' : '(\\d+)';
-    })
-    .join('')
-    .replace(/\\\/$/, '\\/?');
-  const m = new RegExp(`^${source}$`).exec(pathname.slice(root.length));
-  if (!m) return null;
-  const v = Object.fromEntries(keys.map((k, i) => [k, m[i + 1]]));
-  if (v.slug) return v.slug;
-  if (v.name && v.yyyy && v.mm && v.dd) return `${v.yyyy}-${v.mm}-${v.dd}-${v.name}`;
-  return v.name ?? null;
-}
+const slugFromPath = (pathname) => slugFromPostPath(pathname, config.rootURL, config.postURL);
 
 function setDate(root, date) {
   const time = field(root, 'date');
