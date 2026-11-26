@@ -62,5 +62,5 @@
 {{ end }}
 
 {{ define "scripts" }}
-<script type="module" src="{{ "gh-admin/js/admin-settings.js" | relURL }}?v=20261126-1"></script>
+<script type="module" src="{{ "gh-admin/js/admin-settings.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
 {{ end }}

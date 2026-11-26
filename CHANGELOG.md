@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.11.1
+
+- 管理画面の JS の読み込みに版（`?v=`）を付けた。更新後もブラウザのキャッシュに古い JS が残り、「GitHubでログイン」が反応しないなどの不具合が起きていた。版は `layouts/partials/gh-admin/version.html` にあり、リリースのたびに更新する。
+
 ## v0.11.0
 
 - ログイン画面に「GitHubでログイン」を追加した。`params.ghAdmin.oauthClientID` と `oauthTokenURL` を設定すると表示し、トークンの入力は折りたたむ。コールバックURLが別のサイトにある場合は `oauthRelayURL` で中継ページを指定する。未設定なら従来どおりトークンを入力してログインする。

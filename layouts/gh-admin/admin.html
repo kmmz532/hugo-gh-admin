@@ -58,5 +58,5 @@
 
 
 {{ define "scripts" }}
-<script type="module" src="{{ "gh-admin/js/admin-list.js" | relURL }}" data-index-url="{{ "gh-admin/index.json" | relURL }}"></script>
+<script type="module" src="{{ "gh-admin/js/admin-list.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}" data-index-url="{{ "gh-admin/index.json" | relURL }}"></script>
 {{ end }}

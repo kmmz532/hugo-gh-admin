@@ -1,5 +1,5 @@
 {{- /* 記事詳細で読む管理画面以外の JS（コードのコピーボタン）。本体の single.html から呼ぶ */ -}}
 <script type="module">
-  import { addCopyButtons } from "{{ "gh-admin/js/copy.js" | relURL }}";
+  import { addCopyButtons } from "{{ "gh-admin/js/copy.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}";
   addCopyButtons(document.querySelector(".post-body"));
 </script>

@@ -32,5 +32,5 @@
 
 
 {{ define "scripts" }}
-<script type="module" src="{{ "gh-admin/js/login.js" | relURL }}"></script>
+<script type="module" src="{{ "gh-admin/js/login.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
 {{ end }}
