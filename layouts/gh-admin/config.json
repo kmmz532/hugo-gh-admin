@@ -1,0 +1,2 @@
+{{- /* 浮かせる管理ボタン（gh-admin/js/float.js）が読む設定。ログインしていない閲覧者も読むので、索引とは分けて小さくする */ -}}
+{{- partial "gh-admin/settings.html" . -}}

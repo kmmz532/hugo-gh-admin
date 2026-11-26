@@ -41,6 +41,7 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `postsDir` | `content/posts` | The folder for posts |
 | `pagesDir` | `content` | The folder for pages |
 | `float` | `true` | Whether to show the floating admin button (`gh-admin/js/float.js`). With `false`, it is not shown even on pages where it was injected |
+| `floatGuest` | `true` | Whether to show the floating login button when not logged in |
 | `imagesDir` | `static/images` | The folder for images |
 | `imagesURL` | `/images/` | The URL prefix for images in posts (passed through `relURL`) |
 | `defaultCategory` | `tech` | The default category for new posts |
@@ -132,7 +133,7 @@ Themes that do not call the admin parts (common Hugo themes) can use it as follo
 <script type="module" src="/<site path>/gh-admin/js/float.js"></script>
 ```
 
-`float.js` shows a button at the bottom left only on devices that are logged in. It reads the settings from `config` in the index (`gh-admin/index.json`), and also shows "Edit this post" when the open page is a post or a page.
+`float.js` shows a button at the bottom left. When not logged in, it shows only a link to the login screen; when logged in, it shows a menu to the admin screens. It reads the settings from `gh-admin/config/index.json`. While logged in, it also reads the index (`gh-admin/index.json`) and shows "Edit this post" when the open page is a post or a page.
 
 ## What the theme provides (contract)
 

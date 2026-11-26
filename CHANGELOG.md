@@ -8,8 +8,8 @@
 - 索引（`gh-admin/index.json`）の1つ目のファイルに、固定ページの一覧 `pages` を追加した。
 - 固定ページでは、ヘッダーの編集ボタンが `/edit/?page=<slug>` を開くようにした。
 - 管理画面の部品を組み込んでいないテーマでも使えるようにした。管理画面は `layouts/gh-admin/baseof.html` で表示し、テーマの `baseof.html` に依存しない。テーマ側に同じパスのファイルを置くと上書きできる。
-- 公開ページに浮かせる管理ボタン（`gh-admin/js/float.js`）を追加した。ビルド後のHTMLに読み込みの1行を差し込んで使う。`params.ghAdmin.float = false` で表示しない。
-- 索引（`gh-admin/index.json`）の1つ目のファイルに、設定 `config` を追加した。テーマに `external-meta.html`・`post-url.html` が無い場合は、記事のタイトルと `.RelPermalink` を使う。
+- 公開ページに浮かせる管理ボタン（`gh-admin/js/float.js`）を追加した。ビルド後のHTMLに読み込みの1行を差し込んで使う。ログインしていないときはログイン画面への入口を表示する。`params.ghAdmin.float = false` で表示せず、`floatGuest = false` でログインしていないときは表示しない。設定は新しく出力する `gh-admin/config/index.json` から読む。
+- 索引（`gh-admin/index.json`）は、テーマに `external-meta.html`・`post-url.html` が無い場合は、記事のタイトルと `.RelPermalink` を使う。
 - 編集画面のプレビューが読む `lib/marked.min.js` を同梱した。
 
 ## v0.14.0

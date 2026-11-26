@@ -39,6 +39,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `postsDir` | `content/posts` | 記事を置くフォルダ |
 | `pagesDir` | `content` | 固定ページを置くフォルダ |
 | `float` | `true` | 浮かせる管理ボタン（`gh-admin/js/float.js`）を表示するか。`false` にすると、差し込んだページでも表示しない |
+| `floatGuest` | `true` | ログインしていないときに、浮かせるログインボタンを表示するか |
 | `imagesDir` | `static/images` | 画像を置くフォルダ |
 | `imagesURL` | `/images/` | 記事に書く画像のURLの前置き（`relURL` を通す） |
 | `defaultCategory` | `tech` | 新規記事の既定のカテゴリ |
@@ -171,7 +172,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 <script type="module" src="/<サイトのパス>/gh-admin/js/float.js"></script>
 ```
 
-`float.js` はログインしている端末だけ、画面の左下にボタンを表示する。設定は索引（`gh-admin/index.json`）の `config` から読み、開いているページが記事か固定ページなら「この記事を編集」も表示する。
+`float.js` は画面の左下にボタンを表示する。ログインしていなければログイン画面への入口だけを、ログインしていれば管理画面へのメニューを表示する。設定は `gh-admin/config/index.json` から読む。ログイン中は索引（`gh-admin/index.json`）も読み、開いているページが記事か固定ページなら「この記事を編集」も表示する。
 
 ## テーマが用意するもの（契約）
 

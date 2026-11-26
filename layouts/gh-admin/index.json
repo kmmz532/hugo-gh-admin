@@ -32,6 +32,4 @@
 {{- end -}}
 {{- $next1 := index (dict) "none" -}}
 {{- if gt $pages 1 -}}{{- $next1 = printf "%s?v=%d" (relURL "gh-admin/index/2.json") $v -}}{{- end -}}
-{{- /* 浮かせる管理ボタン（gh-admin/js/float.js）が読む設定。テーマの <head> に meta が無いページでも使えるように、1 つ目のファイルに入れる */ -}}
-{{- $config := partial "gh-admin/settings.html" . | transform.Unmarshal -}}
-{{- dict "items" (first $size $items) "next" $next1 "total" $total "pages" $pageItems "config" $config | jsonify -}}
+{{- dict "items" (first $size $items) "next" $next1 "total" $total "pages" $pageItems | jsonify -}}
