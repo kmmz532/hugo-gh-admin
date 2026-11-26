@@ -5,7 +5,7 @@ import { t } from './i18n.js';
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-settings-config').textContent);
 const API = 'https://api.github.com';
-const TOKEN_KEY = 'gh_admin2_token';
+const TOKEN_KEY = 'gh_admin_settings_token';
 let token = sessionStorage.getItem(TOKEN_KEY) || getToken() || '';
 let configFile = null;
 
