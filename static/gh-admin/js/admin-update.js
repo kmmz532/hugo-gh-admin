@@ -1,7 +1,8 @@
-// /admin/update/ の更新の画面。ビルドに使ったモジュールのバージョンと最新バージョンを表示し、サイトを再ビルドする
+// /admin/update/ の更新の画面。ビルドに使ったモジュールのバージョンと最新バージョンを表示し、
+// 古いモジュールをサイトの go.mod で最新バージョンに上げてから再ビルドする
 import { getToken, siteFiles, startBuild } from './backend.js';
 import { t } from './i18n.js';
-import { decodeBase64, encodeBase64, latestPseudoVersion, readGoRequires, readModuleImports, writeGoRequires } from './site-config.js';
+import { decodeBase64, encodeBase64, latestPseudoVersion, readGoRequires, readModuleImports, setGoRequires, writeGoRequires } from './site-config.js';
 
 const $ = (id) => document.getElementById(id);
 const settings = JSON.parse($('admin-update-config').textContent);
@@ -35,6 +36,9 @@ async function latestVersion(path, version) {
   return tags[0] ? { label: tags[0], same: tags[0] === version } : null;
 }
 
+// モジュールのパス → 最新バージョンの取得（再ビルドのときに、古いものを go.mod で上げるために使う）
+const latestVersions = new Map();
+
 function loadVersions() {
   const rows = $('admin-update-rows');
   rows.replaceChildren();
@@ -47,11 +51,33 @@ function loadVersions() {
       return cell;
     });
     rows.append(row);
-    latestVersion(module.path, module.version).then((latest) => {
+    const pending = latestVersion(module.path, module.version);
+    if (module.version) latestVersions.set(module.path, pending.catch(() => null));
+    pending.then((latest) => {
       cells[2].textContent = !latest ? '-' : latest.same ? t('settings.version_up_to_date') : latest.label;
       if (latest && latest.same === false) row.classList.add('outdated');
     }).catch(() => { cells[2].textContent = '-'; });
   }
+}
+
+const siteRepo = () => settings.siteRepo || settings.buildRepo;
+
+// 最新でないモジュールを go.mod で最新バージョンにする。変えたモジュールのパスを返す
+async function updateGoMod() {
+  const outdated = new Map();
+  for (const [path, pending] of latestVersions) {
+    const latest = await pending;
+    if (latest && latest.same === false) outdated.set(path, latest.label);
+  }
+  if (!outdated.size || !siteRepo()) return [];
+  const files = siteFiles({ repo: siteRepo(), branch: settings.siteBranch }, token);
+  const found = await files.getFile('go.mod');
+  if (!found) return [];
+  const before = decodeBase64(found.base64);
+  const after = setGoRequires(before, outdated);
+  if (after === before) return [];
+  await files.putFile('go.mod', encodeBase64(after), 'Update Hugo modules', found.version);
+  return [...outdated.keys()];
 }
 
 $('admin-update-rebuild')?.addEventListener('click', async () => {
@@ -60,10 +86,20 @@ $('admin-update-rebuild')?.addEventListener('click', async () => {
   button.disabled = true;
   status('admin-update-status', t('settings.rebuild_starting'));
   try {
+    // 古いモジュールがあれば、サイトの go.mod を最新バージョンにしてコミットする。
+    // ビルドするリポジトリとブランチが同じなら、このコミットの push でビルドが始まるため、ここでは起動しない
+    const updated = await updateGoMod();
+    const sameRepo = siteRepo() === settings.buildRepo && settings.siteBranch === settings.buildBranch;
+    if (updated.length && sameRepo) {
+      status('admin-update-status', t('settings.rebuild_updated', { modules: updated.join(', ') }));
+      return;
+    }
     const url = await startBuild({ repo: settings.buildRepo, branch: settings.buildBranch }, token, settings.buildWorkflow, { commit: settings.buildCommit });
     const el = $('admin-update-status');
     el.classList.remove('error');
-    el.textContent = `${t('settings.rebuild_started')} `;
+    el.textContent = updated.length
+      ? `${t('settings.rebuild_updated_started', { modules: updated.join(', ') })} `
+      : `${t('settings.rebuild_started')} `;
     if (url) {
       const link = document.createElement('a');
       link.href = url;

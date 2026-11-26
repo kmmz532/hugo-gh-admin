@@ -192,6 +192,23 @@ export function writeGoRequires(text, prefix, entries) {
   return `${out.join('\n')}\n`;
 }
 
+// versions（パス → バージョン）の require を書き換える。go.mod に無いモジュール（テーマ経由の間接的な依存など）は
+// require を追加する。Go は依存のうち最も高いバージョンを選ぶため、サイトの go.mod に書けばテーマの指定より優先される
+export function setGoRequires(text, versions) {
+  const rest = new Map(versions);
+  const lines = text.split(/\r?\n/).map((line) => {
+    const match = /^(\s*(?:require\s+)?)(\S+)(\s+)(\S+)(.*)$/.exec(line);
+    // replace（「=>」を含む行）は書き換えない
+    if (!match || !rest.has(match[2]) || line.includes('=>')) return line;
+    const version = rest.get(match[2]);
+    rest.delete(match[2]);
+    return `${match[1]}${match[2]}${match[3]}${version}${match[5].replace(/\s*\/\/\s*indirect\s*$/, '')}`;
+  });
+  while (lines.length && !lines.at(-1).trim()) lines.pop();
+  if (rest.size) lines.push('', 'require (', ...[...rest].map(([path, version]) => `\t${path} ${version}`), ')');
+  return `${lines.join('\n')}\n`;
+}
+
 // GitHub のリポジトリの最新コミットから Go modules の疑似バージョンを作る（例: v0.0.0-20261126012345-0123456789ab）
 export async function latestPseudoVersion(source, branch = 'main') {
   const res = await fetch(`https://api.github.com/repos/${source}/commits/${encodeURIComponent(branch)}`, {
