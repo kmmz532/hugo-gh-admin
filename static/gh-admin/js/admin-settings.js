@@ -1,5 +1,5 @@
 // /admin/settings/ のサイト設定画面。サイト本体リポジトリの読み書きは backend.js の siteFiles() を使う。
-import { getToken, siteFiles } from './backend.js';
+import { getToken, siteFiles, startBuild } from './backend.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -42,7 +42,8 @@ async function connect(candidate) {
   configFile = file;
   for (const control of controls) await control.connect?.();
   loadForm(decodeBase64(file.base64));
-  $('admin-settings-settings-form').hidden = false;
+  $('admin-settings-tabs').hidden = false;
+  showTab('site');
   $('admin-settings-auth-form').hidden = true;
   status('admin-settings-auth-status', t('settings.connected', { repo: settings.repo }));
   status('admin-settings-status', '');
@@ -590,6 +591,8 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
       // サイト設定用の権限が足りない場合、別のトークンを入力し直せるようにする。
       sessionStorage.removeItem(TOKEN_KEY);
       $('admin-settings-settings-form').hidden = true;
+      $('admin-settings-version').hidden = true;
+      $('admin-settings-tabs').hidden = true;
       $('admin-settings-auth-form').hidden = false;
       $('admin-settings-token').value = '';
       status('admin-settings-auth-status', error.message, true);
@@ -597,6 +600,86 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
     } else {
       status('admin-settings-status', error.message, true);
     }
+  } finally {
+    button.disabled = false;
+  }
+});
+
+// サイト設定とバージョンのタブ
+function showTab(name) {
+  const site = name === 'site';
+  $('admin-settings-settings-form').hidden = !site;
+  $('admin-settings-version').hidden = site;
+  $('admin-settings-tab-site').setAttribute('aria-selected', String(site));
+  $('admin-settings-tab-version').setAttribute('aria-selected', String(!site));
+  if (!site) loadVersions();
+}
+$('admin-settings-tab-site').addEventListener('click', () => showTab('site'));
+$('admin-settings-tab-version').addEventListener('click', () => showTab('version'));
+
+// GitHub にあるモジュール（github.com/<owner>/<repo>/...）の最新の版。タグの版ならタグ、疑似バージョン（v0.0.0-日時-SHA）なら既定のブランチの最新コミットと比べる
+async function latestVersion(path, version) {
+  const match = /^github\.com\/([^/]+)\/([^/]+)/.exec(path);
+  if (!match) return null;
+  const repo = `${match[1]}/${match[2]}`;
+  const pseudo = /^v0\.0\.0-\d{14}-([0-9a-f]{12})$/.exec(version ?? '');
+  if (pseudo || !version) {
+    const res = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const time = new Date(data.commit.committer.date).toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    return { label: `v0.0.0-${time}-${data.sha.slice(0, 12)}`, same: pseudo ? data.sha.startsWith(pseudo[1]) : null };
+  }
+  const res = await fetch(`https://api.github.com/repos/${repo}/tags?per_page=100`, { headers: { Accept: 'application/vnd.github+json' } });
+  if (!res.ok) return null;
+  const parse = (v) => (/^v(\d+)\.(\d+)\.(\d+)$/.exec(v) ?? []).slice(1).map(Number);
+  const tags = (await res.json()).map((tag) => tag.name).filter((name) => parse(name).length === 3)
+    .sort((a, b) => { const x = parse(a); const y = parse(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; });
+  return tags[0] ? { label: tags[0], same: tags[0] === version } : null;
+}
+
+let versionsLoaded = false;
+async function loadVersions() {
+  if (versionsLoaded) return;
+  versionsLoaded = true;
+  const rows = $('admin-settings-version-rows');
+  rows.replaceChildren();
+  for (const module of settings.modules ?? []) {
+    const row = document.createElement('tr');
+    const cells = [module.path, module.version || t('settings.version_local'), t('common.loading')].map((text) => {
+      const cell = document.createElement('td');
+      cell.textContent = text;
+      row.append(cell);
+      return cell;
+    });
+    rows.append(row);
+    latestVersion(module.path, module.version).then((latest) => {
+      cells[2].textContent = !latest ? '-' : latest.same ? t('settings.version_up_to_date') : latest.label;
+      if (latest && latest.same === false) row.classList.add('outdated');
+    }).catch(() => { cells[2].textContent = '-'; });
+  }
+}
+
+$('admin-settings-rebuild')?.addEventListener('click', async () => {
+  if (!window.confirm(t('settings.rebuild_confirm'))) return;
+  const button = $('admin-settings-rebuild');
+  button.disabled = true;
+  status('admin-settings-version-status', t('settings.rebuild_starting'));
+  try {
+    const url = await startBuild({ repo: settings.buildRepo, branch: settings.buildBranch }, token, settings.buildWorkflow);
+    const el = $('admin-settings-version-status');
+    el.classList.remove('error');
+    el.textContent = `${t('settings.rebuild_started')} `;
+    if (url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = t('settings.rebuild_log');
+      el.append(link);
+    }
+  } catch (error) {
+    status('admin-settings-version-status', t('settings.rebuild_failed', { message: error.message }), true);
   } finally {
     button.disabled = false;
   }

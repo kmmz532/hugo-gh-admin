@@ -13,7 +13,7 @@ const provider = config.provider === 'gitlab' ? gitlab : github;
 
 export const {
   AUTHOR_RE, COMMITS_PER_PAGE, getPost, listPostCommits, savePost, deletePost, commitChanges,
-  saveImage, listImages, deleteImage, rawImageUrl, checkRepoPush, fetchLogin, siteFiles,
+  saveImage, listImages, deleteImage, rawImageUrl, checkRepoPush, fetchLogin, siteFiles, startBuild,
 } = provider;
 
 // npm run dev が BLOG_DEV_TOKEN を渡されているときだけ、localhost でトークンを受け取って保存する。

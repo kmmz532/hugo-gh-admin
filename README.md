@@ -54,6 +54,9 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `oauthClientID` | なし | 「GitHubでログイン」に使うGitHub OAuth AppのClient ID。`oauthTokenURL` とあわせて設定すると、ログイン画面にボタンを表示し、トークンの入力は折りたたむ。未設定ならトークンを入力してログインする |
 | `oauthTokenURL` | なし | OAuthのコードをトークンに交換するURL（Client Secretを持つサーバーが用意する）。`{"code": "..."}` をPOSTすると `{"access_token": "..."}` を返す |
 | `oauthRelayURL` | なし | OAuth Appに登録したコールバックURLが別のサイトにある場合の中継ページ。`state` に戻り先（`r`）と確認用の値（`s`）をJSONにしてBase64URLで渡し、中継ページは戻り先に `code` と `state`（`s` の値）を付けて戻す。未設定ならログイン画面自体をコールバックURLにする |
+| `buildWorkflow` | なし | サイト設定の「バージョン」タブの「最新の版で再ビルド」で実行する、ビルドのワークフローのファイル名（例: `deploy.yml`）。GitLabでは値によらずパイプラインを実行する。未設定なら再ビルドのボタンを出さない |
+| `buildRepo` | `siteRepo`（未設定なら `repo`） | 再ビルドするリポジトリ。記事のリポジトリでビルドする構成などで指定する |
+| `buildBranch` | `siteBranch` | 再ビルドするブランチ |
 | `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()`（GitLabでは `getGitLabToken()`）を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |
 
 画面のURLを変えるときは、本体に同じパスの `content/*.md` を置いて `url:` を上書きし、この項目も同じURLに合わせます。
@@ -64,7 +67,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 - `/admin/`：記事の一括管理
 - `/admin/images/`：画像の管理
-- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
+- `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定。「バージョン」タブでは、ビルドに使ったモジュールの版と最新の版を確認し、再ビルドできる
 
 サイト設定ではブログ名（`title`・`params.headerTitle`）、ファビコン、デフォルトサムネイルを変更できる。画像は `static/` にアップロードし、`hugo.toml` の設定を更新する。変更は記事の保存先（GitHubまたはGitLab）にコミットされ、サイトの再ビルド後に反映される。
 

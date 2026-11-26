@@ -56,6 +56,9 @@ Write these in `[params.ghAdmin]` in `hugo.toml`. Omitted items use their defaul
 | `oauthClientID` | none | The Client ID of a GitHub OAuth App for "Log in with GitHub". With `oauthTokenURL`, the login page shows the button and folds the token field. Without it, you log in with a token |
 | `oauthTokenURL` | none | A URL that exchanges the OAuth code for a token (provided by a server that holds the Client Secret). POST `{"code": "..."}` and it returns `{"access_token": "..."}` |
 | `oauthRelayURL` | none | A relay page when the callback URL registered in the OAuth App is on another site. `state` carries JSON with the return URL (`r`) and a check value (`s`) in Base64URL, and the relay page returns to `r` with `code` and `state` (the value of `s`). Without it, the login page itself is the callback URL |
+| `buildWorkflow` | none | The file name of the build workflow (for example `deploy.yml`) that "Rebuild with the latest versions" on the Versions tab of the site settings runs. On GitLab, a pipeline runs whatever the value is. Without it, the rebuild button is not shown |
+| `buildRepo` | `siteRepo` (or `repo`) | The repository to rebuild, for setups that build in another repository |
+| `buildBranch` | `siteBranch` | The branch to rebuild |
 | `tokenProvider` | none | The URL of a module that provides the GitHub token (provided by the site). The module exports `async function getGitHubToken()` (`getGitLabToken()` on GitLab) and returns a token string or null. The token is cleared when the tab closes (sessionStorage). Without it, you log in with a PAT |
 
 To change the URLs of the admin screens, put a `content/*.md` with the same path in the site, override `url:`, and set the same URL in these items.

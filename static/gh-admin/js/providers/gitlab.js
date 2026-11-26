@@ -163,3 +163,9 @@ export function siteFiles(target, token) {
     }),
   };
 }
+
+// サイトを再ビルドする（パイプラインの実行）。返り値はパイプラインの URL
+export async function startBuild(target, token) {
+  const json = await api(`${projectUrl(target.repo)}/pipeline?ref=${encodeURIComponent(target.branch)}`, { method: 'POST', token, session: false });
+  return json?.web_url ?? '';
+}

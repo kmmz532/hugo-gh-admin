@@ -167,3 +167,11 @@ export function siteFiles(target, token) {
     },
   };
 }
+
+// サイトを再ビルドする（GitHub Actions のワークフローの手動実行）。workflow はファイル名（例: deploy.yml）。返り値は実行の一覧の URL
+export async function startBuild(target, token, workflow) {
+  await api(`/repos/${target.repo}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`, {
+    method: 'POST', body: { ref: target.branch }, token, session: false,
+  });
+  return `https://github.com/${target.repo}/actions/workflows/${encodeURIComponent(workflow)}`;
+}
