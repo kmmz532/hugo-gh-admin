@@ -82,7 +82,7 @@ The site settings change the blog name (`title` and `params.headerTitle`), the f
 
 #### Settings defined by the theme
 
-A theme (or the site) can add fields to "Theme settings" by writing `[[fields]]` in `data/gh-admin/settings.toml`. Each field has `key`, `table` (for example `params`; the top of the file if omitted), `type` (`text`, `textarea`, `url`, `number`, `checkbox`, `select` or `list`), `label` (a string or a table per language), and optionally `default`, `min`, `max`, `options` (`[[fields.options]]` with `value` and `label`) and `columns` (`[[fields.columns]]` for `list`, saved as an array of tables `[[table.key]]`). See the Japanese README for an example.
+A theme (or the site) can add fields to "Theme settings" by writing `[[fields]]` in `data/gh-admin/settings.toml`. Each field has `key`, `table` (for example `params`; the top of the file if omitted), `type` (`text`, `textarea`, `url`, `number`, `checkbox`, `select`, `list`, `module` or `moduleversion`), `label` (a string or a table per language), and optionally `default`, `min`, `max`, `options` (`[[fields.options]]` with `value` and `label`) and `columns` (`[[fields.columns]]` for `list`, saved as an array of tables `[[table.key]]`). `module` switches the `path` of the `[[module.imports]]` entry that matches one of the `options` (for example, to switch themes). `moduleversion` switches between pinning module versions in `go.mod` and using the latest version on every build; it takes `prefix`, `modules`, `source` (a GitHub `owner/repo` whose latest commit becomes the pseudo-version), `branch` and `file`. See the Japanese README for examples.
 
 Only strings, numbers and booleans are supported. Only the lines of changed settings are rewritten, and other settings and comments are kept.
 

@@ -108,12 +108,22 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 |---|---|
 | `key` | 変更する設定のキー |
 | `table` | キーがあるテーブル（例: `params`）。省略時はファイルの先頭 |
-| `type` | `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list` |
+| `type` | `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list`・`module`・`moduleversion` |
 | `label` | 表示名。文字列か、言語ごとの表（`ja`・`en` など） |
 | `default` | 設定がないときの値（例: `checkbox` で既定が有効なら `true`） |
 | `min`・`max` | `number` の範囲 |
 | `options` | `select` の選択肢。`[[fields.options]]` に `value` と `label` を書く |
 | `columns` | `list` の列。`[[fields.columns]]` に列ごとの `key`・`type`・`label`（`options`）を書く。`list` は `[[table.key]]` 形式のテーブルの配列として保存する |
+
+`module` は、`[[module.imports]]` のうち `options` の `value` に一致する `path` を切り替える（テーマの切り替えなど）。`moduleversion` は、`go.mod` でモジュールの版を固定するか、ビルドのたびに最新の版を利用するかを切り替える。
+
+| キー（`moduleversion`） | 内容 |
+|---|---|
+| `prefix` | 対象のモジュールのパスの先頭（例: `github.com/kmmz532/blogit/themes/`）。`[[module.imports]]` のうち一致するものを固定する |
+| `modules` | ほかに固定するモジュール（例: テーマが取り込む共通部分） |
+| `source` | 版を取得するGitHubのリポジトリ（`owner/repo`）。固定するときは、このリポジトリの最新コミットから疑似バージョンを作る |
+| `branch` | `source` のブランチ。省略時は `main` |
+| `file` | `go.mod` のパス。省略時は `go.mod` |
 
 値は文字列・数値・真偽値だけを扱う。変更した項目の行だけを書き換え、ほかの設定やコメントは保持する。
 

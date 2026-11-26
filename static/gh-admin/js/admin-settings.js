@@ -40,6 +40,7 @@ async function connect(candidate) {
   if (!file) throw new Error(`${settings.path}: Not Found`);
   sessionStorage.setItem(TOKEN_KEY, token);
   configFile = file;
+  for (const control of controls) await control.connect?.();
   loadForm(decodeBase64(file.base64));
   $('admin-settings-settings-form').hidden = false;
   $('admin-settings-auth-form').hidden = true;
@@ -283,6 +284,14 @@ function renderField(field, parent) {
     renderList(field, parent);
     return;
   }
+  if (field.type === 'module') {
+    renderModule(field, parent);
+    return;
+  }
+  if (field.type === 'moduleversion') {
+    renderModuleVersion(field, parent);
+    return;
+  }
   const table = field.table ?? '';
   const id = `admin-settings-field-${table || 'root'}-${field.key}`.replace(/[^A-Za-z0-9_-]/g, '-');
   const label = document.createElement('label');
@@ -305,6 +314,157 @@ function renderField(field, parent) {
         writeValue(lines, 'defaultContentLanguage', value.split('-')[0].toLowerCase());
       }
       return true;
+    },
+  });
+}
+
+// Hugo Modules。[[module.imports]] の path と、go.mod の require を扱う
+function readModuleImports(lines) {
+  return readList(lines, 'module.imports').map((item) => item.path).filter((path) => typeof path === 'string');
+}
+
+function replaceModuleImport(lines, from, to) {
+  let inImport = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (HEADER.test(lines[i])) { inImport = lines[i].trim() === '[[module.imports]]'; continue; }
+    const match = inImport && KEY_LINE.exec(lines[i]);
+    if (match && match[1] === 'path' && parseValue(match[2]) === from) {
+      lines[i] = `${lines[i].match(/^\s*/)[0]}path = ${literal(to)}`;
+      return true;
+    }
+  }
+  return false;
+}
+
+// go.mod の require（パス → 版）。require ( ... ) と require <path> <version> の両方を読む
+function readGoRequires(text) {
+  const requires = new Map();
+  let inBlock = false;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (/^require\s*\($/.test(trimmed)) { inBlock = true; continue; }
+    if (inBlock && trimmed === ')') { inBlock = false; continue; }
+    const match = inBlock ? /^(\S+)\s+(\S+)/.exec(trimmed) : /^require\s+(\S+)\s+(\S+)/.exec(trimmed);
+    if (match && !match[1].startsWith('//')) requires.set(match[1], match[2]);
+  }
+  return requires;
+}
+
+// prefix で始まるモジュールの require を取り除き、entries（[パス, 版]）を追加する
+function writeGoRequires(text, prefix, entries) {
+  const out = [];
+  let inBlock = false;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (/^require\s*\($/.test(trimmed)) { inBlock = true; out.push(line); continue; }
+    if (inBlock && trimmed === ')') {
+      inBlock = false;
+      // 空になった require ( ) は消す
+      if (/^require\s*\($/.test(out.at(-1)?.trim() ?? '')) out.pop();
+      else out.push(line);
+      continue;
+    }
+    const match = inBlock ? /^(\S+)\s+\S+/.exec(trimmed) : /^require\s+(\S+)\s+\S+/.exec(trimmed);
+    if (match && match[1].startsWith(prefix)) continue;
+    out.push(line);
+  }
+  while (out.length && !out.at(-1).trim()) out.pop();
+  if (entries.length) out.push('', 'require (', ...entries.map(([path, version]) => `\t${path} ${version}`), ')');
+  return `${out.join('\n')}\n`;
+}
+
+// GitHub のリポジトリの最新コミットから Go modules の疑似バージョンを作る（例: v0.0.0-20261126012345-0123456789ab）
+async function latestPseudoVersion(source, branch = 'main') {
+  const res = await fetch(`https://api.github.com/repos/${source}/commits/${encodeURIComponent(branch)}`, {
+    headers: { Accept: 'application/vnd.github+json' },
+  });
+  if (!res.ok) throw new Error(t('settings.module_version_failed', { message: `${res.status} ${res.statusText}` }));
+  const data = await res.json();
+  const time = new Date(data.commit.committer.date).toISOString().replace(/[-:T]/g, '').slice(0, 14);
+  return `v0.0.0-${time}-${data.sha.slice(0, 12)}`;
+}
+
+// type = "module": [[module.imports]] のうち options のどれかに一致する path を切り替える（テーマの切り替えなど）
+function renderModule(field, parent) {
+  const label = document.createElement('label');
+  label.className = 'field';
+  const input = createInput({ ...field, type: 'select' });
+  label.append(fieldLabel(field), input);
+  parent.append(label);
+  const values = (field.options ?? []).map((option) => String(option.value));
+  const current = (lines) => readModuleImports(lines).find((path) => values.includes(path));
+  controls.push({
+    load(lines) {
+      const path = current(lines);
+      label.hidden = !path;
+      if (path) input.value = path;
+    },
+    save(lines) {
+      const from = current(lines);
+      if (!from || input.value === from) return false;
+      return replaceModuleImport(lines, from, input.value);
+    },
+  });
+}
+
+// type = "moduleversion": go.mod で prefix に一致するモジュールの版を固定するか（自動で更新するか）を切り替える。
+// 固定する対象は [[module.imports]] のうち prefix に一致するものと modules に書いたもの。版は source（GitHub の owner/repo）の最新コミット
+function renderModuleVersion(field, parent) {
+  const prefix = field.prefix ?? '';
+  const file = field.file ?? 'go.mod';
+  const auto = document.createElement('label');
+  auto.className = 'field admin-settings-checkbox';
+  const autoInput = createInput({ type: 'checkbox' });
+  auto.append(autoInput, ` ${fieldLabel(field)}`);
+  const update = document.createElement('label');
+  update.className = 'field admin-settings-checkbox';
+  const updateInput = createInput({ type: 'checkbox' });
+  update.append(updateInput, ` ${t('settings.module_update')}`);
+  const note = document.createElement('p');
+  note.className = 'admin-note';
+  parent.append(auto, note, update);
+  let goMod = null;
+  const pinned = () => [...readGoRequires(goMod?.text ?? '')].filter(([path]) => path.startsWith(prefix));
+  const refresh = () => {
+    const versions = [...new Set(pinned().map(([, version]) => version))];
+    note.textContent = autoInput.checked
+      ? t('settings.module_auto_hint')
+      : versions.length ? t('settings.module_pinned_hint', { version: versions.join(', ') }) : t('settings.module_pin_hint');
+    update.hidden = autoInput.checked || versions.length === 0;
+  };
+  autoInput.addEventListener('change', refresh);
+  controls.push({
+    async connect() {
+      const found = await files.getFile(file);
+      goMod = found ? { text: decodeBase64(found.base64), version: found.version } : null;
+    },
+    load() {
+      const available = goMod !== null && Boolean(field.source);
+      auto.hidden = !available;
+      note.hidden = !available;
+      autoInput.checked = pinned().length === 0;
+      updateInput.checked = false;
+      if (available) refresh();
+      else update.hidden = true;
+    },
+    // hugo.toml の変更（テーマの切り替え）を反映したあとの lines から、固定するモジュールを決める
+    async save(lines) {
+      if (!goMod || !field.source) return false;
+      const modules = [...new Set([...(field.modules ?? []), ...readModuleImports(lines).filter((path) => path.startsWith(prefix))])];
+      const current = pinned();
+      let entries = [];
+      if (!autoInput.checked) {
+        const version = updateInput.checked || current.length === 0
+          ? await latestPseudoVersion(field.source, field.branch)
+          : current[0][1];
+        entries = modules.map((path) => [path, version]);
+      }
+      const text = writeGoRequires(goMod.text, prefix, entries);
+      if (text === goMod.text) return false;
+      await files.putFile(file, encodeBase64(text), 'Update theme version', goMod.version);
+      const saved = await files.getFile(file);
+      goMod = { text, version: saved?.version };
+      return 'file';
     },
   });
 }
@@ -381,8 +541,12 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
       configChanged = true;
     }
 
+    // go.mod など設定ファイル以外を変更した項目は、その場で個別にコミットする
+    let otherChanged = false;
     for (const control of controls) {
-      if (control.save(lines)) configChanged = true;
+      const changed = await control.save(lines);
+      if (changed === 'file') otherChanged = true;
+      else if (changed) configChanged = true;
     }
 
     const favicon = $('admin-settings-favicon').files[0];
@@ -410,7 +574,7 @@ $('admin-settings-settings-form').addEventListener('submit', async (event) => {
       configChanged = true;
     }
 
-    let commit = '変更なし';
+    let commit = otherChanged ? '完了' : '変更なし';
     if (configChanged) {
       const result = await files.putFile(settings.path, encodeBase64(lines.join('\n')), 'Update site settings', configFile.version);
       configFile = await files.getFile(settings.path);

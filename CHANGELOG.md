@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.10.0
+
+- サイト設定で、ブログの説明・著者・1ページあたりの記事数・言語コードを変更できるようにした。
+- テーマ（またはサイト）が `data/gh-admin/settings.toml` の `[[fields]]` で、サイト設定に項目を追加できるようにした。種類は `text`・`textarea`・`url`・`number`・`checkbox`・`select`・`list`（テーブルの配列）・`module`（`[[module.imports]]` の切り替え）・`moduleversion`（`go.mod` での版の固定）。
+- `[[params.links]]` などのテーブルの配列をセクションの区切りとして扱っておらず、`params.icon` が未設定のときにリンクの `icon` を読んでいた不具合を修正した。
+
 ## v0.9.0
 
 - 保存先に GitLab（gitlab.com とセルフホスト）を追加した。`params.ghAdmin.provider = "gitlab"` と `gitlabURL` で選ぶ。既定値は従来どおり GitHub。

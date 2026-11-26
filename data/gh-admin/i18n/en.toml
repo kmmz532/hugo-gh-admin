@@ -247,6 +247,11 @@ conflict = "This was updated elsewhere. Reload and try again (nothing was change
 reading = "Loading ({read} / {total})"
 
 [settings]
+module_update = "Update to the latest version"
+module_auto_hint = "Each build uses the latest version."
+module_pinned_hint = "Pinned to: {version}"
+module_pin_hint = "Saving pins the current latest version."
+module_version_failed = "Could not get the latest version. Try again later. ({message})"
 description_label = "Blog description"
 author_label = "Author"
 pager_size_label = "Posts per page"
