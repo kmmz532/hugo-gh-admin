@@ -55,6 +55,7 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 | `oauthTokenURL` | なし | OAuthのコードをトークンに交換するURL（Client Secretを持つサーバーが用意する）。`{"code": "..."}` をPOSTすると `{"access_token": "..."}` を返す |
 | `oauthRelayURL` | なし | OAuth Appに登録したコールバックURLが別のサイトにある場合の中継ページ。`state` に戻り先（`r`）と確認用の値（`s`）をJSONにしてBase64URLで渡し、中継ページは戻り先に `code` と `state`（`s` の値）を付けて戻す。未設定ならログイン画面自体をコールバックURLにする |
 | `buildWorkflow` | なし | サイト設定の「バージョン」タブの「最新の版で再ビルド」で実行する、ビルドのワークフローのファイル名（例: `deploy.yml`）。GitLabでは値によらずパイプラインを実行する。未設定なら再ビルドのボタンを出さない |
+| `buildCommit` | `false` | `true` にすると、再ビルドで中身が空のコミットを積む（GitHubのみ）。Cloudflare PagesのGit連携など、pushでビルドする構成で使う。`buildWorkflow` より優先する |
 | `buildRepo` | `siteRepo`（未設定なら `repo`） | 再ビルドするリポジトリ。記事のリポジトリでビルドする構成などで指定する |
 | `buildBranch` | `siteBranch` | 再ビルドするブランチ |
 | `tokenProvider` | なし | GitHub のトークンを受け取るモジュールの URL（サイトが用意する）。モジュールは `export async function getGitHubToken()`（GitLabでは `getGitLabToken()`）を持ち、トークン（文字列）か null を返す。トークンはタブを閉じると消える（sessionStorage）。未設定なら PAT でログインする |

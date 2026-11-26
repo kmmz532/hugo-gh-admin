@@ -666,7 +666,7 @@ $('admin-settings-rebuild')?.addEventListener('click', async () => {
   button.disabled = true;
   status('admin-settings-version-status', t('settings.rebuild_starting'));
   try {
-    const url = await startBuild({ repo: settings.buildRepo, branch: settings.buildBranch }, token, settings.buildWorkflow);
+    const url = await startBuild({ repo: settings.buildRepo, branch: settings.buildBranch }, token, settings.buildWorkflow, { commit: settings.buildCommit });
     const el = $('admin-settings-version-status');
     el.classList.remove('error');
     el.textContent = `${t('settings.rebuild_started')} `;

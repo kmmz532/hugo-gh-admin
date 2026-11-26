@@ -38,7 +38,7 @@
     <tbody id="admin-settings-version-rows"></tbody>
   </table>
   <p class="admin-note">{{ $i18n.settings.version_note }}</p>
-  {{- if $gh.buildWorkflow }}
+  {{- if or $gh.buildWorkflow $gh.buildCommit }}
   <button type="button" id="admin-settings-rebuild" class="btn primary">{{ $i18n.settings.rebuild }}</button>
   {{- else }}
   <p class="admin-note">{{ $i18n.settings.rebuild_unset }}</p>
@@ -82,7 +82,7 @@
 </form>
 <p id="admin-settings-status" class="bulk-status" role="status"></p>
 
-<script type="application/json" id="admin-settings-config">{{ dict "repo" $gh.siteRepo "branch" $gh.siteBranch "path" $gh.siteConfigPath "lang" $gh.lang "fields" $fields "modules" $modules "adminVersion" (partial "gh-admin/version.html" .) "buildRepo" $gh.buildRepo "buildBranch" $gh.buildBranch "buildWorkflow" $gh.buildWorkflow | jsonify | safeJS }}</script>
+<script type="application/json" id="admin-settings-config">{{ dict "repo" $gh.siteRepo "branch" $gh.siteBranch "path" $gh.siteConfigPath "lang" $gh.lang "fields" $fields "modules" $modules "adminVersion" (partial "gh-admin/version.html" .) "buildRepo" $gh.buildRepo "buildBranch" $gh.buildBranch "buildWorkflow" $gh.buildWorkflow "buildCommit" $gh.buildCommit | jsonify | safeJS }}</script>
 {{ end }}
 
 {{ define "scripts" }}

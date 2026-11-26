@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13.1
+
+- 再ビルドの方法に、中身が空のコミットを積む `params.ghAdmin.buildCommit = true` を追加した（GitHubのみ）。Cloudflare PagesのGit連携など、pushでビルドする構成で使う。
+
 ## v0.13.0
 
 - サイト設定に「バージョン」タブを追加した。ビルドに使ったモジュール（テーマ・hugo-gh-admin など）の版と、GitHub上の最新の版を表示する。

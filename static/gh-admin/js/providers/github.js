@@ -168,8 +168,18 @@ export function siteFiles(target, token) {
   };
 }
 
-// サイトを再ビルドする（GitHub Actions のワークフローの手動実行）。workflow はファイル名（例: deploy.yml）。返り値は実行の一覧の URL
-export async function startBuild(target, token, workflow) {
+// サイトを再ビルドする。workflow はワークフローのファイル名（例: deploy.yml）で、手動実行する。
+// commit が true なら、中身が空のコミットを積む（Cloudflare Pages など、push でビルドする連携向け）。返り値はビルドの状況を見る URL
+export async function startBuild(target, token, workflow, { commit = false } = {}) {
+  if (commit) {
+    const base = `/repos/${target.repo}/git`;
+    const options = { token, session: false };
+    const head = await api(`${base}/ref/heads/${encodeURIComponent(target.branch)}`, options);
+    const parent = await api(`${base}/commits/${head.object.sha}`, options);
+    const created = await api(`${base}/commits`, { ...options, method: 'POST', body: { message: 'Rebuild the site', tree: parent.tree.sha, parents: [head.object.sha] } });
+    await api(`${base}/refs/heads/${encodeURIComponent(target.branch)}`, { ...options, method: 'PATCH', body: { sha: created.sha } });
+    return `https://github.com/${target.repo}/commit/${created.sha}`;
+  }
   await api(`/repos/${target.repo}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`, {
     method: 'POST', body: { ref: target.branch }, token, session: false,
   });
