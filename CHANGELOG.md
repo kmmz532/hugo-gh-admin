@@ -2,6 +2,9 @@
 
 ## 未リリース
 
+- 「更新」（`/admin/update/`）を「モジュール」とは別のページとして戻した。「モジュール」は読み込むモジュールの編集、「更新」はバージョンの確認・Hugo のバージョン・テーマのバージョンの固定・再ビルドを扱う。
+- 「更新」に「Hugo のバージョン」を追加した。ビルドの設定ファイル（GitHub Actions のワークフローの `hugo-version`、`.gitlab-ci.yml` の Hugo 公式イメージのタグ）のバージョンを変更してコミットする。GitHub でワークフローのファイルを変更するには、トークンに Workflows の書き込み権限が必要。
+- 「読み込むモジュール」の入力欄に、ほかの画面と同じスタイルが当たっていなかった不具合を直した。
 - 「モジュール」の画面のファイルを `content/admin-modules.md`・`layouts/gh-admin/admin-modules.html` に改名した（レイアウト名も `admin-modules`）。テーマで `content/admin-update.md` や `layouts/gh-admin/admin-update.html` を上書きしている場合は、新しい名前に変更する。
 
 ## v0.15.7

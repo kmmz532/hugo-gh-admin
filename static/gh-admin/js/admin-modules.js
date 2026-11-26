@@ -8,7 +8,7 @@ import {
 } from './site-config.js';
 
 const $ = (id) => document.getElementById(id);
-const settings = JSON.parse($('admin-update-config').textContent);
+const settings = JSON.parse($('admin-modules-config').textContent);
 const token = sessionStorage.getItem('gh_admin_settings_token') || getToken() || '';
 
 const newBlock = (path) => ({ path, text: [IMPORT_HEADER, `  path = ${JSON.stringify(path)}`] });

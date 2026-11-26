@@ -1,8 +1,9 @@
-{{- /* 管理画面の共通メニュー（記事・画像・設定・モジュール）。引数はページ */ -}}
+{{- /* 管理画面の共通メニュー（記事・画像・設定・モジュール・更新）。引数はページ */ -}}
 {{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal -}}
 <nav class="admin-nav" aria-label="管理メニュー">
   <a href="{{ $gh.adminURL }}"{{ if eq .Layout "admin" }} aria-current="page"{{ end }}>記事</a>
   <a href="{{ $gh.adminImagesURL }}"{{ if eq .Layout "admin-images" }} aria-current="page"{{ end }}>画像</a>
   <a href="{{ "admin/settings/" | relURL }}"{{ if eq .Layout "admin-settings" }} aria-current="page"{{ end }}>設定</a>
   <a href="{{ "admin/modules/" | relURL }}"{{ if eq .Layout "admin-modules" }} aria-current="page"{{ end }}>モジュール</a>
+  <a href="{{ "admin/update/" | relURL }}"{{ if eq .Layout "admin-update" }} aria-current="page"{{ end }}>更新</a>
 </nav>

@@ -71,7 +71,8 @@ hugo mod get github.com/kmmz532/hugo-gh-admin@v0.1.0
 
 - `/admin/`：記事の一括管理と固定ページの一覧。固定ページは `/edit/?page=<slug>` で編集し、`/edit/?new=page` で作成する
 - `/admin/images/`：画像の管理
-- `/admin/modules/`：読み込むモジュールの追加・削除・並べ替えとバージョンの固定、ビルドに使ったモジュールのバージョンと最新バージョンの確認、テーマのバージョンの固定（`moduleversion` の項目）、再ビルド
+- `/admin/modules/`：読み込むモジュールの追加・削除・並べ替えとバージョンの固定
+- `/admin/update/`：ビルドに使ったモジュールのバージョンと最新バージョンの確認、Hugo のバージョンの変更（GitHub Actions のワークフローと `.gitlab-ci.yml`）、テーマのバージョンの固定（`moduleversion` の項目）、再ビルド
 - `/admin/settings/`：ブログ名・説明・著者・1ページあたりの記事数・言語・テーマ・ファビコン・記事カード用デフォルトサムネイルと、テーマが定義する項目の設定
 
 テーマは、`[[module.imports]]` のうち hugo-gh-admin 以外の先頭のモジュールを置き換えて切り替える。リポジトリのURL、Hugo Modulesのパス、themes.gohugo.ioのテーマのページのURLのいずれかを入力でき、themes.gohugo.ioに掲載されたテーマを候補に表示する。管理画面の部品を組み込んでいないテーマに切り替えるときは、hugo-gh-admin の取り込みを追加する。テーマが必要とする設定は、`hugo.toml` へ手動で追加する。

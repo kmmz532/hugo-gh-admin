@@ -1,0 +1,49 @@
+{{ define "main" }}
+{{- $gh := partial "gh-admin/settings.html" . | transform.Unmarshal }}
+{{- $i18n := partial "gh-admin/i18n.html" . | transform.Unmarshal }}
+<h1 class="page-title">{{ $i18n.settings.update_title }}</h1>
+{{ partial "gh-admin/admin-nav.html" . }}
+{{- /* ビルドに使ったモジュールのバージョン（hugo.Deps）。replace した手元のモジュールはバージョンが空になる */}}
+{{- $modules := slice }}
+{{- range hugo.Deps }}{{ if .Owner }}{{ $modules = $modules | append (dict "path" .Path "version" .Version) }}{{ end }}{{ end }}
+{{- /* テーマなどが data/gh-admin/settings.toml の [[fields]] で定義した項目（ここではバージョンの固定だけを使う） */}}
+{{- $fields := slice }}{{ with index site.Data "gh-admin" }}{{ with .settings }}{{ $fields = .fields | default slice }}{{ end }}{{ end }}
+<section id="admin-update" class="settings-card admin-settings-card">
+  <h2>{{ $i18n.settings.version_heading }}</h2>
+  <p class="admin-note">{{ replace $i18n.settings.version_built "{time}" (now.Format "2006-01-02 15:04") }}</p>
+  <table class="admin-settings-versions">
+    <thead><tr><th>{{ $i18n.settings.version_module }}</th><th>{{ $i18n.settings.version_current }}</th><th>{{ $i18n.settings.version_latest }}</th></tr></thead>
+    <tbody id="admin-update-rows"></tbody>
+  </table>
+  {{- if or $gh.buildWorkflow $gh.buildCommit }}
+  <button type="button" id="admin-update-rebuild" class="btn primary">{{ $i18n.settings.rebuild }}</button>
+  {{- else }}
+  <p class="admin-note">{{ $i18n.settings.rebuild_unset }}</p>
+  {{- end }}
+  <p id="admin-update-status" class="bulk-status" role="status"></p>
+</section>
+<section id="admin-hugo" class="settings-card admin-settings-card admin-hugo">
+  <h2>{{ $i18n.settings.hugo_heading }}</h2>
+  <p class="admin-note">{{ replace $i18n.settings.hugo_current "{version}" hugo.Version }}</p>
+  <div id="admin-hugo-form" class="admin-hugo-form" hidden>
+    <input id="admin-hugo-version" type="text" inputmode="decimal" placeholder="0.150.0" aria-label="{{ $i18n.settings.hugo_version_label }}">
+    <button type="button" id="admin-hugo-latest" class="btn">{{ $i18n.settings.modules_latest }}</button>
+    <button type="button" id="admin-hugo-save" class="btn primary">{{ $i18n.settings.pin_save }}</button>
+  </div>
+  <p id="admin-hugo-status" class="bulk-status" role="status"></p>
+</section>
+<section id="admin-update-pin" class="settings-card admin-settings-card" hidden>
+  <h2>{{ $i18n.settings.pin_heading }}</h2>
+  <div id="admin-update-pin-fields" class="admin-settings-fields"></div>
+  <button type="button" id="admin-update-pin-save" class="btn primary">{{ $i18n.settings.pin_save }}</button>
+  <p id="admin-update-pin-status" class="bulk-status" role="status"></p>
+</section>
+<p id="admin-update-login" class="admin-note" hidden><a href="{{ $gh.loginURL }}?return={{ .RelPermalink | urlquery }}">{{ $i18n.settings.update_login }}</a></p>
+<script type="application/json" id="gh-admin-messages">{{ partial "gh-admin/messages.html" $i18n | safeJS }}</script>
+<script type="application/json" id="admin-update-config">{{ dict "modules" $modules "fields" $fields "lang" $gh.lang "siteRepo" $gh.siteRepo "siteBranch" $gh.siteBranch "siteConfigPath" $gh.siteConfigPath "buildRepo" $gh.buildRepo "buildBranch" $gh.buildBranch "buildWorkflow" $gh.buildWorkflow "buildCommit" $gh.buildCommit "provider" $gh.provider "hugoVersion" hugo.Version | jsonify | safeJS }}</script>
+{{ end }}
+
+{{ define "scripts" }}
+<script type="module" src="{{ "gh-admin/js/admin-update.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
+<script type="module" src="{{ "gh-admin/js/admin-hugo.js" | relURL }}?v={{ partial "gh-admin/version.html" . }}"></script>
+{{ end }}
