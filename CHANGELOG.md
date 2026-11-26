@@ -1,5 +1,9 @@
 # Changelog
 
+## 未リリース
+
+- 「モジュール」の画面のファイルを `content/admin-modules.md`・`layouts/gh-admin/admin-modules.html` に改名した（レイアウト名も `admin-modules`）。テーマで `content/admin-update.md` や `layouts/gh-admin/admin-update.html` を上書きしている場合は、新しい名前に変更する。
+
 ## v0.15.7
 
 - 「モジュール」の画面の URL を `/admin/update/` から `/admin/modules/` に変更した。

@@ -1,7 +1,7 @@
 ---
 title: "モジュール"
 type: "gh-admin"
-layout: admin-update
+layout: admin-modules
 url: /admin/modules/
 sidebar: false
 hide:

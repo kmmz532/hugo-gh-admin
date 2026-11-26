@@ -4,5 +4,5 @@
   <a href="{{ $gh.adminURL }}"{{ if eq .Layout "admin" }} aria-current="page"{{ end }}>記事</a>
   <a href="{{ $gh.adminImagesURL }}"{{ if eq .Layout "admin-images" }} aria-current="page"{{ end }}>画像</a>
   <a href="{{ "admin/settings/" | relURL }}"{{ if eq .Layout "admin-settings" }} aria-current="page"{{ end }}>設定</a>
-  <a href="{{ "admin/modules/" | relURL }}"{{ if eq .Layout "admin-update" }} aria-current="page"{{ end }}>モジュール</a>
+  <a href="{{ "admin/modules/" | relURL }}"{{ if eq .Layout "admin-modules" }} aria-current="page"{{ end }}>モジュール</a>
 </nav>
