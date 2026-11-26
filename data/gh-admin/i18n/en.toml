@@ -191,6 +191,9 @@ size_medium = "Medium 480px"
 size_large = "Large 720px"
 
 [upload]
+crop_hint = "Drag over the image to choose an area to crop."
+crop = "Crop"
+crop_reset = "Undo crop"
 heading = "Upload this image?"
 image_alt = "Image to upload"
 size_label = "Display size"

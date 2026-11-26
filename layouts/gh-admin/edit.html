@@ -137,7 +137,15 @@
 
 <dialog id="upload-confirm" class="images-dialog upload-confirm" aria-labelledby="upload-confirm-title">
   <h2 id="upload-confirm-title">{{ $i18n.upload.heading }}</h2>
-  <img id="upload-confirm-image" class="upload-confirm-image" alt="{{ $i18n.upload.image_alt }}">
+  <div id="upload-crop-area" class="upload-crop-area">
+    <img id="upload-confirm-image" class="upload-confirm-image" alt="{{ $i18n.upload.image_alt }}" draggable="false">
+    <div id="upload-crop-box" class="upload-crop-box" hidden></div>
+  </div>
+  <div id="upload-crop-tools" class="upload-crop-tools">
+    <p class="admin-note">{{ $i18n.upload.crop_hint }}</p>
+    <button type="button" id="upload-crop-apply" class="btn" disabled>{{ $i18n.upload.crop }}</button>
+    <button type="button" id="upload-crop-reset" class="btn" hidden>{{ $i18n.upload.crop_reset }}</button>
+  </div>
   <p id="upload-confirm-name" class="image-status"></p>
   <label class="field">{{ $i18n.upload.size_label }}
     <select id="upload-confirm-size">

@@ -128,13 +128,16 @@ export function insertImageMarkdown(textarea, url, alt = t('toolbar.default_alt'
 export function attachToolbar({ textarea, toolbar, fileInput, upload, onError, confirmUpload = async () => '' }) {
   textarea.addEventListener('blur', () => lastCaret.set(textarea, [textarea.selectionStart, textarea.selectionEnd]));
 
-  // 貼り付け・ドロップは誤爆しやすいので、上げる前に確認する。画像ボタンは自分でファイルを選ぶので確認しない
+  // 上げる前に確認する（貼り付け・ドロップの誤爆を防ぎ、表示幅の指定と切り抜きができる）
   async function insertConfirmed(file) {
     // 確認の間に選択範囲が変わっても、貼り付けた時点の位置に入れる（確認の後で先頭に入る不具合の対策）
     const caret = [textarea.selectionStart, textarea.selectionEnd];
-    // 確認の戻り値は表示幅（'' は元のまま）。やめるなら null
-    const width = await confirmUpload(file);
-    if (width !== null) insertImage(textarea, file, upload, onError, width, caret);
+    // 確認の戻り値は { width: 表示幅（'' は元のまま）, file: 上げる画像（切り抜いたものを含む） }。やめるなら null
+    const result = await confirmUpload(file);
+    if (result !== null) {
+      const chosen = typeof result === 'string' ? { width: result, file } : result;
+      insertImage(textarea, chosen.file, upload, onError, chosen.width, caret);
+    }
     textarea.focus();
   }
 
@@ -165,7 +168,7 @@ export function attachToolbar({ textarea, toolbar, fileInput, upload, onError, c
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     fileInput.value = '';
-    if (file) insertImage(textarea, file, upload, onError);
+    if (file) insertConfirmed(file);
   });
 
   // テキストの貼り付けは通常どおり。画像と URL 1 つだけのときは横取りする

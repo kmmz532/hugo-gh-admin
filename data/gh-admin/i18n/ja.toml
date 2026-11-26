@@ -191,6 +191,9 @@ size_medium = "中 480px"
 size_large = "大 720px"
 
 [upload]
+crop_hint = "画像の上をドラッグすると、切り抜く範囲を選べます。"
+crop = "切り抜く"
+crop_reset = "元に戻す"
 heading = "この画像をアップロードしますか？"
 image_alt = "アップロードする画像"
 size_label = "表示サイズ"

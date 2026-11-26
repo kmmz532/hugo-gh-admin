@@ -872,6 +872,45 @@ body:has(.editor) .footer {
   border-radius: 6px;
 }
 
+/* 切り抜き: 画像の上をドラッグして範囲を選ぶ */
+.upload-crop-area {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.upload-crop-area.croppable {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.upload-crop-box {
+  position: absolute;
+  border: 2px dashed #fff;
+  outline: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.upload-crop-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.upload-crop-tools .admin-note {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.upload-crop-tools[hidden] {
+  display: none;
+}
+
 .upload-confirm-actions {
   display: flex;
   gap: 0.5rem;
